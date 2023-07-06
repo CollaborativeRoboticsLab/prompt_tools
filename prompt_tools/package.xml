@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>prompt_tools</name>
+  <version>0.0.1</version>
+  <description>meta-package with tools for working with prompted systems such as large language models and their responses</description>
+
+  <maintainer email="michael.pritchard@canberra.edu.au">Michael Pritchard</maintainer>
+  <maintainer email="mppritchard3@hotmail.com">mik-p</maintainer>
+
+  <author email="thomas.muller-dardelin@canberra.edu.au">Thomas Muller-Dardelin</author>
+  <author email="michael.pritchard@canberra.edu.au">Michael Pritchard</author>
+
+  <license>MIT</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>prompt_msgs</exec_depend>
+  <exec_depend>prompt_bridge</exec_depend>
+
+  <export>
+    <metapackage />
+  </export>
+</package>
