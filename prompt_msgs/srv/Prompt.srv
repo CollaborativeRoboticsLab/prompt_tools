@@ -1,0 +1,4 @@
+# prompt service send a prompt and recieve a response
+prompt_msgs/Prompt prompt
+---
+prompt_msgs/PromptResponse response
