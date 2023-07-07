@@ -12,6 +12,8 @@
 
   <license>MIT</license>
 
+  <url type="repository">https://github.com/AIResearchLab/prompt_tools</url>
+
   <buildtool_depend>catkin</buildtool_depend>
 
   <exec_depend>prompt_msgs</exec_depend>
