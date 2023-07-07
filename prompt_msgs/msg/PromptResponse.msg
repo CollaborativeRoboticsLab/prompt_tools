@@ -3,6 +3,6 @@
 # also contains the accuracy, confidence, and risk of the response
 string response
 bool success
-float accuracy
-float confidence
-float risk
+float32 accuracy
+float32 confidence
+float32 risk
