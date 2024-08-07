@@ -1,0 +1,7 @@
+<library path="libllm_prompt_provider_plugins.so">
+  <class name="prompt_provider::PromptProvider" type="prompt_provider::PromptProvider" base_class_type="pluginlib::PluginBase">
+    <description>
+      A plugin that provides prompt provider base class
+    </description>
+  </class>
+</library>

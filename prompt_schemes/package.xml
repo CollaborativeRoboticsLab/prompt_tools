@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="3">
+    <name>prompt_schemes</name>
+    <version>0.1.0</version>
+    <description>
+        prompt schemes are common formats used to interoperate between robots and language models
+    </description>
+
+    <maintainer email="michael.pritchard@canberra.edu.au">Michael Pritchard</maintainer>
+    <maintainer email="mppritchard3@hotmail.com">mik-p</maintainer>
+    <author email="michael.pritchard@canberra.edu.au">Michael Pritchard</author>
+
+    <license>MIT</license>
+
+    <buildtool_depend>ament_cmake</buildtool_depend>
+
+    <depend>rclcpp</depend>
+    <depend>behaviortree_cpp</depend>
+
+    <export>
+        <build_type>ament_cmake</build_type>
+    </export>
+</package>

@@ -1,17 +1,21 @@
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
 #include <prompt_bridge/prompt_bridge.hpp>
 
 // main function
 int main(int argc, char** argv)
 {
   // initialize the node
-  ros::init(argc, argv, "prompt_bridge_server");
+  // ros::init(argc, argv, "prompt_bridge_server");
+  rclcpp::init(argc, argv);
 
-  // create the PromptBridge object
-  prompt_bridge::PromptBridge prompt_bridge;
+  // create the node
+  auto node = std::make_shared<prompt_bridge::PromptBridge>();
 
   // spin the node
-  ros::spin();
+  rclcpp::spin(node);
+
+  // shutdown the node
+  rclcpp::shutdown();
 
   return 0;
 }

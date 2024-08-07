@@ -1,3 +1,3 @@
 # a history of multiple completed prompt transactions
-Header header
+std_msgs/Header header
 prompt_msgs/PromptTransaction[] transactions
