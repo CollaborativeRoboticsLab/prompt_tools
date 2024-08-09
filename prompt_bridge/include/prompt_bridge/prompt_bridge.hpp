@@ -1,19 +1,21 @@
 #pragma once
 
+#include <llm_prompt_provider_plugins/prompt_provider_base.hpp>
 #include <memory>
-
-#include <rclcpp/rclcpp.hpp>
+#include <pluginlib/class_loader.hpp>
 #include <prompt_msgs/msg/prompt_history.hpp>
 #include <prompt_msgs/msg/prompt_transaction.hpp>
 #include <prompt_msgs/srv/prompt.hpp>
-#include <llm_prompt_provider_plugins/prompt_provider.hpp>
+#include <prompt_schemes/scheme_base.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 namespace prompt_bridge
 {
 class PromptBridge : public rclcpp::Node
 {
 public:
-  PromptBridge() : Node("prompt_bridge"), loop_hz_(1.0), frame_id_("agent"), transaction_limit_(10)
+  PromptBridge(const rclcpp::NodeOptions& options)
+    : Node("prompt_bridge", options), loop_hz_(1.0), frame_id_("agent"), transaction_limit_(10)
   {
     // loop rate
     loop_hz_ = this->declare_parameter("loop_rate", 1.0);
@@ -24,8 +26,29 @@ public:
     // number of transactions stored in history
     transaction_limit_ = this->declare_parameter("cached_transactions", 10);
 
-    // create prompt provider from plugin class
-    // prompt_provider_ = std::make_shared<prompt_provider::PromptProvider>(shared_from_this());
+    // create prompt provider from plugin class loader
+    std::string plugin_name = this->declare_parameter("prompt_provider", "prompt_provider::DefaultPromptProvider");
+
+    // create plugin loader
+    pluginlib::ClassLoader<prompt_provider::PromptProviderBase> loader("llm_prompt_provider_plugins", "prompt_provider:"
+                                                                                                      ":PromptProviderB"
+                                                                                                      "ase");
+
+    prompt_provider_ = loader.createUniqueInstance(plugin_name);
+
+    // init provider
+    prompt_provider_->init(this->shared_from_this());
+
+    // create prompt scheme from plugin class loader
+    std::string scheme = this->declare_parameter("scheme", "prompt_scheme::DefaultScheme");
+
+    // create plugin loader
+    pluginlib::ClassLoader<prompt_schemes::SchemeBase> scheme_loader("prompt_schemes", "prompt_schemes::SchemeBase");
+
+    scheme_ = scheme_loader.createUniqueInstance(scheme);
+
+    // init scheme
+    scheme_->init(this->shared_from_this());
 
     // history publisher
     prompt_history_pub_ = this->create_publisher<prompt_msgs::msg::PromptHistory>("history", 1);
@@ -34,7 +57,7 @@ public:
     prompt_service_ = this->create_service<prompt_msgs::srv::Prompt>(
         "prompt", std::bind(&PromptBridge::prompt_service_cb, this, std::placeholders::_1, std::placeholders::_2));
 
-    // prompt publisher timer
+    // history publisher timer
     history_pub_timer_ = this->create_wall_timer(std::chrono::duration<double>(1.0 / loop_hz_),
                                                  std::bind(&PromptBridge::history_pub_timer_cb, this));
   }
@@ -54,7 +77,7 @@ public:
     // send the prompt message to the prompt provider
     try
     {
-      prompt_provider::PromptProvider::PromptResponse result =
+      prompt_provider::PromptProviderBase::PromptResponse result =
           prompt_provider_->sendPrompt(prompt_provider_->fromMsg(req->prompt));
 
       // set the response message
@@ -106,16 +129,17 @@ private:
   std::string frame_id_;  // frame id
 
   // number of transactions stored in history
-  int transaction_limit_;
+  unsigned int transaction_limit_;
 
   // prompt history
   prompt_msgs::msg::PromptHistory prompt_history_;
 
   // prompt provider
-  std::shared_ptr<prompt_provider::PromptProvider> prompt_provider_;
+  std::shared_ptr<prompt_provider::PromptProviderBase> prompt_provider_;
+  // prompt scheme
+  std::shared_ptr<prompt_schemes::SchemeBase> scheme_;
 
   // ROS API
-  // subs
   // pubs
   rclcpp::Publisher<prompt_msgs::msg::PromptHistory>::SharedPtr prompt_history_pub_;
   // services

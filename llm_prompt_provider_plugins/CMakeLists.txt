@@ -1,18 +1,34 @@
 cmake_minimum_required(VERSION 3.10)
 project(llm_prompt_provider_plugins)
 
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 17)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
 # Find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(prompt_msgs REQUIRED)
+find_package(Poco REQUIRED COMPONENTS
+  JSON
+  Net
+)
 
 # Include directories
 include_directories(include)
 
 # Library
 add_library(${PROJECT_NAME} SHARED
-  src/prompt_provider.cpp
+  src/rest_prompt_provider.cpp
+)
+
+target_link_libraries(${PROJECT_NAME}
+  Poco::JSON
+  Poco::Net
 )
 
 ament_target_dependencies(${PROJECT_NAME}

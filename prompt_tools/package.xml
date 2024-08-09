@@ -14,12 +14,6 @@
 
   <url type="repository">https://github.com/AIResearchLab/prompt_tools</url>
 
-  <buildtool_depend>catkin</buildtool_depend>
-
   <exec_depend>prompt_msgs</exec_depend>
   <exec_depend>prompt_bridge</exec_depend>
-
-  <export>
-    <metapackage />
-  </export>
 </package>

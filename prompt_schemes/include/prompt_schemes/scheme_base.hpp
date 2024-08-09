@@ -1,5 +1,6 @@
 #pragma once
 
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 
 namespace prompt_schemes
@@ -43,10 +44,10 @@ public:
   };
 
 public:
-  // cannot instantiate base class
-  SchemeBase() = delete;
+  SchemeBase() = default;
+  virtual ~SchemeBase() = default;
 
-  ~SchemeBase() = default;
+  virtual void init(const rclcpp::Node::SharedPtr& node) = 0;
 
   // get current state
   const State state()

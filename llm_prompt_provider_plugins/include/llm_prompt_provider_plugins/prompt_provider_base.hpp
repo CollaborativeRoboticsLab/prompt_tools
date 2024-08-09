@@ -1,16 +1,40 @@
 #pragma once
 
-#include <rclcpp/rclcpp.hpp>
+#include <exception>
 #include <prompt_msgs/msg/prompt.hpp>
 #include <prompt_msgs/msg/prompt_response.hpp>
-
-#include <pluginlib/class_list_macros.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 namespace prompt_provider
 {
 
+// provider exception class
+class PromptProviderException : public std::exception
+{
+public:
+  PromptProviderException(const std::string& msg) : msg_(msg)
+  {
+  }
+
+  virtual const char* what() const noexcept override
+  {
+    return msg_.c_str();
+  }
+
+private:
+  std::string msg_;
+};
+
 // class PromptProvider pure virtual
-class PromptProvider
+/**
+ * @brief PromptProviderBase
+ *
+ * This is the base class for prompt provider plugins
+ * it provides a common interface for all prompt provider plugins
+ * the main functions are to send a prompt and recieve a response
+ *
+ */
+class PromptProviderBase
 {
 public:
   // internal data types
@@ -39,13 +63,12 @@ public:
   };
 
 public:
-  // cannot instantiate base class
-  PromptProvider() = delete;
-
-  // destructor
-  virtual ~PromptProvider() = default;
+  PromptProviderBase() = default;
+  virtual ~PromptProviderBase() = default;
 
   // abstract methods
+  // init
+  virtual void init(const rclcpp::Node::SharedPtr& node) = 0;
   // sendPrompt
   virtual const PromptResponse sendPrompt(const PromptRequest& req) = 0;
 

@@ -98,6 +98,12 @@ public:
 class BTScheme : public SchemeBase
 {
 public:
+  BTScheme() = default;
+
+  virtual void init(const rclcpp::Node::SharedPtr& node)
+  {
+  }
+
   // register robot action
   const void register_action(const std::string& action)
   {
@@ -116,19 +122,19 @@ public:
 
 protected:
   // implement the base class state functions
-  const bool starting(const std::string& doc_str) override
+  virtual const bool starting(const std::string& doc_str)
   {
     // skip this state
     return true;
   }
 
-  const bool collecting(const std::string& doc_str) override
+  virtual const bool collecting(const std::string& doc_str)
   {
     // move to next state as the registered actions should be present
     return true;
   }
 
-  const bool negotiating(const std::string& doc_str) override
+  virtual const bool negotiating(const std::string& doc_str)
   {
     // try passing the xml
     try
@@ -148,7 +154,7 @@ protected:
     return true;
   }
 
-  const bool running(const std::string& doc_str) override
+  virtual const bool running(const std::string& doc_str)
   {
     // scrub the xml
     std::string scrubbed_xml = XMLScrubber::scrub_xml(doc_str);
@@ -156,6 +162,12 @@ protected:
     // parse the xml to BT
     parse_xml_to_bt(scrubbed_xml);
 
+    // skip this state
+    return true;
+  }
+
+  virtual const bool idle(const std::string& doc_str)
+  {
     // skip this state
     return true;
   }
