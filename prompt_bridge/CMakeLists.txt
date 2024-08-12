@@ -11,6 +11,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(prompt_msgs REQUIRED)
 find_package(llm_prompt_provider_plugins REQUIRED)
@@ -18,8 +19,6 @@ find_package(prompt_schemes REQUIRED)
 
 include_directories(
   include
-  # ${prompt_msgs_INCLUDE_DIRS}
-  # ${llm_prompt_provider_plugins_INCLUDE_DIRS}
 )
 
 # component library
@@ -30,6 +29,7 @@ add_library(${PROJECT_NAME} SHARED
 ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   rclcpp_components
+  rclcpp_action
   pluginlib
   prompt_msgs
   llm_prompt_provider_plugins
