@@ -1,6 +1,8 @@
 # dev
 .vscode/
 
+__pycache__
+
 devel/
 logs/
 build/

@@ -71,6 +71,8 @@ public:
       case State::IDLE:
         return "IDLE";
     }
+
+    return "UNDEFINED";
   }
 
   // set document string

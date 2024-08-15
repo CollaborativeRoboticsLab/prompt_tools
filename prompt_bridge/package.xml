@@ -24,6 +24,8 @@
   <depend>llm_prompt_provider_plugins</depend>
   <depend>prompt_schemes</depend>
 
+  <exec_depend>launch_ros</exec_depend>
+
   <export>
     <build_type>ament_cmake</build_type>
   </export>
