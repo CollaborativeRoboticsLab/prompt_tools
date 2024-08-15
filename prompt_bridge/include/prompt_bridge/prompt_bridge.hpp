@@ -145,21 +145,108 @@ public:
   rclcpp_action::GoalResponse handle_goal(const rclcpp_action::GoalUUID& uuid,
                                           std::shared_ptr<const prompt_msgs::action::Plan::Goal> goal)
   {
+    // check if the goal is valid
+    // prompt empty
+    if (goal->goal.prompt.prompt.empty())
+    {
+      RCLCPP_ERROR(this->get_logger(), "goal prompt is empty");
+      return rclcpp_action::GoalResponse::REJECT;
+    }
+
+    // check if the scheme is idle
+    // FIXME: is this thread safe?
+    if (scheme_->state() != prompt_schemes::SchemeBase::State::IDLE)
+    {
+      RCLCPP_ERROR(this->get_logger(), "scheme is not idle");
+      return rclcpp_action::GoalResponse::REJECT;
+    }
+
+    // start the action
+    RCLCPP_INFO(this->get_logger(), "prompt plan action accepted");
+    return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
   }
 
   rclcpp_action::CancelResponse
   handle_cancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<prompt_msgs::action::Plan>> goal_handle)
   {
+    // cancel the action
+    RCLCPP_INFO(this->get_logger(), "prompt plan action canceled");
+    (void)goal_handle;
+    return rclcpp_action::CancelResponse::ACCEPT;
   }
 
   void handle_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<prompt_msgs::action::Plan>> goal_handle)
   {
+    // start execution and detach
     std::thread{ std::bind(&PromptBridge::execute, this, std::placeholders::_1), goal_handle }.detach();
   }
 
   // execute action
+  /**
+   * @brief execute a plan action
+   * handle prompt negotiation via a scheme and prompt provider
+   * and publish feedback and result
+   *
+   * @param goal_handle
+   */
   void execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<prompt_msgs::action::Plan>> goal_handle)
   {
+    // set tick rate
+    rclcpp::Rate rate(10);  // 10 Hz
+
+    // feedback and result objects
+    auto feedback = std::make_shared<prompt_msgs::action::Plan::Feedback>();
+    auto result = std::make_shared<prompt_msgs::action::Plan::Result>();
+
+    // set the initial document string to the goal prompt
+    scheme_->set_doc_str(goal_handle->get_goal()->goal.prompt.prompt);
+    // set the prompt provider
+    scheme_->set_prompt_provider(prompt_provider_);
+
+    // tick the scheme to start (assuming that the scheme was idle)
+    if (scheme_->state() == prompt_schemes::SchemeBase::State::IDLE)
+    {
+      scheme_->tick(scheme_->get_doc_str());
+    }
+
+    // while the scheme is not finished (idle) and the action is not canceled
+    // and ros is not shutting down
+    while (scheme_->state() != prompt_schemes::SchemeBase::State::IDLE && !goal_handle->is_canceling() && rclcpp::ok())
+    {
+      // tick the scheme
+      // updating the scheme state machine
+      // use the prompt provider set in the scheme
+      scheme_->tick(scheme_->get_doc_str());
+
+      // update feedback with the current state
+      feedback->current_op = scheme_->op_string();
+      goal_handle->publish_feedback(feedback);
+
+      // sleep
+      rate.sleep();
+    }
+
+    // if the action is canceled
+    if (goal_handle->is_canceling())
+    {
+      result->summary = "plan action canceled";
+      result->plan_docs.push_back(scheme_->get_doc_str());
+      goal_handle->canceled(result);
+      RCLCPP_INFO(this->get_logger(), "plan action canceled");
+      return;
+    }
+
+    // if the scheme is finished
+    if (scheme_->state() != prompt_schemes::SchemeBase::State::IDLE)
+    {
+      // set the result
+      result->summary = goal_handle->get_goal()->goal.prompt.prompt;
+      result->plan_docs.push_back(scheme_->get_doc_str());
+      goal_handle->succeed(result);
+      RCLCPP_INFO(this->get_logger(), "plan action succeeded");
+    }
+
+    return;
   }
 
 private:

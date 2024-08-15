@@ -105,13 +105,13 @@ public:
   }
 
   // register robot action
-  const void register_action(const std::string& action)
+  void register_action(const std::string& action)
   {
   }
 
 public:
   // parse xml to BT
-  const void parse_xml_to_bt(const std::string& bt_xml)
+  void parse_xml_to_bt(const std::string& bt_xml)
   {
     // parse xml string to BT
     factory_.registerBehaviorTreeFromText(bt_xml);
@@ -122,19 +122,21 @@ public:
 
 protected:
   // implement the base class state functions
-  virtual const bool starting(const std::string& doc_str)
+  virtual bool starting(const std::string& doc_str)
   {
-    // skip this state
+    // set the next prompt to the document string
+    start_with_doc_str(doc_str);
+    // skip this state otherwise
     return true;
   }
 
-  virtual const bool collecting(const std::string& doc_str)
+  virtual bool collecting(const std::string& doc_str)
   {
     // move to next state as the registered actions should be present
     return true;
   }
 
-  virtual const bool negotiating(const std::string& doc_str)
+  virtual bool negotiating(const std::string& doc_str)
   {
     // try passing the xml
     try
@@ -154,7 +156,7 @@ protected:
     return true;
   }
 
-  virtual const bool running(const std::string& doc_str)
+  virtual bool running(const std::string& doc_str)
   {
     // scrub the xml
     std::string scrubbed_xml = XMLScrubber::scrub_xml(doc_str);
@@ -162,12 +164,6 @@ protected:
     // parse the xml to BT
     parse_xml_to_bt(scrubbed_xml);
 
-    // skip this state
-    return true;
-  }
-
-  virtual const bool idle(const std::string& doc_str)
-  {
     // skip this state
     return true;
   }

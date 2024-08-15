@@ -14,6 +14,8 @@ find_package(rclcpp REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(tinyxml2 REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
+find_package(prompt_msgs REQUIRED)
+find_package(llm_prompt_provider_plugins REQUIRED)
 
 # Include directories
 include_directories(
@@ -34,6 +36,8 @@ ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   pluginlib
   behaviortree_cpp
+  prompt_msgs
+  llm_prompt_provider_plugins
 )
 
 # Plugin description file

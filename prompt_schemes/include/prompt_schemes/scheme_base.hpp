@@ -1,5 +1,6 @@
 #pragma once
 
+#include <llm_prompt_provider_plugins/prompt_provider_base.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <string>
 
@@ -50,9 +51,26 @@ public:
   virtual void init(const rclcpp::Node::SharedPtr& node) = 0;
 
   // get current state
-  const State state()
+  const State& state()
   {
     return state_;
+  }
+
+  const std::string op_string()
+  {
+    switch (state_)
+    {
+      case State::STARTING:
+        return "STARTING";
+      case State::COLLECTING:
+        return "COLLECTING";
+      case State::NEGOTIATING:
+        return "NEGOTIATING";
+      case State::RUNNING:
+        return "RUNNING";
+      case State::IDLE:
+        return "IDLE";
+    }
   }
 
   // set document string
@@ -62,9 +80,17 @@ public:
   }
 
   // get document string
-  const std::string get_doc_str()
+  const std::string& get_doc_str()
   {
     return doc_str_;
+  }
+
+  // set prompt provider
+  void set_prompt_provider(
+      const std::shared_ptr<prompt_provider::PromptProviderBase>&
+          prompt_provider)
+  {
+    prompt_provider_ = prompt_provider;
   }
 
   // function to iterate through state actions and transitions
@@ -99,23 +125,28 @@ protected:
   // virtual functions for each state
   // actions in starting
   // was started by external request
-  virtual const bool starting(const std::string& doc_str) = 0;
+  virtual bool starting(const std::string& doc_str) = 0;
   // actions in collecting
   // collect request and list of available capabilities
   // these can be registered using plugins, capability provider, or other
   // explicit runtime registrations
-  virtual const bool collecting(const std::string& doc_str) = 0;
+  virtual bool collecting(const std::string& doc_str) = 0;
   // actions in negotiating
   // negotiate document with prompt provider
   // this is the core of the prompt scheme
-  virtual const bool negotiating(const std::string& doc_str) = 0;
+  virtual bool negotiating(const std::string& doc_str) = 0;
   // actions in running
   // create and manage lifecycle
   // run the to completion or fail and return to negotiation
-  virtual const bool running(const std::string& doc_str) = 0;
+  virtual bool running(const std::string& doc_str) = 0;
   // actions in idle
   // nothing to do in idle except to listen for request
-  virtual const bool idle(const std::string& doc_str) = 0;
+  virtual bool idle(const std::string& doc_str)
+  {
+    // skip this state
+    // essentially if tick is called then the scheme starts
+    return true;
+  }
 
   // transition to next state
   void next()
@@ -153,6 +184,12 @@ protected:
     }
   }
 
+  // set next prompt to doc string
+  void start_with_doc_str(const std::string& doc_str)
+  {
+    next_prompt_ = doc_str_;
+  }
+
 private:
   // transition states
   void start()
@@ -184,8 +221,14 @@ private:
   // current state
   State state_ = State::IDLE;
 
-  // document string
+  // internal document string for negotiation updates
   std::string doc_str_;
+
+  // internal prompt for next negotiation
+  std::string next_prompt_;
+
+  // current prompt provider
+  std::shared_ptr<prompt_provider::PromptProviderBase> prompt_provider_;
 };
 
 }  // namespace prompt_schemes
