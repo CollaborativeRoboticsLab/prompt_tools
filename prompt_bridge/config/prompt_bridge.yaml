@@ -1,3 +1,18 @@
 # config for prompt_bridge
 /**:
   ros__parameters:
+    loop_rate: 10.0
+    frame_id: prompt_bridge
+    cached_transactions: 10
+    offer_service: true
+    prompt_provider_plugin: prompt_provider::RestPromptProvider
+    prompt_scheme_plugin: prompt_schemes::BTScheme
+
+    # provider config
+    RestPromptProvider:
+      uri: http://localhost:5000/api/v1/prompt
+      method: POST
+
+    # scheme config
+    BTScheme:
+      test: hello

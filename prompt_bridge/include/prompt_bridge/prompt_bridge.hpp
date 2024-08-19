@@ -22,7 +22,7 @@ public:
     : Node("prompt_bridge", options), loop_hz_(1.0), frame_id_("agent"), transaction_limit_(10)
   {
     // loop rate
-    loop_hz_ = this->declare_parameter("loop_rate", 1.0);
+    loop_hz_ = this->declare_parameter("loop_rate", loop_hz_);
 
     // frame id
     frame_id_ = this->declare_parameter("frame_id", frame_id_);
@@ -34,49 +34,55 @@ public:
     const bool offer_service = this->declare_parameter("offer_service", false);
 
     // create prompt provider from plugin class loader
-    std::string plugin_name = this->declare_parameter("prompt_provider", "prompt_provider::DefaultPromptProvider");
+    std::string plugin_name = this->declare_parameter("prompt_provider_plugin", "prompt_provider::"
+                                                                                "DefaultPromptProvider");
 
     // create plugin loader
+    RCLCPP_INFO(this->get_logger(), "Loading prompt provider plugin: '%s'", plugin_name.c_str());
     pluginlib::ClassLoader<prompt_provider::PromptProviderBase> loader("llm_prompt_provider_plugins", "prompt_provider:"
                                                                                                       ":PromptProviderB"
                                                                                                       "ase");
 
-    prompt_provider_ = loader.createUniqueInstance(plugin_name);
+    prompt_provider_ = loader.createSharedInstance(plugin_name);
 
     // init provider
-    prompt_provider_->init(this->shared_from_this());
+    // get a shared pointer to the node parameters interface
+    prompt_provider_->init(this->get_node_parameters_interface(), this->get_node_logging_interface());
 
     // create prompt scheme from plugin class loader
-    std::string scheme = this->declare_parameter("scheme", "prompt_scheme::DefaultScheme");
+    std::string scheme = this->declare_parameter("prompt_scheme_plugin", "prompt_scheme::DefaultScheme");
 
     // create plugin loader
+    RCLCPP_INFO(this->get_logger(), "Loading prompt scheme plugin: '%s'", scheme.c_str());
     pluginlib::ClassLoader<prompt_schemes::SchemeBase> scheme_loader("prompt_schemes", "prompt_schemes::SchemeBase");
 
-    scheme_ = scheme_loader.createUniqueInstance(scheme);
+    scheme_ = scheme_loader.createSharedInstance(scheme);
 
     // init scheme
-    scheme_->init(this->shared_from_this());
+    scheme_->init(this->get_node_parameters_interface(), this->get_node_logging_interface());
 
     // history publisher
-    prompt_history_pub_ = this->create_publisher<prompt_msgs::msg::PromptHistory>("history", 1);
+    prompt_history_pub_ = this->create_publisher<prompt_msgs::msg::PromptHistory>("~/history", 1);
 
     // optional service interface
     if (offer_service)
     {
       // create prompt service
       prompt_service_ = this->create_service<prompt_msgs::srv::Prompt>(
-          "prompt", std::bind(&PromptBridge::prompt_service_cb, this, std::placeholders::_1, std::placeholders::_2));
+          "~/prompt", std::bind(&PromptBridge::prompt_service_cb, this, std::placeholders::_1, std::placeholders::_2));
     }
 
     // plan action server
     this->plan_action_server_ = rclcpp_action::create_server<prompt_msgs::action::Plan>(
-        this, "plan", std::bind(&PromptBridge::handle_goal, this, std::placeholders::_1, std::placeholders::_2),
+        this, "~/plan", std::bind(&PromptBridge::handle_goal, this, std::placeholders::_1, std::placeholders::_2),
         std::bind(&PromptBridge::handle_cancel, this, std::placeholders::_1),
         std::bind(&PromptBridge::handle_accepted, this, std::placeholders::_1));
 
     // history publisher timer
-    history_pub_timer_ = this->create_wall_timer(std::chrono::duration<double>(1.0 / loop_hz_),
+    history_pub_timer_ = this->create_wall_timer(std::chrono::duration<double>(1.0),
                                                  std::bind(&PromptBridge::history_pub_timer_cb, this));
+
+    RCLCPP_INFO(this->get_logger(), "PromptBridge initialized");
   }
 
   ~PromptBridge() = default;
@@ -192,7 +198,7 @@ public:
   void execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<prompt_msgs::action::Plan>> goal_handle)
   {
     // set tick rate
-    rclcpp::Rate rate(10);  // 10 Hz
+    rclcpp::Rate rate(loop_hz_);  // 10 Hz
 
     // feedback and result objects
     auto feedback = std::make_shared<prompt_msgs::action::Plan::Feedback>();

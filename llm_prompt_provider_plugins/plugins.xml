@@ -1,4 +1,4 @@
-<library path="libllm_prompt_provider_plugins.so">
+<library path="llm_prompt_provider_plugins">
   <class type="prompt_provider::RestPromptProvider" base_class_type="prompt_provider::PromptProviderBase">
     <description>
       A plugin that provides rest based prompt provider

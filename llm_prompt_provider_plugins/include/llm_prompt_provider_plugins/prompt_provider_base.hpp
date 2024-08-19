@@ -68,7 +68,8 @@ public:
 
   // abstract methods
   // init
-  virtual void init(const rclcpp::Node::SharedPtr& node) = 0;
+  virtual void init(rclcpp::node_interfaces::NodeParametersInterface::SharedPtr params,
+                    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr log) = 0;
   // sendPrompt
   virtual const PromptResponse sendPrompt(const PromptRequest& req) = 0;
 
@@ -97,5 +98,9 @@ public:
     result.risk = res.risk;
     return result;
   }
+
+protected:
+  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging_interface_ptr_;
 };
+
 }  // namespace prompt_provider

@@ -1,4 +1,4 @@
-<library path="libprompt_scheme_plugins.so">
+<library path="prompt_schemes">
   <class type="prompt_schemes::BTScheme" base_class_type="prompt_schemes::SchemeBase">
     <description>
       A plugin that provides behavior tree based prompt scheme

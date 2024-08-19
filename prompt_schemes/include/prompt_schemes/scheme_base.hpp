@@ -48,7 +48,8 @@ public:
   SchemeBase() = default;
   virtual ~SchemeBase() = default;
 
-  virtual void init(const rclcpp::Node::SharedPtr& node) = 0;
+  virtual void init(rclcpp::node_interfaces::NodeParametersInterface::SharedPtr params,
+                    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr log) = 0;
 
   // get current state
   const State& state()
@@ -89,8 +90,7 @@ public:
 
   // set prompt provider
   void set_prompt_provider(
-      const std::shared_ptr<prompt_provider::PromptProviderBase>&
-          prompt_provider)
+      const std::shared_ptr<prompt_provider::PromptProviderBase>& prompt_provider)
   {
     prompt_provider_ = prompt_provider;
   }
@@ -218,6 +218,9 @@ private:
   {
     state_ = State::IDLE;
   }
+
+protected:
+  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging_interface_ptr_;
 
 private:
   // current state

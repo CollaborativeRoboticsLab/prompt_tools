@@ -37,15 +37,15 @@ ament_target_dependencies(${PROJECT_NAME}
 )
 
 # register component
-rclcpp_components_register_node(prompt_bridge_node
+rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "prompt_bridge::PromptBridge"
   EXECUTABLE prompt_bridge_node
 )
 
-ament_export_targets(export_prompt_bridge_node)
+ament_export_targets(prompt_bridge_node)
 
 install(TARGETS ${PROJECT_NAME}
-  EXPORT export_prompt_bridge_node
+  EXPORT prompt_bridge_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
