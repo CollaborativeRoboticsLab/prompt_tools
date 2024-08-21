@@ -96,10 +96,8 @@ public:
    *
    * @param req
    * @param res
-   * @return true
-   * @return false
    */
-  bool prompt_service_cb(const std::shared_ptr<prompt_msgs::srv::Prompt::Request> req,
+  void prompt_service_cb(const std::shared_ptr<prompt_msgs::srv::Prompt::Request> req,
                          std::shared_ptr<prompt_msgs::srv::Prompt::Response> res)
   {
     // print the prompt message
@@ -120,7 +118,9 @@ public:
     catch (const prompt_provider::PromptProviderException& e)
     {
       RCLCPP_ERROR_STREAM(this->get_logger(), "Prompt provider failed to send prompt: " << e.what());
-      return false;
+
+      // throw exception
+      throw std::runtime_error("Prompt provider failed to send prompt");
     }
 
     // post send time
@@ -143,8 +143,6 @@ public:
     {
       prompt_history_.transactions.erase(prompt_history_.transactions.begin());
     }
-
-    return true;
   }
 
   // action callbacks
