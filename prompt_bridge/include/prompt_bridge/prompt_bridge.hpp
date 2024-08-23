@@ -19,7 +19,13 @@ class PromptBridge : public rclcpp::Node
 {
 public:
   PromptBridge(const rclcpp::NodeOptions& options = rclcpp::NodeOptions())
-    : Node("prompt_bridge", options), loop_hz_(1.0), frame_id_("agent"), transaction_limit_(10)
+    : Node("prompt_bridge", options)
+    , loop_hz_(1.0)
+    , frame_id_("agent")
+    , transaction_limit_(10)
+    // , prompt_history_()
+    , prompt_provider_loader_("llm_prompt_provider_plugins", "prompt_provider::PromptProviderBase")
+    , scheme_loader_("prompt_schemes", "prompt_schemes::SchemeBase")
   {
     // loop rate
     loop_hz_ = this->declare_parameter("loop_rate", loop_hz_);
@@ -37,13 +43,8 @@ public:
     std::string plugin_name = this->declare_parameter("prompt_provider_plugin", "prompt_provider::"
                                                                                 "DefaultPromptProvider");
 
-    // create plugin loader
     RCLCPP_INFO(this->get_logger(), "Loading prompt provider plugin: '%s'", plugin_name.c_str());
-    pluginlib::ClassLoader<prompt_provider::PromptProviderBase> loader("llm_prompt_provider_plugins", "prompt_provider:"
-                                                                                                      ":PromptProviderB"
-                                                                                                      "ase");
-
-    prompt_provider_ = loader.createSharedInstance(plugin_name);
+    prompt_provider_ = prompt_provider_loader_.createSharedInstance(plugin_name);
 
     // init provider
     // get a shared pointer to the node parameters interface
@@ -52,11 +53,8 @@ public:
     // create prompt scheme from plugin class loader
     std::string scheme = this->declare_parameter("prompt_scheme_plugin", "prompt_scheme::DefaultScheme");
 
-    // create plugin loader
     RCLCPP_INFO(this->get_logger(), "Loading prompt scheme plugin: '%s'", scheme.c_str());
-    pluginlib::ClassLoader<prompt_schemes::SchemeBase> scheme_loader("prompt_schemes", "prompt_schemes::SchemeBase");
-
-    scheme_ = scheme_loader.createSharedInstance(scheme);
+    scheme_ = scheme_loader_.createSharedInstance(scheme);
 
     // init scheme
     scheme_->init(this->get_node_parameters_interface(), this->get_node_logging_interface());
@@ -273,6 +271,10 @@ private:
 
   // prompt history
   prompt_msgs::msg::PromptHistory prompt_history_;
+
+  // loaders
+  pluginlib::ClassLoader<prompt_provider::PromptProviderBase> prompt_provider_loader_;
+  pluginlib::ClassLoader<prompt_schemes::SchemeBase> scheme_loader_;
 
   // prompt provider
   std::shared_ptr<prompt_provider::PromptProviderBase> prompt_provider_;
