@@ -18,7 +18,7 @@
 
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>rclcpp_actions</depend>
+  <depend>rclcpp_action</depend>
   <depend>pluginlib</depend>
   <depend>prompt_msgs</depend>
   <depend>llm_prompt_provider_plugins</depend>
