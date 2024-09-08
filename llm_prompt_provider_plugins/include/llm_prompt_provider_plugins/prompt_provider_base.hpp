@@ -43,6 +43,7 @@ public:
   {
     std::string key;
     std::string value;
+    std::string type;
   };
 
   // prompt provider request
@@ -56,6 +57,7 @@ public:
   struct PromptResponse
   {
     std::string response;
+    std::vector<PromptOption> options;
     bool success;
     double accuracy;
     double confidence;
@@ -82,7 +84,7 @@ public:
     result.prompt = prompt.prompt;
     for (const auto& option : prompt.options)
     {
-      result.options.push_back(PromptOption{ option.key, option.value });
+      result.options.push_back(PromptOption{ option.key, option.value, option.type });
     }
     return result;
   }

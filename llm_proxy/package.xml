@@ -7,11 +7,8 @@
   <maintainer email="mppritchard3@hotmail.com">ubuntu</maintainer>
   <license>MIT</license>
 
-  <exec_depend>rclpy</exec_depend>
-
-  <exec_depend>python3-fastapi</exec_depend>
-  <exec_depend>python3-uvicorn</exec_depend>
-  <exec_depend>python3-langchain</exec_depend>
+  <!-- <exec_depend>rclpy</exec_depend> -->
+  <exec_depend>python3-requests</exec_depend>
 
   <export>
     <build_type>ament_python</build_type>

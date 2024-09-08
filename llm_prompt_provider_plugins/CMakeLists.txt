@@ -16,6 +16,9 @@ find_package(prompt_msgs REQUIRED)
 find_package(Poco REQUIRED COMPONENTS
   JSON
   Net
+  NetSSL
+  Util
+  Foundation
 )
 
 # Include directories
@@ -29,6 +32,9 @@ add_library(${PROJECT_NAME} SHARED
 target_link_libraries(${PROJECT_NAME}
   Poco::JSON
   Poco::Net
+  Poco::NetSSL
+  Poco::Util
+  Poco::Foundation
 )
 
 ament_target_dependencies(${PROJECT_NAME}

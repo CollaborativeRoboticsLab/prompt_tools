@@ -10,7 +10,7 @@
 
     # provider config
     RestPromptProvider:
-      uri: http://localhost:5000/api/v1/prompt
+      uri: http://ollama:11434/api/generate
       method: POST
 
     # scheme config

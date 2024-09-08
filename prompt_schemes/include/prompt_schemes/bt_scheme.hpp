@@ -100,9 +100,8 @@ class BTScheme : public SchemeBase
 public:
   BTScheme() = default;
 
-  virtual void
-  init(rclcpp::node_interfaces::NodeParametersInterface::SharedPtr params,
-       rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr log)
+  virtual void init(rclcpp::node_interfaces::NodeParametersInterface::SharedPtr params,
+                    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr log)
   {
   }
 

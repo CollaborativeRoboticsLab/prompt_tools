@@ -89,8 +89,7 @@ public:
   }
 
   // set prompt provider
-  void set_prompt_provider(
-      const std::shared_ptr<prompt_provider::PromptProviderBase>& prompt_provider)
+  void set_prompt_provider(const std::shared_ptr<prompt_provider::PromptProviderBase>& prompt_provider)
   {
     prompt_provider_ = prompt_provider;
   }

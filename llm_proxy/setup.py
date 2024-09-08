@@ -20,7 +20,6 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'llm_proxy = llm_proxy.llm_proxy:main',
         ],
     },
 )
