@@ -57,11 +57,35 @@ public:
     // get verification mode from parameter server
     ssl_verify_ = params->declare_parameter("RestPromptProvider.ssl_verify", rclcpp::ParameterValue(true)).get<bool>();
 
+    // get auth type from parameter server
+    auth_type_ =
+        params->declare_parameter("RestPromptProvider.auth_type", rclcpp::ParameterValue("Bearer")).get<std::string>();
+
+    // get api key from environment
+    const char* api_key_env = std::getenv("PROMPT_PROVIDER_API_KEY");
+    if (api_key_env)
+    {
+      api_key_ = api_key_env;
+    }
+    else
+    {
+      RCLCPP_WARN(node_logging_interface_ptr_->get_logger(), "missing env var: PROMPT_PROVIDER_API_KEY");
+      api_key_ = "";
+    }
+
     // log
     RCLCPP_INFO(node_logging_interface_ptr_->get_logger(), "RestPromptProvider initialized with uri: %s, method: %s",
                 uri_.c_str(), method_.c_str());
   }
 
+  /**
+   * @brief sendPrompt send a prompt to a prompt provider using REST
+   *
+   * Typical providers offer stream based responses which is also supported
+   *
+   * @param req
+   * @return const PromptResponse
+   */
   virtual const PromptResponse sendPrompt(const PromptRequest& req)
   {
     // uri
@@ -79,6 +103,20 @@ public:
     // set headers
     request.setContentType("application/json");
     request.setContentLength(body_stream.str().size());
+
+    // if bearer token
+    if (auth_type_ == "Bearer")
+    {
+      request.setCredentials(auth_type_, api_key_);
+    }
+    // else if (auth_type_ == "Token")
+    // {
+    //   request.setCredentials(auth_type_, api_key_);
+    // }
+    else
+    {
+      RCLCPP_WARN(node_logging_interface_ptr_->get_logger(), "unsupported auth type: %s", auth_type_.c_str());
+    }
 
     std::unique_ptr<Poco::Net::HTTPClientSession> session_ptr;
     // is the session secure?
@@ -107,22 +145,24 @@ public:
       RCLCPP_WARN(node_logging_interface_ptr_->get_logger(), "insecure session created");
     }
 
-    // send request
-    std::ostream& os = session_ptr->sendRequest(request);
+    try
+    {
+      // send request
+      std::ostream& os = session_ptr->sendRequest(request);
+      // complete request body
+      body_json.stringify(os);
 
-    RCLCPP_WARN(node_logging_interface_ptr_->get_logger(), "Sending prompt: %s", body_stream.str().c_str());
-
-    // complete request body
-    body_json.stringify(os);
+      // RCLCPP_WARN(node_logging_interface_ptr_->get_logger(), "sending prompt: %s", body_stream.str().c_str());
+    }
+    catch (const Poco::Net::NetException& e)
+    {
+      RCLCPP_ERROR(node_logging_interface_ptr_->get_logger(), "network error: %s", e.what());
+      throw PromptProviderException("network error: " + std::string(e.what()));
+    }
 
     // get response
     Poco::Net::HTTPResponse response;
     std::istream& rs = session_ptr->receiveResponse(response);
-
-    // parse response
-    Poco::JSON::Parser parser;
-    Poco::Dynamic::Var result = parser.parse(rs);
-    Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
 
     // check for errors
     if (response.getStatus() != Poco::Net::HTTPResponse::HTTP_OK)
@@ -132,24 +172,48 @@ public:
       throw PromptProviderException("HTTP Error: " + std::to_string(response.getStatus()) + " " + response.getReason());
     }
 
-    // create response
+    // check content type is 'text/event-stream' or 'application/x-ndjson'
+    // https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events
+    // these types are used for server-sent events or newline delimited JSON
+    if (response.getContentType() == "text/event-stream" || response.getContentType() == "application/x-ndjson")
+    {
+      // TODO: handle event stream
+      // pass to stream parsing
+      // RestPromptProvider::handle_event_stream(rs, chunck_cb);
+      RCLCPP_ERROR(node_logging_interface_ptr_->get_logger(), "HTTP streaming not supported");
+      throw PromptProviderException("HTTP stream not supported");
+    }
+
+    // is the response chunked even though it is not server-sent event?
+    if (response.getChunkedTransferEncoding())
+    {
+      // TODO: handle chunked responses
+      RCLCPP_ERROR(node_logging_interface_ptr_->get_logger(), "HTTP Chunked Transfer Encoding not supported");
+      throw PromptProviderException("HTTP Chunked Transfer Encoding not supported");
+    }
+
+    // parse response
+    Poco::JSON::Parser parser;
+    Poco::Dynamic::Var result = parser.parse(rs);
+    Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
+
+    // create prompt provider response container
     PromptProviderBase::PromptResponse res;
 
     // try parse response
     if (object->get("response"))
       res.response = object->get("response").toString();
 
-    // for all other variables loop and push back to response key/values
-    for (auto it = object->begin(); it != object->end(); ++it)
-    {
-      // FIXME:
-      // res.options.push_back(PromptProviderBase::PromptOption{ it->key(), it->value(), "" });
-    }
-
+    // TODO: create custom parsers for specific options from different apis
     // res.success = object->get("success").convert<bool>();
     // res.accuracy = object->get("accuracy").convert<double>();
     // res.confidence = object->get("confidence").convert<double>();
     // res.risk = object->get("risk").convert<double>();
+    // for all other variables loop and push back to response key/values
+    for (Poco::JSON::Object::ConstIterator it = object->begin(); it != object->end(); ++it)
+    {
+      res.options.push_back(PromptProviderBase::PromptOption{ it->first, it->second.convert<std::string>(), "" });
+    }
 
     return res;
   }
@@ -211,6 +275,8 @@ private:
   std::string uri_;
   std::string method_;
   bool ssl_verify_;
+  std::string auth_type_;
+  std::string api_key_;
 };
 
 }  // namespace prompt_provider
