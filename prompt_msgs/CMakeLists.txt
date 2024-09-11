@@ -28,6 +28,7 @@ set(srv_files
 )
 
 set(action_files
+  "action/Prompt.action"
   "action/Plan.action"
 )
 

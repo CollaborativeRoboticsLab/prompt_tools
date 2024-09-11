@@ -1,0 +1,8 @@
+# prompt as a goal to allow to use streaming apis from prompt providers
+prompt_msgs/PromptStamped goal
+---
+# result (last partial result)
+prompt_msgs/PromptResponseStamped response
+---
+# partial prompt response as feedback
+prompt_msgs/PromptResponseStamped response
