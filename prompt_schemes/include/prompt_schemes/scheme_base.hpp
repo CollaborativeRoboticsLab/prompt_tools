@@ -19,6 +19,36 @@ namespace prompt_schemes
 class SchemeBase
 {
 public:
+  // prompt template type
+  /** */
+  struct prompt_template_t
+  {
+    std::string system_role;
+    std::string objective_brief;
+    std::vector<std::string> available_actions;
+    std::string result_format_guide;
+    std::string user_query;
+
+    const std::string generate()
+    {
+      std::string prompt = system_role + "\n" + objective_brief + "\n";
+
+      // add action list
+      for (const auto& action : available_actions)
+      {
+        prompt += action + "\n";
+      }
+
+      // add result format guide
+      prompt += result_format_guide + "\n";
+
+      // add user query
+      prompt += "the current user query is: " + user_query;
+
+      return prompt;
+    }
+  };
+
   // scheme state type
   /**
    * @brief State
@@ -191,6 +221,25 @@ protected:
     next_prompt_ = doc_str_;
   }
 
+  // send next prompt
+  const std::string send_next_prompt()
+  {
+    if (prompt_provider_ != nullptr)
+    {
+      prompt_template_.user_query = next_prompt_;
+
+      prompt_provider::PromptProviderBase::PromptRequest req;
+      req.prompt = prompt_template_.generate();
+      req.options = prompt_options_;
+
+      const prompt_provider::PromptProviderBase::PromptResponse res = prompt_provider_->sendPrompt(req);
+
+      return res.response;
+    }
+
+    return doc_str_;
+  }
+
 private:
   // transition states
   void start()
@@ -219,7 +268,14 @@ private:
   }
 
 protected:
+  // logging interface
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging_interface_ptr_;
+
+  // scheme prompt template
+  SchemeBase::prompt_template_t prompt_template_;
+
+  // model options
+  std::vector<prompt_provider::PromptProviderBase::PromptOption> prompt_options_;
 
 private:
   // current state

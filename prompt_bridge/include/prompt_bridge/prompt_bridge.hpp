@@ -5,6 +5,7 @@
 #include <memory>
 #include <pluginlib/class_loader.hpp>
 #include <prompt_msgs/action/plan.hpp>
+#include <prompt_msgs/action/prompt.hpp>
 #include <prompt_msgs/msg/prompt_history.hpp>
 #include <prompt_msgs/msg/prompt_transaction.hpp>
 #include <prompt_msgs/srv/prompt.hpp>
@@ -15,6 +16,13 @@
 
 namespace prompt_bridge
 {
+/**
+ * @brief PromptBridge
+ *
+ * This class provides a bridge between ROS resources and the prompt provider and scheme
+ * It also provides a ROS action and service servers that can be used to send and receive prompts
+ *
+ */
 class PromptBridge : public rclcpp::Node
 {
 public:
@@ -70,11 +78,18 @@ public:
           "~/prompt", std::bind(&PromptBridge::prompt_service_cb, this, std::placeholders::_1, std::placeholders::_2));
     }
 
+    // prompt action server
+    // TODO: add support for streaming (prompt action server)
+    // this->prompt_action_server_ = rclcpp_action::create_server<prompt_msgs::action::Prompt>(
+    //     this, "~/prompt", std::bind(&PromptBridge::handle_goal, this, std::placeholders::_1, std::placeholders::_2),
+    //     std::bind(&PromptBridge::handle_cancel, this, std::placeholders::_1),
+    //     std::bind(&PromptBridge::handle_accepted, this, std::placeholders::_1));
+
     // plan action server
     this->plan_action_server_ = rclcpp_action::create_server<prompt_msgs::action::Plan>(
-        this, "~/plan", std::bind(&PromptBridge::handle_goal, this, std::placeholders::_1, std::placeholders::_2),
-        std::bind(&PromptBridge::handle_cancel, this, std::placeholders::_1),
-        std::bind(&PromptBridge::handle_accepted, this, std::placeholders::_1));
+        this, "~/plan", std::bind(&PromptBridge::handle_plan_goal, this, std::placeholders::_1, std::placeholders::_2),
+        std::bind(&PromptBridge::handle_plan_cancel, this, std::placeholders::_1),
+        std::bind(&PromptBridge::handle_plan_accepted, this, std::placeholders::_1));
 
     // history publisher timer
     history_pub_timer_ = this->create_wall_timer(std::chrono::duration<double>(1.0),
@@ -99,7 +114,7 @@ public:
                          std::shared_ptr<prompt_msgs::srv::Prompt::Response> res)
   {
     // print the prompt message
-    RCLCPP_INFO(this->get_logger(), "Prompt: %s", req->prompt.prompt.c_str());
+    // RCLCPP_DEBUG(this->get_logger(), "Prompt: %s", req->prompt.prompt.c_str());
 
     // pre send time
     auto pre_send_time = this->now();
@@ -144,14 +159,14 @@ public:
   }
 
   // action callbacks
-  rclcpp_action::GoalResponse handle_goal(const rclcpp_action::GoalUUID& uuid,
-                                          std::shared_ptr<const prompt_msgs::action::Plan::Goal> goal)
+  rclcpp_action::GoalResponse handle_plan_goal(const rclcpp_action::GoalUUID& uuid,
+                                               std::shared_ptr<const prompt_msgs::action::Plan::Goal> goal)
   {
     // check if the goal is valid
     // prompt empty
     if (goal->goal.prompt.prompt.empty())
     {
-      RCLCPP_ERROR(this->get_logger(), "goal prompt is empty");
+      RCLCPP_ERROR(this->get_logger(), "plan action goal prompt is empty");
       return rclcpp_action::GoalResponse::REJECT;
     }
 
@@ -159,31 +174,32 @@ public:
     // FIXME: is this thread safe?
     if (scheme_->state() != prompt_schemes::SchemeBase::State::IDLE)
     {
-      RCLCPP_ERROR(this->get_logger(), "scheme is not idle");
+      RCLCPP_ERROR(this->get_logger(), "plan scheme is not idle");
       return rclcpp_action::GoalResponse::REJECT;
     }
 
     // start the action
-    RCLCPP_INFO(this->get_logger(), "prompt plan action accepted");
+    RCLCPP_DEBUG(this->get_logger(), "prompt plan action accepted");
     return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
   }
 
   rclcpp_action::CancelResponse
-  handle_cancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<prompt_msgs::action::Plan>> goal_handle)
+  handle_plan_cancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<prompt_msgs::action::Plan>> goal_handle)
   {
     // cancel the action
-    RCLCPP_INFO(this->get_logger(), "prompt plan action canceled");
+    RCLCPP_WARN(this->get_logger(), "prompt plan action canceled");
     (void)goal_handle;
     return rclcpp_action::CancelResponse::ACCEPT;
   }
 
-  void handle_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<prompt_msgs::action::Plan>> goal_handle)
+  void
+  handle_plan_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<prompt_msgs::action::Plan>> goal_handle)
   {
     // start execution and detach
-    std::thread{ std::bind(&PromptBridge::execute, this, std::placeholders::_1), goal_handle }.detach();
+    std::thread{ std::bind(&PromptBridge::plan_execute, this, std::placeholders::_1), goal_handle }.detach();
   }
 
-  // execute action
+  // execute plan action
   /**
    * @brief execute a plan action
    * handle prompt negotiation via a scheme and prompt provider
@@ -191,7 +207,7 @@ public:
    *
    * @param goal_handle
    */
-  void execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<prompt_msgs::action::Plan>> goal_handle)
+  void plan_execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<prompt_msgs::action::Plan>> goal_handle)
   {
     // set tick rate
     rclcpp::Rate rate(loop_hz_);  // 10 Hz
@@ -199,6 +215,9 @@ public:
     // feedback and result objects
     auto feedback = std::make_shared<prompt_msgs::action::Plan::Feedback>();
     auto result = std::make_shared<prompt_msgs::action::Plan::Result>();
+
+    // log
+    RCLCPP_INFO(this->get_logger(), "prompt-plan goal: %s", goal_handle->get_goal()->goal.prompt.prompt.c_str());
 
     // set the initial document string to the goal prompt
     scheme_->set_doc_str(goal_handle->get_goal()->goal.prompt.prompt);
@@ -223,6 +242,9 @@ public:
       // update feedback with the current state
       feedback->current_op = scheme_->op_string();
       goal_handle->publish_feedback(feedback);
+
+      RCLCPP_WARN(this->get_logger(), "current scheme: %s", scheme_->get_doc_str().c_str());
+      RCLCPP_WARN(this->get_logger(), "current op: %s", scheme_->op_string().c_str());
 
       // sleep
       rate.sleep();
@@ -287,6 +309,7 @@ private:
   // services
   rclcpp::Service<prompt_msgs::srv::Prompt>::SharedPtr prompt_service_;
   // actions
+  rclcpp_action::Client<prompt_msgs::action::Prompt>::SharedPtr prompt_action_client_;
   rclcpp_action::Server<prompt_msgs::action::Plan>::SharedPtr plan_action_server_;
   // timers
   rclcpp::TimerBase::SharedPtr history_pub_timer_;
