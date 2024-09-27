@@ -107,7 +107,8 @@ public:
     // t.get<std::vector<rclcpp::Parameter>>();
     // init model options
     std::vector<std::string> model_option_keys =
-        params->declare_parameter("BTScheme.prompt_option_keys", std::vector<std::string>());
+        params->declare_parameter("BTScheme.prompt_option_keys", rclcpp::ParameterValue(std::vector<std::string>{}))
+            .get<std::vector<std::string>>();
     for (const auto& key : model_option_keys)
     {
       prompt_provider::PromptProviderBase::PromptOption opt;
@@ -118,7 +119,7 @@ public:
       opt.type = params->declare_parameter("BTScheme.prompt_options." + key + ".type", rclcpp::ParameterValue(""))
                      .get<std::string>();
 
-      prompt_options_.push_back(opts);
+      prompt_options_.push_back(opt);
     }
 
     // fill in the prompt template with default scheme
