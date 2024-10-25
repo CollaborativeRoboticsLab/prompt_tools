@@ -12,24 +12,33 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(pluginlib REQUIRED)
-find_package(tinyxml2 REQUIRED)
+# find_package(tinyxml2 REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
 find_package(prompt_msgs REQUIRED)
 find_package(llm_prompt_provider_plugins REQUIRED)
+find_package(PkgConfig)
+pkg_check_modules(TINYXML2 tinyxml2 REQUIRED)
 
 # Include directories
-include_directories(
-  include
-  ${tinyxml2_INCLUDE_DIRS}
-  )
+include_directories(include
+${TINYXML2_INCLUDE_DIRS}
+)
+
+# include_directories(
+#   include
+#   ${tinyxml2_INCLUDE_DIRS}
+#   )
 
 # Library
 add_library(${PROJECT_NAME} SHARED
   src/bt_scheme.cpp
 )
 
+# target_link_libraries(${PROJECT_NAME}
+#   ${tinyxml2_LIBRARIES}
+# )
 target_link_libraries(${PROJECT_NAME}
-  ${tinyxml2_LIBRARIES}
+  ${TINYXML2_LIBRARIES}
 )
 
 ament_target_dependencies(${PROJECT_NAME}
@@ -38,6 +47,7 @@ ament_target_dependencies(${PROJECT_NAME}
   behaviortree_cpp
   prompt_msgs
   llm_prompt_provider_plugins
+  TINYXML2
 )
 
 # Plugin description file
