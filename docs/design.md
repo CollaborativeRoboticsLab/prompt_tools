@@ -10,9 +10,9 @@ The advantage of using the prompt tools is that the LLM can be used to perform r
 
 The prompt tools are designed to be used with a ROS system that has a resource model. The resource model is a model of the resources available to the ROS system. The resource model is used to determine which subsystems are available to perform robotic tasks.
 
-## Capability Model
+## Capability Model as a Resource Model
 
-The resource model is a capability model. The capability model is a model of the capabilities of the ROS system. The capabilities are defined by the subsystems in the ROS system. Capabilities can be registered and deregistered by the subsystems for translating to prompts and responses. The capabilities are used to determine which subsystems are available to perform robotic tasks.
+The resource model used in this approach is a capability model. The capability model is a model of the capabilities of the ROS system. The capabilities are defined by the subsystems in the ROS system. Capabilities can be registered and deregistered by the subsystems for translating to prompts and responses. The capabilities are used to determine which subsystems are available to perform robotic tasks.
 
 ## Translation
 
