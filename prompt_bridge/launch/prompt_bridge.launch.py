@@ -22,25 +22,12 @@ def generate_launch_description():
         'prompt_bridge.yaml'
     )
 
-    cap_config = os.path.join(
-        get_package_share_directory('capabilities2_server'),
-        'config',
-        'capabilities.yaml'
-    )
-
     # components
     bridge_component = ComposableNode(
         package='prompt_bridge',
         plugin='prompt_bridge::PromptBridge',
         name='prompt_bridge',
         parameters=[bridge_config]
-    )
-
-    cap_component = ComposableNode(
-        package='capabilities2_server',
-        plugin='capabilities2_server::CapabilitiesServer',
-        name='capabilities',
-        parameters=[cap_config]
     )
 
     # create bridge composition
@@ -51,15 +38,7 @@ def generate_launch_description():
         executable='component_container',
         composable_node_descriptions=[
             bridge_component,
-            # cap_component
         ]
-    )
-
-    # create launch proxy node
-    launch_proxy = Node(
-        package='capabilities2_launch_proxy',
-        executable='capabilities_launch_proxy',
-        name='capabilities_launch_proxy'
     )
 
     # return
