@@ -29,6 +29,7 @@ set(srv_files
 
 set(action_files
   "action/Prompt.action"
+  "action/Plan.action"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}
