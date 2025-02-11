@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(llm_prompt_provider_plugins)
+project(prompt_provider_plugins)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)

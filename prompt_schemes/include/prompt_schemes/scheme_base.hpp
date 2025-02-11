@@ -1,6 +1,6 @@
 #pragma once
 
-#include <llm_prompt_provider_plugins/prompt_provider_base.hpp>
+#include <prompt_provider_plugins/prompt_provider_base.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <string>
 

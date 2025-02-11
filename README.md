@@ -1,13 +1,24 @@
-# prompt_tools
+# Prompt Tools
 
 [![ROS2 Jazzy](https://img.shields.io/badge/ROS2-Jazzy-blue)](https://index.ros.org/doc/ros2/Releases/)
+[![ROS2 Humble](https://img.shields.io/badge/ROS2-Humble-blue)](https://index.ros.org/doc/ros2/Releases/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Open in Visual Studio Code](https://img.shields.io/badge/vscode-dev-blue)](https://open.vscode.dev/airesearchlab/prompt_tools)
 <!-- [![DOI](https://zenodo.org/badge/DOI/10.1/zenodo.1.svg)](https://doi.org/10.1/zenodo.1) -->
 
-ROS meta-package with tools for working with prompted systems such as large language models and their responses in a distributed data driven robotic system application (ROS) including generic ROS message types for LLM prompts.
+ROS2 meta-package with tools for working with prompted systems such as large language models and their responses in a distributed data driven robotic system application (ROS) including generic ROS message types for LLM prompts.
 
-The work has been created as part of a proposed ROS REP.
+## Entities
+
+| Entity | Package | Description |
+| --- | --- | --- |
+| [Bridge](./prompt_bridge/readme.md) | prompt_bridge | The main connection that connects ROS2 data and a LLM |
+| [Provider Plugins](./prompt_provider_plugins/readme.md) | prompt_provider_plugin | The interface that connects bridge with the LLM. Implemented as a plugin |
+| [Schemes](./prompt_schemes/readme.md) | prompt_scheme | The interface that connects ROS2 with the bridge. Implemented as a plugin. |
+
+## System Structure
+
+![system structure](./docs/images/system-structure.png)
 
 ## Install
 

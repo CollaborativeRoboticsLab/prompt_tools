@@ -1,12 +1,13 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>llm_prompt_provider_plugins</name>
+  <name>prompt_provider_plugins</name>
   <version>0.1.0</version>
   <description>
     This package provides a prompt provider plugin for different language models
   </description>
 
   <maintainer email="michael.pritchard@canberra.edu.au">Michael Pritchard</maintainer>
+  <maintainer email="kalana.ratnayakemudiyanselage@canberra.edu.au">Kalana Ratnayake</maintainer>
   <maintainer email="mppritchard3@hotmail.com">mik-p</maintainer>
 
   <author email="michael.pritchard@canberra.edu.au">Michael Pritchard</author>

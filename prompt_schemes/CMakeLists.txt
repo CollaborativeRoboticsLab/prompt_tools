@@ -15,7 +15,7 @@ find_package(pluginlib REQUIRED)
 # find_package(tinyxml2 REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
 find_package(prompt_msgs REQUIRED)
-find_package(llm_prompt_provider_plugins REQUIRED)
+find_package(prompt_provider_plugins REQUIRED)
 find_package(PkgConfig)
 pkg_check_modules(TINYXML2 tinyxml2 REQUIRED)
 
@@ -46,7 +46,7 @@ ament_target_dependencies(${PROJECT_NAME}
   pluginlib
   behaviortree_cpp
   prompt_msgs
-  llm_prompt_provider_plugins
+  prompt_provider_plugins
   TINYXML2
 )
 

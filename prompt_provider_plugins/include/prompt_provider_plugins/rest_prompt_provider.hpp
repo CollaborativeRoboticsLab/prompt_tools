@@ -1,6 +1,6 @@
 #pragma once
 
-#include <llm_prompt_provider_plugins/prompt_provider_base.hpp>
+#include <prompt_provider_plugins/prompt_provider_base.hpp>
 #include <prompt_msgs/msg/prompt.hpp>
 
 // include poco json and net/netssl

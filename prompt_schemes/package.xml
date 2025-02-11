@@ -19,7 +19,7 @@
     <depend>tinyxml2</depend>
     <depend>behaviortree_cpp</depend>
     <depend>prompt_msgs</depend>
-    <depend>llm_prompt_provider_plugins</depend>
+    <depend>prompt_provider_plugins</depend>
 
     <export>
         <build_type>ament_cmake</build_type>
