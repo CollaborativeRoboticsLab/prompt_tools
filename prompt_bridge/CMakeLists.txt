@@ -16,6 +16,7 @@ find_package(pluginlib REQUIRED)
 find_package(prompt_msgs REQUIRED)
 find_package(prompt_provider_plugins REQUIRED)
 find_package(prompt_schemes REQUIRED)
+find_package(backward_ros REQUIRED)
 
 include_directories(
   include

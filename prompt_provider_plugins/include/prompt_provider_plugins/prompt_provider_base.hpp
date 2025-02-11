@@ -102,7 +102,7 @@ public:
   }
 
 protected:
-  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr node_logging_interface_ptr_;
+  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_;
 };
 
 }  // namespace prompt_provider

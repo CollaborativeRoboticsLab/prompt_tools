@@ -109,6 +109,7 @@ public:
     std::vector<std::string> model_option_keys =
         params->declare_parameter("BTScheme.prompt_option_keys", rclcpp::ParameterValue(std::vector<std::string>{}))
             .get<std::vector<std::string>>();
+            
     for (const auto& key : model_option_keys)
     {
       prompt_provider::PromptProviderBase::PromptOption opt;

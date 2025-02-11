@@ -22,14 +22,6 @@ def generate_launch_description():
         'prompt_bridge.yaml'
     )
 
-    # components
-    bridge_component = ComposableNode(
-        package='prompt_bridge',
-        plugin='prompt_bridge::PromptBridge',
-        name='prompt_bridge',
-        parameters=[bridge_config]
-    )
-
     # create bridge composition
     prompt_bridge = ComposableNodeContainer(
         name='prompt_bridge_container',
@@ -37,12 +29,16 @@ def generate_launch_description():
         package='rclcpp_components',
         executable='component_container',
         composable_node_descriptions=[
-            bridge_component,
+            ComposableNode(
+                package='prompt_bridge',
+                plugin='prompt_bridge::PromptBridge',
+                name='prompt_bridge',
+                parameters=[bridge_config]
+            )
         ]
     )
 
     # return
     return LaunchDescription([
         prompt_bridge,
-        # launch_proxy
     ])

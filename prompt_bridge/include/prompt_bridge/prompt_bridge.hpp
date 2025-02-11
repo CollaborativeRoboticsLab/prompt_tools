@@ -2,21 +2,17 @@
 
 #include <functional>
 #include <memory>
-#include <thread>
-
-#include <rclcpp/rclcpp.hpp>
-#include <rclcpp_action/rclcpp_action.hpp>
-
 #include <pluginlib/class_loader.hpp>
-
 #include <prompt_msgs/action/plan.hpp>
 #include <prompt_msgs/action/prompt.hpp>
 #include <prompt_msgs/msg/prompt_history.hpp>
 #include <prompt_msgs/msg/prompt_transaction.hpp>
 #include <prompt_msgs/srv/prompt.hpp>
-
-#include <prompt_schemes/scheme_base.hpp>
 #include <prompt_provider_plugins/prompt_provider_base.hpp>
+#include <prompt_schemes/scheme_base.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <rclcpp_action/rclcpp_action.hpp>
+#include <thread>
 
 namespace prompt_bridge
 {
@@ -29,6 +25,9 @@ namespace prompt_bridge
  */
 class PromptBridge : public rclcpp::Node
 {
+  using PromptPlan = prompt_msgs::action::Plan;
+  using PromptSrv = prompt_msgs::srv::Prompt;
+
 public:
   PromptBridge(const rclcpp::NodeOptions& options = rclcpp::NodeOptions())
     : Node("prompt_bridge", options)
@@ -36,7 +35,7 @@ public:
     , frame_id_("agent")
     , transaction_limit_(10)
     // , prompt_history_()
-    , prompt_provider_loader_("llm_prompt_provider_plugins", "prompt_provider::PromptProviderBase")
+    , prompt_provider_loader_("prompt_provider_plugins", "prompt_provider::PromptProviderBase")
     , scheme_loader_("prompt_schemes", "prompt_schemes::SchemeBase")
   {
     // loop rate
@@ -49,7 +48,7 @@ public:
     transaction_limit_ = this->declare_parameter("cached_transactions", 10);
 
     // offer service
-    const bool offer_service = this->declare_parameter("offer_service", false);
+    const bool offer_service = this->declare_parameter("offer_service", true);
 
     // create prompt provider from plugin class loader
     std::string plugin_name = this->declare_parameter("prompt_provider_plugin", "prompt_provider::"
@@ -78,7 +77,7 @@ public:
     if (offer_service)
     {
       // create prompt service
-      prompt_service_ = this->create_service<prompt_msgs::srv::Prompt>(
+      prompt_service_ = this->create_service<PromptSrv>(
           "~/prompt", std::bind(&PromptBridge::prompt_service_cb, this, std::placeholders::_1, std::placeholders::_2));
     }
 
@@ -90,14 +89,14 @@ public:
     //     std::bind(&PromptBridge::handle_accepted, this, std::placeholders::_1));
 
     // plan action server
-    this->plan_action_server_ = rclcpp_action::create_server<prompt_msgs::action::Plan>(
+    this->plan_action_server_ = rclcpp_action::create_server<PromptPlan>(
         this, "~/plan", std::bind(&PromptBridge::handle_plan_goal, this, std::placeholders::_1, std::placeholders::_2),
         std::bind(&PromptBridge::handle_plan_cancel, this, std::placeholders::_1),
         std::bind(&PromptBridge::handle_plan_accepted, this, std::placeholders::_1));
 
     // history publisher timer
-    history_pub_timer_ = this->create_wall_timer(std::chrono::duration<double>(1.0),
-                                                 std::bind(&PromptBridge::history_pub_timer_cb, this));
+    history_pub_timer_ =
+        this->create_wall_timer(std::chrono::duration<double>(1.0), std::bind(&PromptBridge::history_timer, this));
 
     RCLCPP_INFO(this->get_logger(), "PromptBridge initialized");
   }
@@ -114,8 +113,7 @@ public:
    * @param req
    * @param res
    */
-  void prompt_service_cb(const std::shared_ptr<prompt_msgs::srv::Prompt::Request> req,
-                         std::shared_ptr<prompt_msgs::srv::Prompt::Response> res)
+  void prompt_service_cb(const std::shared_ptr<PromptSrv::Request> req, std::shared_ptr<PromptSrv::Response> res)
   {
     // print the prompt message
     // RCLCPP_DEBUG(this->get_logger(), "Prompt: %s", req->prompt.prompt.c_str());
@@ -145,6 +143,7 @@ public:
 
     // create the prompt transaction
     prompt_msgs::msg::PromptTransaction prompt_transaction = prompt_msgs::msg::PromptTransaction();
+    
     prompt_transaction.prompt.header = std_msgs::msg::Header();
     prompt_transaction.prompt.header.stamp = pre_send_time;
     prompt_transaction.prompt.prompt = req->prompt;
@@ -164,7 +163,7 @@ public:
 
   // action callbacks
   rclcpp_action::GoalResponse handle_plan_goal(const rclcpp_action::GoalUUID& uuid,
-                                               std::shared_ptr<const prompt_msgs::action::Plan::Goal> goal)
+                                               std::shared_ptr<const PromptPlan::Goal> goal)
   {
     // check if the goal is valid
     // prompt empty
@@ -188,7 +187,7 @@ public:
   }
 
   rclcpp_action::CancelResponse
-  handle_plan_cancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<prompt_msgs::action::Plan>> goal_handle)
+  handle_plan_cancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<PromptPlan>> goal_handle)
   {
     // cancel the action
     RCLCPP_WARN(this->get_logger(), "prompt plan action canceled");
@@ -196,8 +195,7 @@ public:
     return rclcpp_action::CancelResponse::ACCEPT;
   }
 
-  void
-  handle_plan_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<prompt_msgs::action::Plan>> goal_handle)
+  void handle_plan_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<PromptPlan>> goal_handle)
   {
     // start execution and detach
     std::thread{ std::bind(&PromptBridge::plan_execute, this, std::placeholders::_1), goal_handle }.detach();
@@ -211,14 +209,14 @@ public:
    *
    * @param goal_handle
    */
-  void plan_execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<prompt_msgs::action::Plan>> goal_handle)
+  void plan_execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<PromptPlan>> goal_handle)
   {
     // set tick rate
     rclcpp::Rate rate(loop_hz_);  // 10 Hz
 
     // feedback and result objects
-    auto feedback = std::make_shared<prompt_msgs::action::Plan::Feedback>();
-    auto result = std::make_shared<prompt_msgs::action::Plan::Result>();
+    auto feedback = std::make_shared<PromptPlan::Feedback>();
+    auto result = std::make_shared<PromptPlan::Result>();
 
     // log
     RCLCPP_INFO(this->get_logger(), "prompt-plan goal: %s", goal_handle->get_goal()->goal.prompt.prompt.c_str());
@@ -279,7 +277,7 @@ public:
 
 private:
   // history pub timer callback
-  void history_pub_timer_cb()
+  void history_timer()
   {
     // publish the prompt history
     prompt_history_.header.frame_id = frame_id_;
@@ -311,10 +309,10 @@ private:
   // pubs
   rclcpp::Publisher<prompt_msgs::msg::PromptHistory>::SharedPtr prompt_history_pub_;
   // services
-  rclcpp::Service<prompt_msgs::srv::Prompt>::SharedPtr prompt_service_;
+  rclcpp::Service<PromptSrv>::SharedPtr prompt_service_;
   // actions
   rclcpp_action::Client<prompt_msgs::action::Prompt>::SharedPtr prompt_action_client_;
-  rclcpp_action::Server<prompt_msgs::action::Plan>::SharedPtr plan_action_server_;
+  rclcpp_action::Server<PromptPlan>::SharedPtr plan_action_server_;
   // timers
   rclcpp::TimerBase::SharedPtr history_pub_timer_;
 };

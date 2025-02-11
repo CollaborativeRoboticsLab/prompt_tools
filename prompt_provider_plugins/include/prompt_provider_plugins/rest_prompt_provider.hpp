@@ -1,7 +1,7 @@
 #pragma once
 
-#include <prompt_provider_plugins/prompt_provider_base.hpp>
 #include <prompt_msgs/msg/prompt.hpp>
+#include <prompt_provider_plugins/prompt_provider_base.hpp>
 
 // include poco json and net/netssl
 #include <Poco/JSON/Object.h>
@@ -43,7 +43,7 @@ public:
                     rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr log)
   {
     // set logger
-    node_logging_interface_ptr_ = log;
+    logging_ = log;
 
     // default uri
     std::string default_uri = "https://localhost:8443/api/v1/prompt";
@@ -69,13 +69,13 @@ public:
     }
     else
     {
-      RCLCPP_WARN(node_logging_interface_ptr_->get_logger(), "missing env var: PROMPT_PROVIDER_API_KEY");
+      RCLCPP_WARN(logging_->get_logger(), "missing env var: PROMPT_PROVIDER_API_KEY");
       api_key_ = "";
     }
 
     // log
-    RCLCPP_INFO(node_logging_interface_ptr_->get_logger(), "RestPromptProvider initialized with uri: %s, method: %s",
-                uri_.c_str(), method_.c_str());
+    RCLCPP_INFO(logging_->get_logger(), "RestPromptProvider initialized with uri: %s, method: %s", uri_.c_str(),
+                method_.c_str());
   }
 
   /**
@@ -115,10 +115,11 @@ public:
     // }
     else
     {
-      RCLCPP_WARN(node_logging_interface_ptr_->get_logger(), "unsupported auth type: %s", auth_type_.c_str());
+      RCLCPP_WARN(logging_->get_logger(), "unsupported auth type: %s", auth_type_.c_str());
     }
 
     std::unique_ptr<Poco::Net::HTTPClientSession> session_ptr;
+
     // is the session secure?
     if (uri.getScheme() == "https")
     {
@@ -135,14 +136,14 @@ public:
       // create secure session
       // Poco::Net::HTTPSClientSession session(uri.getHost(), uri.getPort(), context);
       session_ptr = std::make_unique<Poco::Net::HTTPSClientSession>(uri.getHost(), uri.getPort(), context);
-      RCLCPP_DEBUG(node_logging_interface_ptr_->get_logger(), "secure session created");
+      RCLCPP_DEBUG(logging_->get_logger(), "secure session created");
     }
     else
     {
       // create insecure session
       // Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
       session_ptr = std::make_unique<Poco::Net::HTTPClientSession>(uri.getHost(), uri.getPort());
-      RCLCPP_WARN(node_logging_interface_ptr_->get_logger(), "insecure session created");
+      RCLCPP_WARN(logging_->get_logger(), "insecure session created");
     }
 
     try
@@ -152,11 +153,11 @@ public:
       // complete request body
       body_json.stringify(os);
 
-      // RCLCPP_WARN(node_logging_interface_ptr_->get_logger(), "sending prompt: %s", body_stream.str().c_str());
+      // RCLCPP_WARN(logging_->get_logger(), "sending prompt: %s", body_stream.str().c_str());
     }
     catch (const Poco::Net::NetException& e)
     {
-      RCLCPP_ERROR(node_logging_interface_ptr_->get_logger(), "network error: %s", e.what());
+      RCLCPP_ERROR(logging_->get_logger(), "network error: %s", e.what());
       throw PromptProviderException("network error: " + std::string(e.what()));
     }
 
@@ -167,8 +168,7 @@ public:
     // check for errors
     if (response.getStatus() != Poco::Net::HTTPResponse::HTTP_OK)
     {
-      RCLCPP_ERROR(node_logging_interface_ptr_->get_logger(), "HTTP Error: %i, %s", response.getStatus(),
-                   response.getReason().c_str());
+      RCLCPP_ERROR(logging_->get_logger(), "HTTP Error: %i, %s", response.getStatus(), response.getReason().c_str());
       throw PromptProviderException("HTTP Error: " + std::to_string(response.getStatus()) + " " + response.getReason());
     }
 
@@ -180,7 +180,7 @@ public:
       // TODO: handle event stream
       // pass to stream parsing
       // RestPromptProvider::handle_event_stream(rs, chunck_cb);
-      RCLCPP_ERROR(node_logging_interface_ptr_->get_logger(), "HTTP streaming not supported");
+      RCLCPP_ERROR(logging_->get_logger(), "HTTP streaming not supported");
       throw PromptProviderException("HTTP stream not supported");
     }
 
@@ -188,7 +188,7 @@ public:
     if (response.getChunkedTransferEncoding())
     {
       // TODO: handle chunked responses
-      RCLCPP_ERROR(node_logging_interface_ptr_->get_logger(), "HTTP Chunked Transfer Encoding not supported");
+      RCLCPP_ERROR(logging_->get_logger(), "HTTP Chunked Transfer Encoding not supported");
       throw PromptProviderException("HTTP Chunked Transfer Encoding not supported");
     }
 
