@@ -9,6 +9,35 @@ ROS meta-package with tools for working with prompted systems such as large lang
 
 The work has been created as part of a proposed ROS REP.
 
+## Install
+
+### Clone packages
+
+Clone the prompt tools package.
+
+```bash
+cd src
+git clone https://github.com/CollaborativeRoboticsLab/prompt_tools.git -b develop
+```
+
+### Dependency Installation
+
+Move to workspace root and run the following command to install dependencies
+
+```bash
+cd ..
+rosdep install --from-paths src --ignore-src -r -y
+```
+
+## Usage
+
+### Start the Prompt Tools stack
+
+```bash
+source install/setup.bash
+ros2 launch prompt_bridge prompt_bridge.launch.py
+```
+
 ## Citation
 
 If you use this work in an academic context, please cite the following publication(s):
