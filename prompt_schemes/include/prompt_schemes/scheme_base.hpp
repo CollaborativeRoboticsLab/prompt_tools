@@ -157,19 +157,23 @@ protected:
   // actions in starting
   // was started by external request
   virtual bool starting(const std::string& doc_str) = 0;
+
   // actions in collecting
   // collect request and list of available capabilities
   // these can be registered using plugins, capability provider, or other
   // explicit runtime registrations
   virtual bool collecting(const std::string& doc_str) = 0;
+
   // actions in negotiating
   // negotiate document with prompt provider
   // this is the core of the prompt scheme
   virtual bool negotiating(const std::string& doc_str) = 0;
+
   // actions in running
   // create and manage lifecycle
   // run the to completion or fail and return to negotiation
   virtual bool running(const std::string& doc_str) = 0;
+  
   // actions in idle
   // nothing to do in idle except to listen for request
   virtual bool idle(const std::string& doc_str)

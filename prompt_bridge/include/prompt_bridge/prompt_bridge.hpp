@@ -9,7 +9,6 @@
 #include <prompt_msgs/msg/prompt_transaction.hpp>
 #include <prompt_msgs/srv/prompt.hpp>
 #include <prompt_provider_plugins/prompt_provider_base.hpp>
-#include <prompt_schemes/scheme_base.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <thread>
@@ -36,7 +35,6 @@ public:
     , transaction_limit_(10)
     // , prompt_history_()
     , prompt_provider_loader_("prompt_provider_plugins", "prompt_provider::PromptProviderBase")
-    , scheme_loader_("prompt_schemes", "prompt_schemes::SchemeBase")
   {
     // loop rate
     loop_hz_ = this->declare_parameter("loop_rate", loop_hz_);
@@ -47,39 +45,23 @@ public:
     // number of transactions stored in history
     transaction_limit_ = this->declare_parameter("cached_transactions", 10);
 
-    // offer service
-    const bool offer_service = this->declare_parameter("offer_service", true);
-
     // create prompt provider from plugin class loader
     std::string plugin_name = this->declare_parameter("prompt_provider_plugin", "prompt_provider::"
                                                                                 "DefaultPromptProvider");
 
     RCLCPP_INFO(this->get_logger(), "Loading prompt provider plugin: '%s'", plugin_name.c_str());
+
     prompt_provider_ = prompt_provider_loader_.createSharedInstance(plugin_name);
 
-    // init provider
-    // get a shared pointer to the node parameters interface
+    // init provider and get a shared pointer to the node parameters interface
     prompt_provider_->init(this->get_node_parameters_interface(), this->get_node_logging_interface());
 
-    // create prompt scheme from plugin class loader
-    std::string scheme = this->declare_parameter("prompt_scheme_plugin", "prompt_scheme::DefaultScheme");
-
-    RCLCPP_INFO(this->get_logger(), "Loading prompt scheme plugin: '%s'", scheme.c_str());
-    scheme_ = scheme_loader_.createSharedInstance(scheme);
-
-    // init scheme
-    scheme_->init(this->get_node_parameters_interface(), this->get_node_logging_interface());
-
     // history publisher
-    prompt_history_pub_ = this->create_publisher<prompt_msgs::msg::PromptHistory>("~/history", 1);
+    prompt_history_pub_ = this->create_publisher<prompt_msgs::msg::PromptHistory>("~/history/bridge", 1);
 
     // optional service interface
-    if (offer_service)
-    {
-      // create prompt service
-      prompt_service_ = this->create_service<PromptSrv>(
+    prompt_service_ = this->create_service<PromptSrv>(
           "~/prompt", std::bind(&PromptBridge::prompt_service_cb, this, std::placeholders::_1, std::placeholders::_2));
-    }
 
     // prompt action server
     // TODO: add support for streaming (prompt action server)
@@ -87,12 +69,6 @@ public:
     //     this, "~/prompt", std::bind(&PromptBridge::handle_goal, this, std::placeholders::_1, std::placeholders::_2),
     //     std::bind(&PromptBridge::handle_cancel, this, std::placeholders::_1),
     //     std::bind(&PromptBridge::handle_accepted, this, std::placeholders::_1));
-
-    // plan action server
-    this->plan_action_server_ = rclcpp_action::create_server<PromptPlan>(
-        this, "~/plan", std::bind(&PromptBridge::handle_plan_goal, this, std::placeholders::_1, std::placeholders::_2),
-        std::bind(&PromptBridge::handle_plan_cancel, this, std::placeholders::_1),
-        std::bind(&PromptBridge::handle_plan_accepted, this, std::placeholders::_1));
 
     // history publisher timer
     history_pub_timer_ =
@@ -161,120 +137,6 @@ public:
     }
   }
 
-  // action callbacks
-  rclcpp_action::GoalResponse handle_plan_goal(const rclcpp_action::GoalUUID& uuid,
-                                               std::shared_ptr<const PromptPlan::Goal> goal)
-  {
-    // check if the goal is valid
-    // prompt empty
-    if (goal->goal.prompt.prompt.empty())
-    {
-      RCLCPP_ERROR(this->get_logger(), "plan action goal prompt is empty");
-      return rclcpp_action::GoalResponse::REJECT;
-    }
-
-    // check if the scheme is idle
-    // FIXME: is this thread safe?
-    if (scheme_->state() != prompt_schemes::SchemeBase::State::IDLE)
-    {
-      RCLCPP_ERROR(this->get_logger(), "plan scheme is not idle");
-      return rclcpp_action::GoalResponse::REJECT;
-    }
-
-    // start the action
-    RCLCPP_DEBUG(this->get_logger(), "prompt plan action accepted");
-    return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
-  }
-
-  rclcpp_action::CancelResponse
-  handle_plan_cancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<PromptPlan>> goal_handle)
-  {
-    // cancel the action
-    RCLCPP_WARN(this->get_logger(), "prompt plan action canceled");
-    (void)goal_handle;
-    return rclcpp_action::CancelResponse::ACCEPT;
-  }
-
-  void handle_plan_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<PromptPlan>> goal_handle)
-  {
-    // start execution and detach
-    std::thread{ std::bind(&PromptBridge::plan_execute, this, std::placeholders::_1), goal_handle }.detach();
-  }
-
-  // execute plan action
-  /**
-   * @brief execute a plan action
-   * handle prompt negotiation via a scheme and prompt provider
-   * and publish feedback and result
-   *
-   * @param goal_handle
-   */
-  void plan_execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<PromptPlan>> goal_handle)
-  {
-    // set tick rate
-    rclcpp::Rate rate(loop_hz_);  // 10 Hz
-
-    // feedback and result objects
-    auto feedback = std::make_shared<PromptPlan::Feedback>();
-    auto result = std::make_shared<PromptPlan::Result>();
-
-    // log
-    RCLCPP_INFO(this->get_logger(), "prompt-plan goal: %s", goal_handle->get_goal()->goal.prompt.prompt.c_str());
-
-    // set the initial document string to the goal prompt
-    scheme_->set_doc_str(goal_handle->get_goal()->goal.prompt.prompt);
-    // set the prompt provider
-    scheme_->set_prompt_provider(prompt_provider_);
-
-    // tick the scheme to start (assuming that the scheme was idle)
-    if (scheme_->state() == prompt_schemes::SchemeBase::State::IDLE)
-    {
-      scheme_->tick(scheme_->get_doc_str());
-    }
-
-    // while the scheme is not finished (idle) and the action is not canceled
-    // and ros is not shutting down
-    while (scheme_->state() != prompt_schemes::SchemeBase::State::IDLE && !goal_handle->is_canceling() && rclcpp::ok())
-    {
-      // tick the scheme
-      // updating the scheme state machine
-      // use the prompt provider set in the scheme
-      scheme_->tick(scheme_->get_doc_str());
-
-      // update feedback with the current state
-      feedback->current_op = scheme_->op_string();
-      goal_handle->publish_feedback(feedback);
-
-      RCLCPP_WARN(this->get_logger(), "current scheme: %s", scheme_->get_doc_str().c_str());
-      RCLCPP_WARN(this->get_logger(), "current op: %s", scheme_->op_string().c_str());
-
-      // sleep
-      rate.sleep();
-    }
-
-    // if the action is canceled
-    if (goal_handle->is_canceling())
-    {
-      result->summary = "plan action canceled";
-      result->plan_docs.push_back(scheme_->get_doc_str());
-      goal_handle->canceled(result);
-      RCLCPP_INFO(this->get_logger(), "plan action canceled");
-      return;
-    }
-
-    // if the scheme is finished
-    if (scheme_->state() != prompt_schemes::SchemeBase::State::IDLE)
-    {
-      // set the result
-      result->summary = goal_handle->get_goal()->goal.prompt.prompt;
-      result->plan_docs.push_back(scheme_->get_doc_str());
-      goal_handle->succeed(result);
-      RCLCPP_INFO(this->get_logger(), "plan action succeeded");
-    }
-
-    return;
-  }
-
 private:
   // history pub timer callback
   void history_timer()
@@ -298,21 +160,21 @@ private:
 
   // loaders
   pluginlib::ClassLoader<prompt_provider::PromptProviderBase> prompt_provider_loader_;
-  pluginlib::ClassLoader<prompt_schemes::SchemeBase> scheme_loader_;
 
   // prompt provider
   std::shared_ptr<prompt_provider::PromptProviderBase> prompt_provider_;
-  // prompt scheme
-  std::shared_ptr<prompt_schemes::SchemeBase> scheme_;
 
   // ROS API
   // pubs
   rclcpp::Publisher<prompt_msgs::msg::PromptHistory>::SharedPtr prompt_history_pub_;
+
   // services
   rclcpp::Service<PromptSrv>::SharedPtr prompt_service_;
+
   // actions
-  rclcpp_action::Client<prompt_msgs::action::Prompt>::SharedPtr prompt_action_client_;
-  rclcpp_action::Server<PromptPlan>::SharedPtr plan_action_server_;
+  // rclcpp_action::Client<prompt_msgs::action::Prompt>::SharedPtr prompt_action_client_;
+  // rclcpp_action::Server<PromptPlan>::SharedPtr plan_action_server_;
+
   // timers
   rclcpp::TimerBase::SharedPtr history_pub_timer_;
 };

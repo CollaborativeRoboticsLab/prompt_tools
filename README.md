@@ -8,17 +8,28 @@
 
 ROS2 meta-package with tools for working with prompted systems such as large language models and their responses in a distributed data driven robotic system application (ROS) including generic ROS message types for LLM prompts.
 
-## Entities
+This package contain two main components as,
+- [prompt_bridge](./prompt_bridge/readme.md) 
+- prompt_planner (experimental)
+
+### Entities
 
 | Entity | Package | Description |
 | --- | --- | --- |
-| [Bridge](./prompt_bridge/readme.md) | prompt_bridge | The main connection that connects ROS2 data and a LLM |
 | [Provider Plugins](./prompt_provider_plugins/readme.md) | prompt_provider_plugin | The interface that connects bridge with the LLM. Implemented as a plugin |
-| [Schemes](./prompt_schemes/readme.md) | prompt_scheme | The interface that connects ROS2 with the bridge. Implemented as a plugin. |
+| [Schemes](./prompt_schemes/readme.md) | prompt_scheme | Additional rule-sets to augments the prompts |
 
-## System Structure
+## Prompt Bridge
 
-![system structure](./docs/images/system-structure.png)
+The main system that connects ROS2 data and a LLM. Utilizes Provider plugins for connection interfaces.
+
+![system structure](./docs/images/bridge-structure.png)
+
+## Prompt Planner (experimental)
+
+The system that connects ROS2 data and a LLM. Utilizes Schemes to introduce additional rulesets to augment the prompts and responses. Also utilizes Provider plugins for connection interfaces.
+
+![system structure](./docs/images/planner-structure.png)
 
 ## Install
 
@@ -42,11 +53,18 @@ rosdep install --from-paths src --ignore-src -r -y
 
 ## Usage
 
-### Start the Prompt Tools stack
+### Start the Prompt Bridge
 
 ```bash
 source install/setup.bash
 ros2 launch prompt_bridge prompt_bridge.launch.py
+```
+
+### Start the Prompt Planner
+
+```bash
+source install/setup.bash
+ros2 launch prompt_planner prompt_planner.launch.py
 ```
 
 ## Citation

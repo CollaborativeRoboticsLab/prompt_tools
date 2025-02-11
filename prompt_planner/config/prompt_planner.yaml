@@ -2,12 +2,13 @@
 /**:
   ros__parameters:
     loop_rate: 10.0
-    frame_id: prompt_bridge
+    frame_id: prompt_planner
     cached_transactions: 10
     offer_service: true
     use_scheme: false
     prompt_provider_plugin: prompt_provider::RestPromptProvider
-    
+    prompt_scheme_plugin: prompt_schemes::BTScheme
+
     # provider config
     RestPromptProvider:
       uri: http://leo.lan.crlab:11434/api/generate
@@ -15,3 +16,13 @@
       # uri: http://ollama:11434/v1/completions (oai api compat version)
       method: POST
       auth_type: Bearer
+
+    # scheme config
+    BTScheme:
+      prompt_option_keys: [stream, model]
+      prompt_options:
+        stream:
+          value: false
+          type: bool
+        model:
+          value: llama3.1:8b

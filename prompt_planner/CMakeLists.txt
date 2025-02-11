@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.10.2)
-project(prompt_bridge)
+cmake_minimum_required(VERSION 3.8)
+project(prompt_planner)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -15,6 +15,7 @@ find_package(rclcpp_action REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(prompt_msgs REQUIRED)
 find_package(prompt_provider_plugins REQUIRED)
+find_package(prompt_schemes REQUIRED)
 find_package(backward_ros REQUIRED)
 
 include_directories(
@@ -23,7 +24,7 @@ include_directories(
 
 # component library
 add_library(${PROJECT_NAME} SHARED
-  src/prompt_bridge.cpp
+  src/prompt_planner.cpp
 )
 
 ament_target_dependencies(${PROJECT_NAME}
@@ -33,18 +34,19 @@ ament_target_dependencies(${PROJECT_NAME}
   pluginlib
   prompt_msgs
   prompt_provider_plugins
+  prompt_schemes
 )
 
 # register component
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "prompt_bridge::PromptBridge"
-  EXECUTABLE prompt_bridge_node
+  PLUGIN "prompt_planner::PromptPlanner"
+  EXECUTABLE prompt_planner_node
 )
 
-ament_export_targets(prompt_bridge_node)
+ament_export_targets(prompt_planner_node)
 
 install(TARGETS ${PROJECT_NAME}
-  EXPORT prompt_bridge_node
+  EXPORT prompt_planner_node
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -61,5 +63,6 @@ install(DIRECTORY launch
 install(DIRECTORY config
   DESTINATION share/${PROJECT_NAME}
 )
+
 
 ament_package()

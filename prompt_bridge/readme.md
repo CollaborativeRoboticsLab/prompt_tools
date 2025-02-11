@@ -50,15 +50,6 @@ The bridge uses plugins for different models and providers. The plugins are load
 
     The prompt to be sent to the prompted system.
 
-## Plugin Base Classes
-
-### prompt_bridge::PromptProvider
-
-The `PromptProvider` is a plugin interface for prompted systems to send prompts to and receive responses from.
-
-### prompt_bridge::PromptModel
-
-The `PromptModel` is a plugin interface for prompted systems to send prompts to and receive responses from.
 
 ## Licence Addition (Optional)
 
