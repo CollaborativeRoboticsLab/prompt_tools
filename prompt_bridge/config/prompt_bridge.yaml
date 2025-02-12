@@ -10,7 +10,7 @@
     
     # provider config
     RestPromptProvider:
-      uri: http://leo.lan.crlab:11434/api/generate
+      uri: http://10.0.0.246:11434/api/generate
       # uri: http://ollama:11434/api/generate docker container with name 'ollama'
       # uri: http://ollama:11434/v1/completions (oai api compat version)
       method: POST

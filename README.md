@@ -8,6 +8,8 @@
 
 ROS2 meta-package with tools for working with prompted systems such as large language models and their responses in a distributed data driven robotic system application (ROS) including generic ROS message types for LLM prompts.
 
+If using a local LLM model, use [CollaborativeRoboticsLab/ollama-docker](https://github.com/CollaborativeRoboticsLab/ollama-docker) to startup docker based local system
+
 This package contain two main components as,
 - [prompt_bridge](./prompt_bridge/readme.md) 
 - prompt_planner (experimental)
