@@ -1,7 +1,7 @@
 #pragma once
-
 #include <prompt_msgs/msg/prompt.hpp>
 #include <prompt_provider_plugins/prompt_provider_base.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 // include poco json and net/netssl
 #include <Poco/JSON/Object.h>
@@ -15,9 +15,11 @@
 
 namespace prompt_provider
 {
+namespace rest
+{
 
 /**
- * @brief RestPromptProvider
+ * @brief ChatPromptProvider
  *
  * This is a prompt provider that uses a REST API to send and receive prompts
  * the typical rest api uses application/json content type so that is what is
@@ -31,11 +33,11 @@ namespace prompt_provider
  *  - /edits endpoint
  *
  */
-class RestPromptProvider : public PromptProviderBase
+class ChatPromptProvider : public prompt_provider::PromptProviderBase
 {
 public:
   // constructor
-  RestPromptProvider() : uri_("")
+  ChatPromptProvider() : uri_("")
   {
   }
 
@@ -46,20 +48,23 @@ public:
     logging_ = log;
 
     // default uri
-    std::string default_uri = "https://localhost:8443/api/v1/prompt";
+    std::string default_uri = "https://localhost:8443/api/v1/chat";
 
     // get uri from parameter server
-    uri_ = params->declare_parameter("RestPromptProvider.uri", rclcpp::ParameterValue(default_uri)).get<std::string>();
+    uri_ = params->declare_parameter("rest.ChatPromptProvider.uri", rclcpp::ParameterValue(default_uri)).get<std::string>();
 
     // get method from parameter server
-    method_ = params->declare_parameter("RestPromptProvider.method", rclcpp::ParameterValue("POST")).get<std::string>();
+    method_ = params->declare_parameter("rest.ChatPromptProvider.method", rclcpp::ParameterValue("POST")).get<std::string>();
 
     // get verification mode from parameter server
-    ssl_verify_ = params->declare_parameter("RestPromptProvider.ssl_verify", rclcpp::ParameterValue(true)).get<bool>();
+    ssl_verify_ = params->declare_parameter("rest.ChatPromptProvider.ssl_verify", rclcpp::ParameterValue(true)).get<bool>();
+
+    // get verification mode from parameter server
+    use_chat_ = params->declare_parameter("rest.ChatPromptProvider.use_chat", rclcpp::ParameterValue(true)).get<bool>();
 
     // get auth type from parameter server
     auth_type_ =
-        params->declare_parameter("RestPromptProvider.auth_type", rclcpp::ParameterValue("Bearer")).get<std::string>();
+        params->declare_parameter("rest.ChatPromptProvider.auth_type", rclcpp::ParameterValue("Bearer")).get<std::string>();
 
     // get api key from environment
     const char* api_key_env = std::getenv("PROMPT_PROVIDER_API_KEY");
@@ -74,7 +79,7 @@ public:
     }
 
     // log
-    RCLCPP_INFO(logging_->get_logger(), "RestPromptProvider initialized with uri: %s, method: %s", uri_.c_str(),
+    RCLCPP_INFO(logging_->get_logger(), "ChatPromptProvider initialized with uri: %s, method: %s", uri_.c_str(),
                 method_.c_str());
   }
 
@@ -92,7 +97,7 @@ public:
     Poco::URI uri(uri_);
 
     // prepare request body
-    Poco::JSON::Object body_json = RestPromptProvider::toJson(req);
+    Poco::JSON::Object body_json = ChatPromptProvider::toJson(req);
 
     // calculate body length
     std::ostringstream body_stream;
@@ -179,7 +184,7 @@ public:
     {
       // TODO: handle event stream
       // pass to stream parsing
-      // RestPromptProvider::handle_event_stream(rs, chunck_cb);
+      // ChatPromptProvider::handle_event_stream(rs, chunck_cb);
       RCLCPP_ERROR(logging_->get_logger(), "HTTP streaming not supported");
       throw PromptProviderException("HTTP stream not supported");
     }
@@ -198,11 +203,34 @@ public:
     Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
 
     // create prompt provider response container
-    PromptProviderBase::PromptResponse res;
+    PromptProviderBase::PromptResponse res = handle_response(object);
 
-    // try parse response
-    if (object->get("response"))
-      res.response = object->get("response").toString();
+    return res;
+  }
+
+  virtual const Poco::JSON::Object toJson(const PromptRequest& prompt)
+  {
+    // add options
+    Poco::JSON::Object result = handle_options(prompt);
+
+    PromptProviderBase::PromptDialogue dialog_;
+    dialog_.role = "user";
+    dialog_.content = prompt.prompt;
+
+    conversation_.push_back(dialog_);
+
+    Poco::JSON::Array messages_array = handle_conversation();
+
+    // add prompt
+    result.set("messages", messages_array);
+
+    return result;
+  }
+
+protected:
+  virtual const PromptProviderBase::PromptResponse handle_response(const Poco::JSON::Object::Ptr object)
+  {
+    PromptProviderBase::PromptResponse res;
 
     // TODO: create custom parsers for specific options from different apis
     // res.success = object->get("success").convert<bool>();
@@ -212,28 +240,51 @@ public:
     // for all other variables loop and push back to response key/values
     for (Poco::JSON::Object::ConstIterator it = object->begin(); it != object->end(); ++it)
     {
-      res.options.push_back(PromptProviderBase::PromptOption{ it->first, it->second.convert<std::string>(), "" });
+      if (it->first != "message")
+      {
+        res.options.push_back(PromptProviderBase::PromptOption{ it->first, it->second.convert<std::string>(), "" });
+      }
+      else
+      {
+        Poco::JSON::Object::Ptr messageObj = object->getObject("message");
+        res.response = messageObj->get("content").toString();
+      }
     }
+
+    PromptProviderBase::PromptDialogue dialog_;
+    dialog_.role = "asesistant";
+    dialog_.content = res.response;
+
+    conversation_.push_back(dialog_);
 
     return res;
   }
 
-  virtual const Poco::JSON::Object toJson(const PromptRequest& prompt)
+
+  virtual const Poco::JSON::Array handle_conversation()
   {
-    // add options
-    Poco::JSON::Object result = handle_opts(prompt);
+    // flatten conversation into a object
+    Poco::JSON::Array messages_;
 
-    // add prompt
-    result.set("prompt", prompt.prompt);
+    for (const PromptProviderBase::PromptDialogue& dialog_ : conversation_)
+    {
+      Poco::JSON::Object dialog_object_;
 
-    return result;
+      dialog_object_.set("role", dialog_.role);
+      dialog_object_.set("content", dialog_.content);
+
+      messages_.add(dialog_object_);
+    }
+
+    return messages_;
   }
 
-protected:
-  virtual const Poco::JSON::Object handle_opts(const PromptRequest& prompt)
+
+  virtual const Poco::JSON::Object handle_options(const PromptRequest& prompt)
   {
     // flatten options into object
     Poco::JSON::Object result;
+
     for (const PromptProviderBase::PromptOption& option : prompt.options)
     {
       // try cast the value if there is a type hint
@@ -275,8 +326,13 @@ private:
   std::string uri_;
   std::string method_;
   bool ssl_verify_;
+  bool use_chat_;
   std::string auth_type_;
   std::string api_key_;
+
+  std::vector<PromptDialogue> conversation_;
 };
+
+}  // namespace rest
 
 }  // namespace prompt_provider

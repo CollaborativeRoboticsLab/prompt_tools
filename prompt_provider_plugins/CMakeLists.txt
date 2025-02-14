@@ -26,7 +26,7 @@ include_directories(include)
 
 # Library
 add_library(${PROJECT_NAME} SHARED
-  src/rest_prompt_provider.cpp
+  src/prompt_provider_plugins.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

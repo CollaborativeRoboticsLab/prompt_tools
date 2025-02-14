@@ -1,9 +1,12 @@
 #pragma once
 
+#include <rclcpp/rclcpp.hpp>
+#include <string>
 #include <exception>
+#include <vector>
 #include <prompt_msgs/msg/prompt.hpp>
 #include <prompt_msgs/msg/prompt_response.hpp>
-#include <rclcpp/rclcpp.hpp>
+
 
 namespace prompt_provider
 {
@@ -46,6 +49,13 @@ public:
     std::string type;
   };
 
+  // Prompt Conversation struct
+  struct PromptDialogue
+  {
+    std::string role;
+    std::string content;
+  };
+
   // prompt provider request
   struct PromptRequest
   {
@@ -58,10 +68,10 @@ public:
   {
     std::string response;
     std::vector<PromptOption> options;
-    bool success;
-    double accuracy;
-    double confidence;
-    double risk;
+    bool success{false};
+    double accuracy{0.0};
+    double confidence{0.0};
+    double risk{0.0};
   };
 
 public:
@@ -72,6 +82,7 @@ public:
   // init
   virtual void init(rclcpp::node_interfaces::NodeParametersInterface::SharedPtr params,
                     rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr log) = 0;
+
   // sendPrompt
   virtual const PromptResponse sendPrompt(const PromptRequest& req) = 0;
 

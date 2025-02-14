@@ -1,7 +1,12 @@
 <library path="prompt_provider_plugins">
-  <class type="prompt_provider::RestPromptProvider" base_class_type="prompt_provider::PromptProviderBase">
+  <class type="prompt_provider::rest::SinglePromptProvider" base_class_type="prompt_provider::PromptProviderBase">
     <description>
-      A plugin that provides rest based prompt provider
+      A plugin that provides REST based single prompt provider for /api/generate api endpoint
+    </description>
+  </class>
+  <class type="prompt_provider::rest::ChatPromptProvider" base_class_type="prompt_provider::PromptProviderBase">
+    <description>
+      A plugin that provides REST based chat prompt provider for /api/chat api endpoint
     </description>
   </class>
 </library>
