@@ -6,7 +6,7 @@
     cached_transactions: 10
     offer_service: true
     use_scheme: false
-    prompt_provider_plugin: prompt_provider::rest::SinglePromptProvider
+    prompt_provider_plugin: prompt_provider::rest::ChatPromptProvider
     
     # provider config
     rest:
