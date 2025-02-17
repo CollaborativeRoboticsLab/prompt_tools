@@ -24,7 +24,7 @@ def call_prompt_srv(node):
     # select model
     model_opts = ModelOption()
     model_opts.key = "model"
-    model_opts.value = "llama3.1:8b"
+    model_opts.value = "llama3.2"
     req.prompt.options.append(model_opts)
     # set stream false
     model_opts = ModelOption()

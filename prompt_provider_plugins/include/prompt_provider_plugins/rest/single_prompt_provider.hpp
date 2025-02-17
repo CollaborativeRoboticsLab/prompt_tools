@@ -234,6 +234,7 @@ public:
     return result;
   }
 
+
 protected:
   virtual const Poco::JSON::Object handle_options(const PromptRequest& prompt)
   {

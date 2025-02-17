@@ -51,20 +51,20 @@ public:
     std::string default_uri = "https://localhost:8443/api/v1/chat";
 
     // get uri from parameter server
-    uri_ = params->declare_parameter("rest.ChatPromptProvider.uri", rclcpp::ParameterValue(default_uri)).get<std::string>();
+    uri_ = params->declare_parameter("rest.ChatPromptProvider.uri", rclcpp::ParameterValue(default_uri))
+               .get<std::string>();
 
     // get method from parameter server
-    method_ = params->declare_parameter("rest.ChatPromptProvider.method", rclcpp::ParameterValue("POST")).get<std::string>();
+    method_ =
+        params->declare_parameter("rest.ChatPromptProvider.method", rclcpp::ParameterValue("POST")).get<std::string>();
 
     // get verification mode from parameter server
-    ssl_verify_ = params->declare_parameter("rest.ChatPromptProvider.ssl_verify", rclcpp::ParameterValue(true)).get<bool>();
-
-    // get verification mode from parameter server
-    use_chat_ = params->declare_parameter("rest.ChatPromptProvider.use_chat", rclcpp::ParameterValue(true)).get<bool>();
+    ssl_verify_ =
+        params->declare_parameter("rest.ChatPromptProvider.ssl_verify", rclcpp::ParameterValue(true)).get<bool>();
 
     // get auth type from parameter server
-    auth_type_ =
-        params->declare_parameter("rest.ChatPromptProvider.auth_type", rclcpp::ParameterValue("Bearer")).get<std::string>();
+    auth_type_ = params->declare_parameter("rest.ChatPromptProvider.auth_type", rclcpp::ParameterValue("Bearer"))
+                     .get<std::string>();
 
     // get api key from environment
     const char* api_key_env = std::getenv("PROMPT_PROVIDER_API_KEY");
@@ -252,14 +252,13 @@ protected:
     }
 
     PromptProviderBase::PromptDialogue dialog_;
-    dialog_.role = "asesistant";
+    dialog_.role = "assistant";
     dialog_.content = res.response;
 
     conversation_.push_back(dialog_);
 
     return res;
   }
-
 
   virtual const Poco::JSON::Array handle_conversation()
   {
@@ -278,7 +277,6 @@ protected:
 
     return messages_;
   }
-
 
   virtual const Poco::JSON::Object handle_options(const PromptRequest& prompt)
   {
@@ -326,7 +324,6 @@ private:
   std::string uri_;
   std::string method_;
   bool ssl_verify_;
-  bool use_chat_;
   std::string auth_type_;
   std::string api_key_;
 
