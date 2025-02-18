@@ -148,6 +148,8 @@ public:
       // create insecure session
       // Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
       session_ptr = std::make_unique<Poco::Net::HTTPClientSession>(uri.getHost(), uri.getPort());
+      session_ptr->setKeepAliveTimeout(Poco::Timespan(300, 00));
+
       RCLCPP_WARN(logging_->get_logger(), "insecure session created");
     }
 

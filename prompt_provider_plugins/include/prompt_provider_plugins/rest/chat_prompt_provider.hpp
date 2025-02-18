@@ -141,6 +141,8 @@ public:
       // create secure session
       // Poco::Net::HTTPSClientSession session(uri.getHost(), uri.getPort(), context);
       session_ptr = std::make_unique<Poco::Net::HTTPSClientSession>(uri.getHost(), uri.getPort(), context);
+      session_ptr->setKeepAliveTimeout(Poco::Timespan(300, 00));
+
       RCLCPP_DEBUG(logging_->get_logger(), "secure session created");
     }
     else
