@@ -6,19 +6,27 @@
     cached_transactions: 10
     offer_service: true
     use_scheme: false
-    prompt_provider_plugin: prompt_provider::RestPromptProvider
-    prompt_scheme_plugin: prompt_schemes::BTScheme
+    prompt_provider: prompt_provider::rest::SinglePromptProvider
+    prompt_scheme: prompt_scheme::BTPlannerScheme
 
     # provider config
-    RestPromptProvider:
-      uri: http://leo.lan.crlab:11434/api/generate
-      # uri: http://ollama:11434/api/generate docker container with name 'ollama'
-      # uri: http://ollama:11434/v1/completions (oai api compat version)
-      method: POST
-      auth_type: Bearer
+    rest:
+      SinglePromptProvider:
+        uri: http://10.0.0.246:11434/api/generate
+        # uri: http://ollama:11434/api/generate docker container with name 'ollama'
+        # uri: http://ollama:11434/v1/completions (openai api compat version)
+        method: POST
+        auth_type: Bearer
+
+      ChatPromptProvider:
+        uri: http://10.0.0.246:11434/api/chat
+        # uri: http://ollama:11434/api/chat docker container with name 'ollama'
+        # uri: http://ollama:11434/v1/completions (openai api compat version)
+        method: POST
+        auth_type: Bearer
 
     # scheme config
-    BTScheme:
+    BTPlannerScheme:
       prompt_option_keys: [stream, model]
       prompt_options:
         stream:

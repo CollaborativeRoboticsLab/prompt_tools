@@ -1,0 +1,7 @@
+<library path="prompt_scheme">
+  <class type="prompt_scheme::BTPlannerScheme" base_class_type="prompt_scheme::SchemeBase">
+    <description>
+      A plugin that provides behavior tree based prompt scheme
+    </description>
+  </class>
+</library>

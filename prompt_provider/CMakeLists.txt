@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(prompt_provider_plugins)
+project(prompt_provider)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -13,6 +13,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(prompt_msgs REQUIRED)
+find_package(prompt_utils REQUIRED)
 find_package(Poco REQUIRED COMPONENTS
   JSON
   Net
@@ -26,7 +27,7 @@ include_directories(include)
 
 # Library
 add_library(${PROJECT_NAME} SHARED
-  src/prompt_provider_plugins.cpp
+  src/prompt_provider.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}
@@ -41,6 +42,7 @@ ament_target_dependencies(${PROJECT_NAME}
   rclcpp
   pluginlib
   prompt_msgs
+  prompt_utils
 )
 
 # Plugin description file

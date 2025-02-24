@@ -1,6 +1,8 @@
 #pragma once
 #include <prompt_msgs/msg/prompt.hpp>
-#include <prompt_provider_plugins/prompt_provider_base.hpp>
+#include <prompt_provider/prompt_provider_base.hpp>
+#include <prompt_utils/structs.hpp>
+#include <prompt_utils/exceptions.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 // include poco json and net/netssl
@@ -91,7 +93,7 @@ public:
    * @param req
    * @return const PromptResponse
    */
-  virtual const PromptResponse sendPrompt(const PromptRequest& req)
+  virtual const prompt::PromptResponse sendPrompt(const prompt::PromptRequest& req)
   {
     // uri
     Poco::URI uri(uri_);
@@ -141,7 +143,6 @@ public:
       // create secure session
       // Poco::Net::HTTPSClientSession session(uri.getHost(), uri.getPort(), context);
       session_ptr = std::make_unique<Poco::Net::HTTPSClientSession>(uri.getHost(), uri.getPort(), context);
-      session_ptr->setKeepAliveTimeout(Poco::Timespan(300, 00));
 
       RCLCPP_DEBUG(logging_->get_logger(), "secure session created");
     }
@@ -165,7 +166,7 @@ public:
     catch (const Poco::Net::NetException& e)
     {
       RCLCPP_ERROR(logging_->get_logger(), "network error: %s", e.what());
-      throw PromptProviderException("network error: " + std::string(e.what()));
+      throw prompt::PromptProviderException("network error: " + std::string(e.what()));
     }
 
     // get response
@@ -176,7 +177,7 @@ public:
     if (response.getStatus() != Poco::Net::HTTPResponse::HTTP_OK)
     {
       RCLCPP_ERROR(logging_->get_logger(), "HTTP Error: %i, %s", response.getStatus(), response.getReason().c_str());
-      throw PromptProviderException("HTTP Error: " + std::to_string(response.getStatus()) + " " + response.getReason());
+      throw prompt::PromptProviderException("HTTP Error: " + std::to_string(response.getStatus()) + " " + response.getReason());
     }
 
     // check content type is 'text/event-stream' or 'application/x-ndjson'
@@ -188,7 +189,7 @@ public:
       // pass to stream parsing
       // ChatPromptProvider::handle_event_stream(rs, chunck_cb);
       RCLCPP_ERROR(logging_->get_logger(), "HTTP streaming not supported");
-      throw PromptProviderException("HTTP stream not supported");
+      throw prompt::PromptProviderException("HTTP stream not supported");
     }
 
     // is the response chunked even though it is not server-sent event?
@@ -196,7 +197,7 @@ public:
     {
       // TODO: handle chunked responses
       RCLCPP_ERROR(logging_->get_logger(), "HTTP Chunked Transfer Encoding not supported");
-      throw PromptProviderException("HTTP Chunked Transfer Encoding not supported");
+      throw prompt::PromptProviderException("HTTP Chunked Transfer Encoding not supported");
     }
 
     // parse response
@@ -205,17 +206,17 @@ public:
     Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
 
     // create prompt provider response container
-    PromptProviderBase::PromptResponse res = handle_response(object);
+    prompt::PromptResponse res = handle_response(object);
 
     return res;
   }
 
-  virtual const Poco::JSON::Object toJson(const PromptRequest& prompt)
+  virtual const Poco::JSON::Object toJson(const prompt::PromptRequest& prompt)
   {
     // add options
     Poco::JSON::Object result = handle_options(prompt);
 
-    PromptProviderBase::PromptDialogue dialog_;
+    prompt::PromptDialogue dialog_;
     dialog_.role = "user";
     dialog_.content = prompt.prompt;
 
@@ -230,9 +231,9 @@ public:
   }
 
 protected:
-  virtual const PromptProviderBase::PromptResponse handle_response(const Poco::JSON::Object::Ptr object)
+  virtual const prompt::PromptResponse handle_response(const Poco::JSON::Object::Ptr object)
   {
-    PromptProviderBase::PromptResponse res;
+    prompt::PromptResponse res;
 
     // TODO: create custom parsers for specific options from different apis
     // res.success = object->get("success").convert<bool>();
@@ -244,7 +245,7 @@ protected:
     {
       if (it->first != "message")
       {
-        res.options.push_back(PromptProviderBase::PromptOption{ it->first, it->second.convert<std::string>(), "" });
+        res.options.push_back(prompt::PromptOption{ it->first, it->second.convert<std::string>(), "" });
       }
       else
       {
@@ -253,7 +254,7 @@ protected:
       }
     }
 
-    PromptProviderBase::PromptDialogue dialog_;
+    prompt::PromptDialogue dialog_;
     dialog_.role = "assistant";
     dialog_.content = res.response;
 
@@ -267,7 +268,7 @@ protected:
     // flatten conversation into a object
     Poco::JSON::Array messages_;
 
-    for (const PromptProviderBase::PromptDialogue& dialog_ : conversation_)
+    for (const prompt::PromptDialogue& dialog_ : conversation_)
     {
       Poco::JSON::Object dialog_object_;
 
@@ -280,12 +281,12 @@ protected:
     return messages_;
   }
 
-  virtual const Poco::JSON::Object handle_options(const PromptRequest& prompt)
+  virtual const Poco::JSON::Object handle_options(const prompt::PromptRequest& prompt)
   {
     // flatten options into object
     Poco::JSON::Object result;
 
-    for (const PromptProviderBase::PromptOption& option : prompt.options)
+    for (const prompt::PromptOption& option : prompt.options)
     {
       // try cast the value if there is a type hint
       if (option.type == prompt_msgs::msg::ModelOption::STRING_TYPE)
@@ -329,7 +330,7 @@ private:
   std::string auth_type_;
   std::string api_key_;
 
-  std::vector<PromptDialogue> conversation_;
+  std::vector<prompt::PromptDialogue> conversation_;
 };
 
 }  // namespace rest

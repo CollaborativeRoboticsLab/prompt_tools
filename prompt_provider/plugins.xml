@@ -1,4 +1,4 @@
-<library path="prompt_provider_plugins">
+<library path="prompt_provider">
   <class type="prompt_provider::rest::SinglePromptProvider" base_class_type="prompt_provider::PromptProviderBase">
     <description>
       A plugin that provides REST based single prompt provider for /api/generate api endpoint

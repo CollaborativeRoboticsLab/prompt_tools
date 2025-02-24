@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(prompt_schemes)
+project(prompt_scheme)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -12,10 +12,10 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(pluginlib REQUIRED)
-# find_package(tinyxml2 REQUIRED)
 find_package(behaviortree_cpp REQUIRED)
 find_package(prompt_msgs REQUIRED)
-find_package(prompt_provider_plugins REQUIRED)
+find_package(prompt_provider REQUIRED)
+find_package(prompt_utils REQUIRED)
 find_package(PkgConfig)
 pkg_check_modules(TINYXML2 tinyxml2 REQUIRED)
 
@@ -24,19 +24,11 @@ include_directories(include
 ${TINYXML2_INCLUDE_DIRS}
 )
 
-# include_directories(
-#   include
-#   ${tinyxml2_INCLUDE_DIRS}
-#   )
-
 # Library
 add_library(${PROJECT_NAME} SHARED
   src/bt_scheme.cpp
 )
 
-# target_link_libraries(${PROJECT_NAME}
-#   ${tinyxml2_LIBRARIES}
-# )
 target_link_libraries(${PROJECT_NAME}
   ${TINYXML2_LIBRARIES}
 )
@@ -46,7 +38,8 @@ ament_target_dependencies(${PROJECT_NAME}
   pluginlib
   behaviortree_cpp
   prompt_msgs
-  prompt_provider_plugins
+  prompt_provider
+  prompt_utils
   TINYXML2
 )
 

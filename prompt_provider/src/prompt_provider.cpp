@@ -1,5 +1,5 @@
-#include <prompt_provider_plugins/rest/single_prompt_provider.hpp>
-#include <prompt_provider_plugins/rest/chat_prompt_provider.hpp>
+#include <prompt_provider/rest/single_prompt_provider.hpp>
+#include <prompt_provider/rest/chat_prompt_provider.hpp>
 #include <pluginlib/class_list_macros.hpp>
 
 namespace prompt_provider
