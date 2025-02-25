@@ -55,7 +55,7 @@ rosdep install --from-paths src --ignore-src -r -y
 
 ## Usage
 
-## Using Proxy LLM
+### Using Proxy LLM
 
 If not connecting to a Online API, a local LLM running on docker can be used. Separately clone a repository such as [CollaborativeRoboticsLab/ollama-docker](https://github.com/CollaborativeRoboticsLab/ollama-docker) for this purpose and start it.
 
