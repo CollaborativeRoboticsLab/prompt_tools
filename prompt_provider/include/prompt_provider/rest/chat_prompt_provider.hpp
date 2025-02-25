@@ -93,7 +93,7 @@ public:
    * @param req
    * @return const PromptResponse
    */
-  virtual const prompt::PromptResponse sendPrompt(const prompt::PromptRequest& req)
+  virtual prompt::PromptResponse sendPrompt(const prompt::PromptRequest& req)
   {
     // uri
     Poco::URI uri(uri_);
@@ -166,7 +166,7 @@ public:
     catch (const Poco::Net::NetException& e)
     {
       RCLCPP_ERROR(logging_->get_logger(), "network error: %s", e.what());
-      throw prompt::PromptProviderException("network error: " + std::string(e.what()));
+      throw prompt::PromptException("network error: " + std::string(e.what()));
     }
 
     // get response
@@ -177,7 +177,7 @@ public:
     if (response.getStatus() != Poco::Net::HTTPResponse::HTTP_OK)
     {
       RCLCPP_ERROR(logging_->get_logger(), "HTTP Error: %i, %s", response.getStatus(), response.getReason().c_str());
-      throw prompt::PromptProviderException("HTTP Error: " + std::to_string(response.getStatus()) + " " + response.getReason());
+      throw prompt::PromptException("HTTP Error: " + std::to_string(response.getStatus()) + " " + response.getReason());
     }
 
     // check content type is 'text/event-stream' or 'application/x-ndjson'
@@ -189,7 +189,7 @@ public:
       // pass to stream parsing
       // ChatPromptProvider::handle_event_stream(rs, chunck_cb);
       RCLCPP_ERROR(logging_->get_logger(), "HTTP streaming not supported");
-      throw prompt::PromptProviderException("HTTP stream not supported");
+      throw prompt::PromptException("HTTP stream not supported");
     }
 
     // is the response chunked even though it is not server-sent event?
@@ -197,7 +197,7 @@ public:
     {
       // TODO: handle chunked responses
       RCLCPP_ERROR(logging_->get_logger(), "HTTP Chunked Transfer Encoding not supported");
-      throw prompt::PromptProviderException("HTTP Chunked Transfer Encoding not supported");
+      throw prompt::PromptException("HTTP Chunked Transfer Encoding not supported");
     }
 
     // parse response

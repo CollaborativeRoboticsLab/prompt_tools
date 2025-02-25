@@ -4,4 +4,9 @@
       A plugin that provides behavior tree based prompt scheme
     </description>
   </class>
+  <class type="prompt_scheme::BufferScheme" base_class_type="prompt_scheme::SchemeBase">
+    <description>
+      A plugin that provides behavibuffering from robot-llm prompting
+    </description>
+  </class>
 </library>

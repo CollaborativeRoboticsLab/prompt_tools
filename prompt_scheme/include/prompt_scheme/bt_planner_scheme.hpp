@@ -2,13 +2,10 @@
 
 #include <behaviortree_cpp/bt_factory.h>
 
-
-#include <prompt_msgs/action/plan.hpp>
 #include <prompt_scheme/scheme_base.hpp>
 #include <prompt_scheme/tools/structs.hpp>
 #include <prompt_scheme/tools/xml_scrubber.hpp>
 #include <prompt_utils/structs.hpp>
-
 #include <string>
 #include <vector>
 
@@ -55,8 +52,6 @@ struct prompt_template_t
  */
 class BTPlannerScheme : public SchemeBase
 {
-  using PromptPlan = prompt_msgs::action::Plan;
-
 public:
   BTPlannerScheme() = default;
 

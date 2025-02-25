@@ -26,7 +26,7 @@ ${TINYXML2_INCLUDE_DIRS}
 
 # Library
 add_library(${PROJECT_NAME} SHARED
-  src/bt_scheme.cpp
+  src/prompt_scheme.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

@@ -23,6 +23,7 @@ namespace prompt
     struct PromptRequest
     {
         std::string prompt;
+        bool flush;
         std::vector<PromptOption> options;
     };
 
@@ -30,6 +31,7 @@ namespace prompt
     struct PromptResponse
     {
         std::string response;
+        bool buffered;
         std::vector<PromptOption> options;
         bool success{false};
         double accuracy{0.0};

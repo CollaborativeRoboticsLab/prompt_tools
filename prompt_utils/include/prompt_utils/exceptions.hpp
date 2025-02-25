@@ -6,10 +6,10 @@ namespace prompt
 {
 
     // provider exception class
-class PromptProviderException : public std::exception
+class PromptException : public std::exception
 {
 public:
-  PromptProviderException(const std::string& msg) : msg_(msg)
+  PromptException(const std::string& msg) : msg_(msg)
   {
   }
 

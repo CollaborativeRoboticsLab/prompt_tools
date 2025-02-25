@@ -1,8 +1,6 @@
 #pragma once
 
 #include <rclcpp/rclcpp.hpp>
-#include <prompt_msgs/msg/prompt.hpp>
-#include <prompt_msgs/msg/prompt_response.hpp>
 #include <prompt_utils/structs.hpp>
 #include <prompt_utils/exceptions.hpp>
 
@@ -30,34 +28,7 @@ public:
                     rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr log) = 0;
 
   // sendPrompt
-  virtual const prompt::PromptResponse sendPrompt(const prompt::PromptRequest& req) = 0;
-
-public:
-  // static methods for message conversions
-  // fromMsg
-  static const prompt::PromptRequest fromMsg(const prompt_msgs::msg::Prompt& prompt)
-  {
-    prompt::PromptRequest result;
-
-    result.prompt = prompt.prompt;
-    for (const auto& option : prompt.options)
-    {
-      result.options.push_back(prompt::PromptOption{ option.key, option.value, option.type });
-    }
-    return result;
-  }
-
-  // toMsg
-  static const prompt_msgs::msg::PromptResponse toMsg(const prompt::PromptResponse& res)
-  {
-    prompt_msgs::msg::PromptResponse result;
-    result.response = res.response;
-    result.success = res.success;
-    result.accuracy = res.accuracy;
-    result.confidence = res.confidence;
-    result.risk = res.risk;
-    return result;
-  }
+  virtual prompt::PromptResponse sendPrompt(const prompt::PromptRequest& req) = 0;
 
 protected:
   rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_;

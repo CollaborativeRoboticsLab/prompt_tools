@@ -6,9 +6,9 @@
     cached_transactions: 10
     offer_service: true
     use_scheme: true
-    prompt_provider_plugin: prompt_provider::rest::ChatPromptProvider
-    prompt_scheme_plugin: prompt_scheme::DefaultScheme
-    
+    prompt_provider: prompt_provider::rest::ChatPromptProvider
+    prompt_scheme: prompt_scheme::BufferScheme
+
     # provider config
     rest:
       SinglePromptProvider:
@@ -24,3 +24,14 @@
         # uri: http://ollama:11434/v1/completions (openai api compat version)
         method: POST
         auth_type: Bearer
+
+    # scheme config
+    BufferScheme:
+      override: true
+      prompt_option_keys: [stream, model]
+      prompt_options:
+        stream:
+          value: false
+          type: bool
+        model:
+          value: llama3.2
