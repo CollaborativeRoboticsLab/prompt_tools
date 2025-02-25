@@ -4,12 +4,8 @@ This directory contains prompt provider plugins for the prompt bridge.
 
 ## Plugins
 
-- `RestPromptProvider`: A prompt provider that fetches prompts using a REST API.
-
-## Proxy LLM
-
-If not connecting to a Online API, a local LLM running on docker can be used. Separately clone a repository such as 
-[CollaborativeRoboticsLab/ollama-docker](https://github.com/CollaborativeRoboticsLab/ollama-docker) for this purpose.
+- `SinglePromptProvider`: A prompt provider that fetches single prompts using a REST API.
+- `ChatPromptProvider`: A prompt provider that fetches conversation prompts using a REST API.
 
 ## Usage
 
