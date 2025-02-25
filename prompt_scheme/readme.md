@@ -7,7 +7,7 @@ The `prompt_scheme` package provides transcoding schemes for natural language pr
 The `prompt_scheme` package provides a set of plugins that implement the schemes.
 
 - `BTPlannerScheme` - A scheme that uses the Behavior Tree (BT) framework to transcode natural language prompts into a behavior tree. Tailored to work with ROS2 action service
-- `BTPlannerScheme` - A scheme that provides prompt buffering for robotics applications where a response is not expected always. Intends to optimize token usage.
+- `BufferScheme` - A scheme that provides prompt buffering for robotics applications where a response is not expected always. Intends to optimize token usage.
 
 ## usage
 
