@@ -4,8 +4,11 @@ This directory contains prompt provider plugins for the prompt bridge.
 
 ## Plugins
 
-- `SinglePromptProvider`: A prompt provider that fetches single prompts using a REST API.
-- `ChatPromptProvider`: A prompt provider that fetches conversation prompts using a REST API.
+| Provider | Description |
+| --- | --- |
+| `SinglePromptProvider` | A prompt provider that fetches single prompts using a REST API. |
+| `ChatPromptProvider` | A prompt provider that fetches conversation prompts using a REST API. |
+
 
 ## Usage
 
