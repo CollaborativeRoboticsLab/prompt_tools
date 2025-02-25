@@ -1,0 +1,13 @@
+# action message used by the prompt plan action
+# assume that a stamped prompt contains a goal
+prompt_msgs/PromptStamped goal
+---
+std_msgs/Header header
+# a summary of the prompt plan
+string summary
+# the generated documents that represent the plan
+string[] plan_docs
+---
+# reference to the current state or task
+std_msgs/Header header
+string current_op

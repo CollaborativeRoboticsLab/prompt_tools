@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>prompt_tools</name>
+  <version>0.0.1</version>
+  <description>meta-package with tools for working with prompted systems such as large language models and their responses</description>
+
+  <maintainer email="michael.pritchard@canberra.edu.au">Michael Pritchard</maintainer>
+  <maintainer email="mppritchard3@hotmail.com">mik-p</maintainer>
+  <maintainer email="kalana.ratnayakemudiyanselage@canberra.edu.au">Kalana Ratnayake</maintainer>
+  
+  <author email="thomas.muller-dardelin@canberra.edu.au">Thomas Muller-Dardelin</author>
+  <author email="michael.pritchard@canberra.edu.au">Michael Pritchard</author>
+
+  <license>MIT</license>
+
+  <url type="repository">https://github.com/AIResearchLab/prompt_tools</url>
+
+  <exec_depend>prompt_msgs</exec_depend>
+  <exec_depend>prompt_bridge</exec_depend>
+  <exec_depend>prompt_provider</exec_depend>
+  <exec_depend>prompt_scheme</exec_depend>
+  <exec_depend>prompt_utils</exec_depend>
+</package>

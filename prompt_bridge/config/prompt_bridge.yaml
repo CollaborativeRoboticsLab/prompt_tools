@@ -1,0 +1,37 @@
+# config for prompt_bridge
+/**:
+  ros__parameters:
+    loop_rate: 10.0
+    frame_id: prompt_bridge
+    cached_transactions: 10
+    offer_service: true
+    use_scheme: true
+    prompt_provider: prompt_provider::rest::ChatPromptProvider
+    prompt_scheme: prompt_scheme::BufferScheme
+
+    # provider config
+    rest:
+      SinglePromptProvider:
+        uri: http://10.0.0.246:11434/api/generate
+        # uri: http://ollama:11434/api/generate docker container with name 'ollama'
+        # uri: http://ollama:11434/v1/completions (openai api compat version)
+        method: POST
+        auth_type: Bearer
+
+      ChatPromptProvider:
+        uri: http://10.0.0.246:11434/api/chat
+        # uri: http://ollama:11434/api/chat docker container with name 'ollama'
+        # uri: http://ollama:11434/v1/completions (openai api compat version)
+        method: POST
+        auth_type: Bearer
+
+    # scheme config
+    BufferScheme:
+      override: true
+      prompt_option_keys: [stream, model]
+      prompt_options:
+        stream:
+          value: false
+          type: bool
+        model:
+          value: llama3.2
