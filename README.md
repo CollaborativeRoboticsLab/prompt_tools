@@ -19,7 +19,7 @@ This package contain two main components as,
 | Entity | Package | Description |
 | --- | --- | --- |
 | [Providers](./prompt_provider/readme.md) | prompt_provider | The interface that connects bridge with the LLM. Implemented as a plugin |
-| [Schemes](./prompt_schemes/readme.md) | prompt_scheme | Additional rule-sets to augments the prompts |
+| [Schemes](./prompt_scheme/readme.md) | prompt_scheme | Additional rule-sets to augments the prompts |
 
 ## Prompt Bridge
 
