@@ -10,6 +10,7 @@
 #include <prompt_msgs/srv/prompt.hpp>
 #include <prompt_provider/prompt_provider_base.hpp>
 #include <prompt_scheme/scheme_base.hpp>
+#include <prompt_utils/conversions.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_action/rclcpp_action.hpp>
 #include <thread>
@@ -67,7 +68,7 @@ public:
      ************************************************************************/
 
     // create prompt scheme from plugin class loader
-    std::string scheme = this->declare_parameter("prompt_scheme", "prompt_scheme::DefaultScheme");
+    std::string scheme = this->declare_parameter("prompt_scheme", "prompt_scheme::BTPlannerScheme");
 
     RCLCPP_INFO(this->get_logger(), "Loading prompt scheme plugin: '%s'", scheme.c_str());
     scheme_ = scheme_loader_.createSharedInstance(scheme);
@@ -140,7 +141,6 @@ public:
     std::thread{ std::bind(&PromptPlanner::plan_execute, this, std::placeholders::_1), goal_handle }.detach();
   }
 
-  // execute plan action
   /**
    * @brief execute a plan action
    * handle prompt negotiation via a scheme and prompt provider
@@ -161,7 +161,8 @@ public:
     RCLCPP_INFO(this->get_logger(), "prompt-plan goal: %s", goal_handle->get_goal()->goal.prompt.prompt.c_str());
 
     // set the initial document string to the goal prompt
-    scheme_->set_prompt(goal_handle->get_goal()->goal.prompt.prompt);
+    prompt::PromptRequest input = prompt::fromMsg(goal_handle->get_goal()->goal.prompt);
+    scheme_->processPrompt(input);
 
     // tick the scheme to start (assuming that the scheme was idle)
     if (scheme_->state() == prompt_scheme::State::IDLE)
@@ -169,13 +170,10 @@ public:
       scheme_->tick(scheme_->get_prompt());
     }
 
-    // while the scheme is not finished (idle) and the action is not canceled
-    // and ros is not shutting down
+    // while the scheme is not finished (idle) and the action is not canceled and ros is not shutting down
     while (scheme_->state() != prompt_scheme::State::IDLE && !goal_handle->is_canceling() && rclcpp::ok())
     {
-      // tick the scheme
-      // updating the scheme state machine
-      // use the prompt provider set in the scheme
+      // tick the scheme updating the scheme state machine use the prompt provider set in the scheme
       scheme_->tick(scheme_->get_prompt());
 
       // update feedback with the current state

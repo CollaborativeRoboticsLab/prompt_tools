@@ -56,6 +56,9 @@ public:
   {
     prompt::PromptResponse response;
 
+    // add to the buffer
+    prompt_buffer_.push_back(req.prompt);
+
     if (req.flush)
     {
       // create a string to fill with all buffered prompts
@@ -67,9 +70,6 @@ public:
         prompt_cache = prompt_cache + "\n " + prompt_string;
       }
 
-      // add the latest prompt to the string
-      prompt_cache = prompt_cache + "\n " + req.prompt;
-
       // create a new request
       prompt::PromptRequest request;
       request.prompt = prompt_cache;
@@ -78,19 +78,39 @@ public:
       // send the prompt request to the prompt_provider
       response = prompt_provider_->sendPrompt(request);
       response.buffered = false;
+
+      prompt_buffer_.clear();
     }
     else
     {
-      // add to the buffer
-      prompt_buffer_.push_back(req.prompt);
       response.buffered = true;
     }
 
     return response;
   }
 
-private:
+protected:
+  bool starting(const std::string& prompt) override
+  {
+    return true;
+  }
 
+  bool collecting(const std::string& prompt) override
+  {
+    return true;
+  }
+
+  bool negotiating(const std::string& prompt) override
+  {
+    return true;
+  }
+
+  bool running(const std::string& prompt) override
+  {
+    return true;
+  }
+
+private:
   // override model options from the ros messages
   bool override_;
 

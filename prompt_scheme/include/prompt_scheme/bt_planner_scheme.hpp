@@ -135,6 +135,13 @@ public:
     // TODO: register actions
   }
 
+  virtual prompt::PromptResponse processPrompt(const prompt::PromptRequest& req) override
+  {
+    prompt_ = req.prompt;
+    prompt::PromptResponse response;
+    return response;
+  }
+
 private:
   // register robot action
   void register_action(const std::string& action)
@@ -183,7 +190,7 @@ protected:
   virtual bool negotiating(const std::string& prompt)
   {
     // send next prompt
-    set_prompt(send_next_prompt());
+    prompt_ = send_next_prompt();
 
     // try passing the xml
     try

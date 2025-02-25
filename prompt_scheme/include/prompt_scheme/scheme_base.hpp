@@ -23,12 +23,7 @@ public:
   virtual void init(rclcpp::node_interfaces::NodeParametersInterface::SharedPtr params,
                     rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr log) = 0;
 
-  virtual const prompt::PromptResponse processPrompt(const prompt::PromptRequest& req) = 0;
-
-  void set_prompt(const std::string& prompt)
-  {
-    prompt_ = prompt;
-  }
+  virtual prompt::PromptResponse processPrompt(const prompt::PromptRequest& req) = 0;
 
   // set prompt provider
   void set_prompt_provider(const std::shared_ptr<prompt_provider::PromptProviderBase>& prompt_provider)

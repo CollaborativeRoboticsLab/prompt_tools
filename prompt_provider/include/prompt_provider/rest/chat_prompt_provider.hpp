@@ -241,6 +241,7 @@ protected:
     // res.confidence = object->get("confidence").convert<double>();
     // res.risk = object->get("risk").convert<double>();
     // for all other variables loop and push back to response key/values
+    
     for (Poco::JSON::Object::ConstIterator it = object->begin(); it != object->end(); ++it)
     {
       if (it->first != "message")
