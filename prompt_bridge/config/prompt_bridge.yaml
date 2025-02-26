@@ -12,18 +12,22 @@
     # provider config
     rest:
       SinglePromptProvider:
-        uri: http://10.0.0.246:11434/api/generate
-        # uri: http://ollama:11434/api/generate docker container with name 'ollama'
-        # uri: http://ollama:11434/v1/completions (openai api compat version)
+        # uri: http://10.0.0.246:11434/api/generate         # crlab local ollama container
+        uri: https://api.openai.com/v1/completions          # openai endpoint for gpt models
+        # uri: http://ollama:11434/api/generate             # docker container with name 'ollama' running on the same computer
+        # uri: http://ollama:11434/v1/completions           # docker container with name 'ollama' and openai api compat version
         method: POST
         auth_type: Bearer
+        ssl_verify: false
 
       ChatPromptProvider:
-        uri: http://10.0.0.246:11434/api/chat
-        # uri: http://ollama:11434/api/chat docker container with name 'ollama'
-        # uri: http://ollama:11434/v1/completions (openai api compat version)
+        # uri: http://10.0.0.246:11434/api/chat             # crlab local ollama container
+        uri: https://api.openai.com/v1/chat/completions     # openai endpoint for gpt models
+        # uri: http://ollama:11434/api/generate             # docker container with name 'ollama' running on the same computer
+        # uri: http://ollama:11434/v1/completions           # docker container with name 'ollama' and openai api compat version
         method: POST
         auth_type: Bearer
+        ssl_verify: false
 
     # scheme config
     BufferScheme:
@@ -34,4 +38,5 @@
           value: false
           type: bool
         model:
-          value: llama3.2
+          # value: llama3.2
+          value: gpt-4o
