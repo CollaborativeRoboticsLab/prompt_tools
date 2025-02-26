@@ -1,8 +1,8 @@
 #pragma once
 
-#include <rclcpp/rclcpp.hpp>
-#include <prompt_utils/structs.hpp>
 #include <prompt_utils/exceptions.hpp>
+#include <prompt_utils/structs.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 namespace prompt_provider
 {
@@ -17,7 +17,6 @@ namespace prompt_provider
 class PromptProviderBase
 {
 public:
-
 public:
   PromptProviderBase() = default;
   virtual ~PromptProviderBase() = default;

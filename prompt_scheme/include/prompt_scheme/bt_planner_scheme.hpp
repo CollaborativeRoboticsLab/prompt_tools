@@ -6,6 +6,7 @@
 #include <prompt_scheme/tools/structs.hpp>
 #include <prompt_scheme/tools/xml_scrubber.hpp>
 #include <prompt_utils/structs.hpp>
+#include <prompt_utils/prompt_options.hpp>
 #include <string>
 #include <vector>
 
@@ -63,26 +64,7 @@ public:
     // rclcpp::ParameterValue t;
     // t.get<std::vector<rclcpp::Parameter>>();
     // init model options
-    std::vector<std::string> model_option_keys =
-        params
-            ->declare_parameter("BTPlannerScheme.prompt_option_keys",
-                                rclcpp::ParameterValue(std::vector<std::string>{}))
-            .get<std::vector<std::string>>();
-
-    for (const auto& key : model_option_keys)
-    {
-      prompt::PromptOption opt;
-
-      opt.key = key;
-      opt.value =
-          params->declare_parameter("BTPlannerScheme.prompt_options." + key + ".value", rclcpp::ParameterValue(""))
-              .get<std::string>();
-      opt.type =
-          params->declare_parameter("BTPlannerScheme.prompt_options." + key + ".type", rclcpp::ParameterValue(""))
-              .get<std::string>();
-
-      prompt_options_.push_back(opt);
-    }
+    prompt_options_ = prompt::load_from_paramters(params, "BTPlannerScheme");
 
     // fill in the prompt template with default scheme
     prompt_template_.system_role = "you are an AI designed to plan complex tasks as part of a cooperative supervisory "

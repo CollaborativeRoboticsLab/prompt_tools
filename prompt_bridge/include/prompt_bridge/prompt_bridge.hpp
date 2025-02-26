@@ -36,7 +36,7 @@ public:
     , transaction_limit_(10)
     // , prompt_history_()
     , prompt_provider_loader_("prompt_provider", "prompt_provider::PromptProviderBase")
-    , scheme_loader_("prompt_scheme", "prompt_schemes::SchemeBase")
+    , scheme_loader_("prompt_scheme", "prompt_scheme::SchemeBase")
   {
     // loop rate
     loop_hz_ = this->declare_parameter("loop_rate", loop_hz_);
@@ -53,7 +53,7 @@ public:
      * prompt provider plugin class loader and provider pointer
      ************************************************************************/
 
-    provider_name_ = this->declare_parameter("prompt_provider_plugin", "prompt_provider::DefaultPromptProvider");
+    provider_name_ = this->declare_parameter("prompt_provider", "prompt_provider::DefaultPromptProvider");
 
     RCLCPP_INFO(this->get_logger(), "Loading prompt provider plugin: '%s'", provider_name_.c_str());
 
@@ -67,7 +67,7 @@ public:
      ************************************************************************/
 
     // create prompt scheme from plugin class loader
-    scheme_name_ = this->declare_parameter("prompt_scheme", "prompt_scheme::BufferScheme");
+    scheme_name_ = this->declare_parameter("prompt_scheme", "prompt_scheme::DefaultScheme");
 
     RCLCPP_INFO(this->get_logger(), "Loading prompt scheme plugin: '%s'", scheme_name_.c_str());
     prompt_scheme_ = scheme_loader_.createSharedInstance(scheme_name_);
