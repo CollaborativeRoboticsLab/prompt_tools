@@ -1,9 +1,4 @@
 #pragma once
-#include <prompt_msgs/msg/prompt.hpp>
-#include <prompt_provider/prompt_provider_base.hpp>
-#include <prompt_utils/structs.hpp>
-#include <prompt_utils/exceptions.hpp>
-#include <rclcpp/rclcpp.hpp>
 
 // include poco json and net/netssl
 #include <Poco/JSON/Object.h>
@@ -15,75 +10,32 @@
 #include <Poco/Net/NetException.h>
 #include <Poco/URI.h>
 
+#include <prompt_msgs/msg/prompt.hpp>
+#include <prompt_provider/prompt_provider_base.hpp>
+#include <prompt_utils/exceptions.hpp>
+#include <prompt_utils/structs.hpp>
+#include <rclcpp/rclcpp.hpp>
+
 namespace prompt_provider
 {
 namespace rest
 {
-
 /**
- * @brief SinglePromptProvider
+ * @brief RestProviderBase
  *
- * This is a prompt provider that uses a REST API to send and receive prompts
- * the typical rest api uses application/json content type so that is what is
- * supported
- *
- * Another typical feature of these REST APIs is the use of OpenAI's API definition
- * This definition includes:
- *  - authentication using a bearer token
- *  - /completions endpoint
- *  - /chat/completions endpoint
- *  - /edits endpoint
+ * This is the base class for prompt provider plugins
+ * it provides a common interface for all prompt provider plugins
+ * the main functions are to send a prompt and recieve a response
  *
  */
-class SinglePromptProvider : public prompt_provider::PromptProviderBase
+class RestProviderBase : public prompt_provider::PromptProviderBase
 {
 public:
-  // constructor
-  SinglePromptProvider() : uri_("")
+  RestProviderBase() : uri_("")
   {
   }
 
-  virtual void init(rclcpp::node_interfaces::NodeParametersInterface::SharedPtr params,
-                    rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr log)
-  {
-    // set logger
-    logging_ = log;
-
-    // default uri
-    std::string default_uri = "https://localhost:8443/api/v1/prompt";
-
-    // get uri from parameter server
-    uri_ = params->declare_parameter("rest.SinglePromptProvider.uri", rclcpp::ParameterValue(default_uri)).get<std::string>();
-
-    // get method from parameter server
-    method_ = params->declare_parameter("rest.SinglePromptProvider.method", rclcpp::ParameterValue("POST")).get<std::string>();
-
-    // get verification mode from parameter server
-    ssl_verify_ = params->declare_parameter("rest.SinglePromptProvider.ssl_verify", rclcpp::ParameterValue(true)).get<bool>();
-
-    // get verification mode from parameter server
-    use_chat_ = params->declare_parameter("rest.SinglePromptProvider.use_chat", rclcpp::ParameterValue(true)).get<bool>();
-
-    // get auth type from parameter server
-    auth_type_ =
-        params->declare_parameter("rest.SinglePromptProvider.auth_type", rclcpp::ParameterValue("Bearer")).get<std::string>();
-
-    // get api key from environment
-    const char* api_key_env = std::getenv("PROMPT_PROVIDER_API_KEY");
-    if (api_key_env)
-    {
-      api_key_ = api_key_env;
-    }
-    else
-    {
-      RCLCPP_WARN(logging_->get_logger(), "missing env var: PROMPT_PROVIDER_API_KEY");
-      api_key_ = "";
-    }
-
-    // log
-    RCLCPP_INFO(logging_->get_logger(), "SinglePromptProvider initialized with uri: %s, method: %s", uri_.c_str(),
-                method_.c_str());
-  }
+  virtual ~RestProviderBase() = default;
 
   /**
    * @brief sendPrompt send a prompt to a prompt provider using REST
@@ -125,6 +77,8 @@ public:
       RCLCPP_WARN(logging_->get_logger(), "unsupported auth type: %s", auth_type_.c_str());
     }
 
+    // RCLCPP_INFO(logging_->get_logger(), "Port %d", uri.getPort());
+
     std::unique_ptr<Poco::Net::HTTPClientSession> session_ptr;
 
     // is the session secure?
@@ -136,6 +90,11 @@ public:
       if (!ssl_verify_)
       {
         params.verificationMode = Poco::Net::Context::VERIFY_NONE;
+      }
+      else
+      {
+        params.verificationMode = Poco::Net::Context::VERIFY_STRICT;
+        params.caLocation = "/etc/ssl/certs";  // Update this path if needed
       }
 
       Poco::Net::Context::Ptr context = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, params);
@@ -150,7 +109,6 @@ public:
       // create insecure session
       // Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
       session_ptr = std::make_unique<Poco::Net::HTTPClientSession>(uri.getHost(), uri.getPort());
-
       RCLCPP_WARN(logging_->get_logger(), "insecure session created");
     }
 
@@ -160,8 +118,6 @@ public:
       std::ostream& os = session_ptr->sendRequest(request);
       // complete request body
       body_json.stringify(os);
-
-      // RCLCPP_WARN(logging_->get_logger(), "sending prompt: %s", body_stream.str().c_str());
     }
     catch (const Poco::Net::NetException& e)
     {
@@ -206,43 +162,16 @@ public:
     Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
 
     // create prompt provider response container
-    prompt::PromptResponse res;
-
-    // try parse response
-    if (object->get("response"))
-      res.response = object->get("response").toString();
-
-    // TODO: create custom parsers for specific options from different apis
-    // res.success = object->get("success").convert<bool>();
-    // res.accuracy = object->get("accuracy").convert<double>();
-    // res.confidence = object->get("confidence").convert<double>();
-    // res.risk = object->get("risk").convert<double>();
-    // for all other variables loop and push back to response key/values
-    for (Poco::JSON::Object::ConstIterator it = object->begin(); it != object->end(); ++it)
-    {
-      res.options.push_back(prompt::PromptOption{ it->first, it->second.convert<std::string>(), "" });
-    }
+    prompt::PromptResponse res = fromJson(object);
 
     return res;
   }
 
-  virtual const Poco::JSON::Object toJson(const prompt::PromptRequest& prompt)
-  {
-    // add options
-    Poco::JSON::Object result = handle_options(prompt);
-
-    // add prompt
-    result.set("prompt", prompt.prompt);
-
-    return result;
-  }
-
-
-protected:
   virtual const Poco::JSON::Object handle_options(const prompt::PromptRequest& prompt)
   {
     // flatten options into object
     Poco::JSON::Object result;
+
     for (const prompt::PromptOption& option : prompt.options)
     {
       // try cast the value if there is a type hint
@@ -280,15 +209,19 @@ protected:
     return result;
   }
 
-private:
+protected:
+  // abstract methods
+  virtual const Poco::JSON::Object toJson(const prompt::PromptRequest& prompt) = 0;
+
+  virtual const prompt::PromptResponse fromJson(const Poco::JSON::Object::Ptr object) = 0;
+
   std::string uri_;
   std::string method_;
   bool ssl_verify_;
-  bool use_chat_;
   std::string auth_type_;
   std::string api_key_;
+  rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr logging_;
 };
 
 }  // namespace rest
-
 }  // namespace prompt_provider

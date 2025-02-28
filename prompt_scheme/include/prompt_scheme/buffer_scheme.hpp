@@ -1,11 +1,11 @@
 #pragma once
 
-#include <behaviortree_cpp/bt_factory.h>
-
 #include <prompt_scheme/scheme_base.hpp>
 #include <prompt_scheme/tools/structs.hpp>
 #include <prompt_scheme/tools/xml_scrubber.hpp>
+#include <prompt_utils/prompt_options.hpp>
 #include <prompt_utils/structs.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <vector>
 
@@ -31,25 +31,10 @@ public:
   {
     logging_ = log;
 
-    // init model options
-    std::vector<std::string> model_option_keys =
-        params->declare_parameter("BufferScheme.prompt_option_keys", rclcpp::ParameterValue(std::vector<std::string>{}))
-            .get<std::vector<std::string>>();
+    prompt_options_ = prompt::load_from_paramters(params, "BufferScheme");
 
-    for (const auto& key : model_option_keys)
-    {
-      prompt::PromptOption opt;
-
-      opt.key = key;
-      opt.value = params->declare_parameter("BufferScheme.prompt_options." + key + ".value", rclcpp::ParameterValue(""))
-                      .get<std::string>();
-      opt.type = params->declare_parameter("BufferScheme.prompt_options." + key + ".type", rclcpp::ParameterValue(""))
-                     .get<std::string>();
-
-      prompt_options_.push_back(opt);
-    }
-
-    override_ = params->declare_parameter("BufferScheme.override", rclcpp::ParameterValue(false)).get<bool>();
+    override_ =
+        params->declare_parameter("BufferScheme.override_model_options", rclcpp::ParameterValue(false)).get<bool>();
   }
 
   virtual prompt::PromptResponse processPrompt(const prompt::PromptRequest& req) override
@@ -67,7 +52,7 @@ public:
       // fill the string with buffered prompts
       for (const auto& prompt_string : prompt_buffer_)
       {
-        prompt_cache = prompt_cache + "\n " + prompt_string;
+        prompt_cache = prompt_cache + " "  + prompt_string + ". " ;
       }
 
       // create a new request

@@ -59,6 +59,18 @@ rosdep install --from-paths src --ignore-src -r -y
 
 If not connecting to a Online API, a local LLM running on docker can be used. Separately clone a repository such as [CollaborativeRoboticsLab/ollama-docker](https://github.com/CollaborativeRoboticsLab/ollama-docker) for this purpose and start it.
 
+### Using OpenAI api
+
+Run the following command with the actual `OPENAI_API_KEY` in place of `<open-ai-api-key>`
+```bash
+export PROMPT_PROVIDER_API_KEY="<open-ai-api-key>"
+```
+and then update the config file with the correct api endpoints and model names and run,
+
+```bash
+colcon build
+```
+
 ### Start the Prompt Bridge
 
 ```bash
