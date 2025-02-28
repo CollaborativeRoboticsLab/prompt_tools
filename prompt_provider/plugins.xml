@@ -1,12 +1,22 @@
 <library path="prompt_provider">
-  <class type="prompt_provider::rest::SinglePromptProvider" base_class_type="prompt_provider::PromptProviderBase">
+  <class type="prompt_provider::rest::SinglePromptProviderOllama" base_class_type="prompt_provider::PromptProviderBase">
     <description>
-      A plugin that provides REST based single prompt provider for /api/generate api endpoint
+      A plugin that provides REST based single prompt provider for /api/generate api endpoint of Ollama
     </description>
   </class>
-  <class type="prompt_provider::rest::ChatPromptProvider" base_class_type="prompt_provider::PromptProviderBase">
+  <class type="prompt_provider::rest::SinglePromptProviderOpenAI" base_class_type="prompt_provider::PromptProviderBase">
     <description>
-      A plugin that provides REST based chat prompt provider for /api/chat api endpoint
+      A plugin that provides REST based single prompt provider for /v1/completions api endpoint of OpenAI
+    </description>
+  </class>
+  <class type="prompt_provider::rest::ChatPromptProviderOllama" base_class_type="prompt_provider::PromptProviderBase">
+    <description>
+      A plugin that provides REST based chat prompt provider for /api/chat api endpoint of ollama
+    </description>
+  </class>
+  <class type="prompt_provider::rest::ChatPromptProviderOpenAI" base_class_type="prompt_provider::PromptProviderBase">
+    <description>
+      A plugin that provides REST based chat prompt provider for /v1/chat/completions api endpoint of OpenAI
     </description>
   </class>
 </library>

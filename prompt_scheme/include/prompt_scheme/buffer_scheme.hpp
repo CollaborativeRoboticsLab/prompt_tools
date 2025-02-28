@@ -1,11 +1,11 @@
 #pragma once
 
-#include <rclcpp/rclcpp.hpp>
 #include <prompt_scheme/scheme_base.hpp>
 #include <prompt_scheme/tools/structs.hpp>
 #include <prompt_scheme/tools/xml_scrubber.hpp>
-#include <prompt_utils/structs.hpp>
 #include <prompt_utils/prompt_options.hpp>
+#include <prompt_utils/structs.hpp>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <vector>
 
@@ -33,7 +33,8 @@ public:
 
     prompt_options_ = prompt::load_from_paramters(params, "BufferScheme");
 
-    override_ = params->declare_parameter("BufferScheme.override", rclcpp::ParameterValue(false)).get<bool>();
+    override_ =
+        params->declare_parameter("BufferScheme.override_model_options", rclcpp::ParameterValue(false)).get<bool>();
   }
 
   virtual prompt::PromptResponse processPrompt(const prompt::PromptRequest& req) override
@@ -51,7 +52,7 @@ public:
       // fill the string with buffered prompts
       for (const auto& prompt_string : prompt_buffer_)
       {
-        prompt_cache = prompt_cache + ". " + prompt_string;
+        prompt_cache = prompt_cache + " "  + prompt_string + ". " ;
       }
 
       // create a new request

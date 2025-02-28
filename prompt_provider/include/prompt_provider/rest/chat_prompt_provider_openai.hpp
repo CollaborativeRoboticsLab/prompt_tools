@@ -21,7 +21,7 @@ namespace rest
 {
 
 /**
- * @brief ChatPromptProvider
+ * @brief ChatPromptProviderOpenAI
  *
  * This is a prompt provider that uses a REST API to send and receive prompts
  * the typical rest api uses application/json content type so that is what is
@@ -35,11 +35,11 @@ namespace rest
  *  - /edits endpoint
  *
  */
-class ChatPromptProvider : public prompt_provider::rest::RestProviderBase
+class ChatPromptProviderOpenAI : public prompt_provider::rest::RestProviderBase
 {
 public:
   // constructor
-  ChatPromptProvider() : RestProviderBase()
+  ChatPromptProviderOpenAI() : RestProviderBase()
   {
   }
 
@@ -53,19 +53,19 @@ public:
     std::string default_uri = "https://localhost:8443/api/v1/chat";
 
     // get uri from parameter server
-    uri_ = params->declare_parameter("rest.ChatPromptProvider.uri", rclcpp::ParameterValue(default_uri))
+    uri_ = params->declare_parameter("rest.ChatPromptProviderOpenAI.uri", rclcpp::ParameterValue(default_uri))
                .get<std::string>();
 
     // get method from parameter server
-    method_ =
-        params->declare_parameter("rest.ChatPromptProvider.method", rclcpp::ParameterValue("POST")).get<std::string>();
+    method_ = params->declare_parameter("rest.ChatPromptProviderOpenAI.method", rclcpp::ParameterValue("POST"))
+                  .get<std::string>();
 
     // get verification mode from parameter server
     ssl_verify_ =
-        params->declare_parameter("rest.ChatPromptProvider.ssl_verify", rclcpp::ParameterValue(true)).get<bool>();
+        params->declare_parameter("rest.ChatPromptProviderOpenAI.ssl_verify", rclcpp::ParameterValue(true)).get<bool>();
 
     // get auth type from parameter server
-    auth_type_ = params->declare_parameter("rest.ChatPromptProvider.auth_type", rclcpp::ParameterValue("Bearer"))
+    auth_type_ = params->declare_parameter("rest.ChatPromptProviderOpenAI.auth_type", rclcpp::ParameterValue("Bearer"))
                      .get<std::string>();
 
     // get api key from environment
@@ -81,7 +81,7 @@ public:
     }
 
     // log
-    RCLCPP_INFO(logging_->get_logger(), "ChatPromptProvider initialized with uri: %s, method: %s", uri_.c_str(),
+    RCLCPP_INFO(logging_->get_logger(), "ChatPromptProviderOpenAI initialized with uri: %s, method: %s", uri_.c_str(),
                 method_.c_str());
   }
 
@@ -97,7 +97,17 @@ protected:
 
     conversation_.push_back(dialog_);
 
-    Poco::JSON::Array messages_array = handle_conversation();
+    Poco::JSON::Array messages_array;
+
+    for (const prompt::PromptDialogue& dialog_ : conversation_)
+    {
+      Poco::JSON::Object dialog_object_;
+
+      dialog_object_.set("role", dialog_.role);
+      dialog_object_.set("content", dialog_.content);
+
+      messages_array.add(dialog_object_);
+    }
 
     // add prompt
     result.set("messages", messages_array);
@@ -107,7 +117,9 @@ protected:
 
   virtual const prompt::PromptResponse fromJson(const Poco::JSON::Object::Ptr object)
   {
-    prompt::PromptResponse res;
+    std::ostringstream jsonStream;
+    object->stringify(jsonStream);
+    RCLCPP_INFO(logging_->get_logger(), "Poco JSON Object: %s", jsonStream.str().c_str());
 
     // TODO: create custom parsers for specific options from different apis
     // res.success = object->get("success").convert<bool>();
@@ -116,17 +128,51 @@ protected:
     // res.risk = object->get("risk").convert<double>();
     // for all other variables loop and push back to response key/values
 
+    prompt::PromptResponse res;
+
+    // Ensure "choices" exists
+    if (object->has("choices"))
+    {
+      Poco::JSON::Array::Ptr choicesArray = object->getArray("choices");
+
+      // Check if the array is not empty
+      if (choicesArray->size() > 0)
+      {
+        // Extract the first object from the array
+        Poco::JSON::Object::Ptr choiceObj = choicesArray->getObject(0);
+
+        // Ensure "message" exists
+        if (choiceObj->has("message"))
+        {
+          Poco::JSON::Object::Ptr messageObj = choiceObj->getObject("message");
+
+          // Ensure "content" exists
+          if (messageObj->has("content"))
+          {
+            res.response = messageObj->getValue<std::string>("content");
+          }
+        }
+      }
+    }
+
     for (Poco::JSON::Object::ConstIterator it = object->begin(); it != object->end(); ++it)
     {
-      if (it->first != "message")
+      if ((it->first != "choices") && (it->first != "usage"))
       {
         res.options.push_back(prompt::PromptOption{ it->first, it->second.convert<std::string>(), "" });
       }
-      else
-      {
-        Poco::JSON::Object::Ptr messageObj = object->getObject("message");
-        res.response = messageObj->get("content").toString();
-      }
+    }
+
+    size_t startPos = res.response.find("```xml\n");
+    if (startPos != std::string::npos)
+    {
+      res.response.replace(startPos, 6, "");  // Remove "```xml\n"
+    }
+
+    size_t endPos = res.response.rfind("\n```");
+    if (endPos != std::string::npos)
+    {
+      res.response.replace(endPos, 4, "");  // Remove "\n```"
     }
 
     prompt::PromptDialogue dialog_;
@@ -136,24 +182,6 @@ protected:
     conversation_.push_back(dialog_);
 
     return res;
-  }
-
-  virtual const Poco::JSON::Array handle_conversation()
-  {
-    // flatten conversation into a object
-    Poco::JSON::Array messages_;
-
-    for (const prompt::PromptDialogue& dialog_ : conversation_)
-    {
-      Poco::JSON::Object dialog_object_;
-
-      dialog_object_.set("role", dialog_.role);
-      dialog_object_.set("content", dialog_.content);
-
-      messages_.add(dialog_object_);
-    }
-
-    return messages_;
   }
 
 private:

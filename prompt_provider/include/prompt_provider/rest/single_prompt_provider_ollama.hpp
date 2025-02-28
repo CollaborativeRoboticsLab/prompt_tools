@@ -21,7 +21,7 @@ namespace rest
 {
 
 /**
- * @brief SinglePromptProvider
+ * @brief SinglePromptProviderOllama
  *
  * This is a prompt provider that uses a REST API to send and receive prompts
  * the typical rest api uses application/json content type so that is what is
@@ -35,11 +35,11 @@ namespace rest
  *  - /edits endpoint
  *
  */
-class SinglePromptProvider : public prompt_provider::rest::RestProviderBase
+class SinglePromptProviderOllama : public prompt_provider::rest::RestProviderBase
 {
 public:
   // constructor
-  SinglePromptProvider() : RestProviderBase()
+  SinglePromptProviderOllama() : RestProviderBase()
   {
   }
 
@@ -53,19 +53,19 @@ public:
     std::string default_uri = "https://localhost:8443/api/v1/prompt";
 
     // get uri from parameter server
-    uri_ = params->declare_parameter("rest.SinglePromptProvider.uri", rclcpp::ParameterValue(default_uri))
+    uri_ = params->declare_parameter("rest.SinglePromptProviderOllama.uri", rclcpp::ParameterValue(default_uri))
                .get<std::string>();
 
     // get method from parameter server
-    method_ = params->declare_parameter("rest.SinglePromptProvider.method", rclcpp::ParameterValue("POST"))
+    method_ = params->declare_parameter("rest.SinglePromptProviderOllama.method", rclcpp::ParameterValue("POST"))
                   .get<std::string>();
 
     // get verification mode from parameter server
     ssl_verify_ =
-        params->declare_parameter("rest.SinglePromptProvider.ssl_verify", rclcpp::ParameterValue(true)).get<bool>();
+        params->declare_parameter("rest.SinglePromptProviderOllama.ssl_verify", rclcpp::ParameterValue(true)).get<bool>();
 
     // get auth type from parameter server
-    auth_type_ = params->declare_parameter("rest.SinglePromptProvider.auth_type", rclcpp::ParameterValue("Bearer"))
+    auth_type_ = params->declare_parameter("rest.SinglePromptProviderOllama.auth_type", rclcpp::ParameterValue("Bearer"))
                      .get<std::string>();
 
     // get api key from environment
@@ -81,7 +81,7 @@ public:
     }
 
     // log
-    RCLCPP_INFO(logging_->get_logger(), "SinglePromptProvider initialized with uri: %s, method: %s", uri_.c_str(),
+    RCLCPP_INFO(logging_->get_logger(), "SinglePromptProviderOllama initialized with uri: %s, method: %s", uri_.c_str(),
                 method_.c_str());
   }
 

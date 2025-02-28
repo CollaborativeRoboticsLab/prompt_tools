@@ -77,6 +77,8 @@ public:
       RCLCPP_WARN(logging_->get_logger(), "unsupported auth type: %s", auth_type_.c_str());
     }
 
+    // RCLCPP_INFO(logging_->get_logger(), "Port %d", uri.getPort());
+
     std::unique_ptr<Poco::Net::HTTPClientSession> session_ptr;
 
     // is the session secure?
@@ -88,6 +90,11 @@ public:
       if (!ssl_verify_)
       {
         params.verificationMode = Poco::Net::Context::VERIFY_NONE;
+      }
+      else
+      {
+        params.verificationMode = Poco::Net::Context::VERIFY_STRICT;
+        params.caLocation = "/etc/ssl/certs";  // Update this path if needed
       }
 
       Poco::Net::Context::Ptr context = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, params);

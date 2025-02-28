@@ -35,7 +35,7 @@ load_from_paramters(rclcpp::node_interfaces::NodeParametersInterface::SharedPtr 
     }
 
     // check if value is of type bool
-    if (opt.type == "bool")
+    else if (opt.type == "bool")
     {
       bool value =
           params->declare_parameter(class_name + ".prompt_options." + key + ".value", rclcpp::ParameterValue(false))
@@ -44,7 +44,7 @@ load_from_paramters(rclcpp::node_interfaces::NodeParametersInterface::SharedPtr 
     }
 
     // check if value is of type bool
-    if (opt.type == "int")
+    else if (opt.type == "int")
     {
       int value = params->declare_parameter(class_name + ".prompt_options." + key + ".value", rclcpp::ParameterValue(0))
                       .get<int>();
@@ -52,11 +52,20 @@ load_from_paramters(rclcpp::node_interfaces::NodeParametersInterface::SharedPtr 
     }
 
     // check if value is of type bool
-    if (opt.type == "double")
+    else if (opt.type == "double")
     {
-      double value = params->declare_parameter(class_name + ".prompt_options." + key + ".value", rclcpp::ParameterValue(0))
-                      .get<double>();
+      double value =
+          params->declare_parameter(class_name + ".prompt_options." + key + ".value", rclcpp::ParameterValue(0))
+              .get<double>();
       opt.value = std::to_string(value);
+    }
+
+    // check if type of value is not mentioned and take it as a string
+    else
+    {
+      opt.value =
+          params->declare_parameter(class_name + ".prompt_options." + key + ".value", rclcpp::ParameterValue(""))
+              .get<std::string>();
     }
 
     prompt_options_.push_back(opt);
