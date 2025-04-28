@@ -23,6 +23,7 @@
     <depend>prompt_msgs</depend>
     <depend>prompt_provider</depend>
     <depend>prompt_utils</depend>
+    <depend>tinyxml2_vendor</depend>
 
     <export>
         <build_type>ament_cmake</build_type>

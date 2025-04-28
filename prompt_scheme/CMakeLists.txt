@@ -17,20 +17,16 @@ find_package(prompt_msgs REQUIRED)
 find_package(prompt_provider REQUIRED)
 find_package(prompt_utils REQUIRED)
 find_package(PkgConfig)
-pkg_check_modules(TINYXML2 tinyxml2 REQUIRED)
+find_package(tinyxml2_vendor REQUIRED)
+find_package(TinyXML2 REQUIRED)  # provided by tinyxml2 upstream, or tinyxml2_vendor
 
 # Include directories
 include_directories(include
-${TINYXML2_INCLUDE_DIRS}
 )
 
 # Library
 add_library(${PROJECT_NAME} SHARED
   src/prompt_scheme.cpp
-)
-
-target_link_libraries(${PROJECT_NAME}
-  ${TINYXML2_LIBRARIES}
 )
 
 ament_target_dependencies(${PROJECT_NAME}
@@ -40,7 +36,7 @@ ament_target_dependencies(${PROJECT_NAME}
   prompt_msgs
   prompt_provider
   prompt_utils
-  TINYXML2
+  TinyXML2
 )
 
 # Plugin description file
