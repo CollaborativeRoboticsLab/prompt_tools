@@ -18,6 +18,7 @@
   <exec_depend>prompt_msgs</exec_depend>
   <exec_depend>prompt_bridge</exec_depend>
   <exec_depend>prompt_provider</exec_depend>
-  <exec_depend>prompt_scheme</exec_depend>
-  <exec_depend>prompt_utils</exec_depend>
+  <exec_depend>prompt_base</exec_depend>
+  <exec_depend>prompt_huggingface</exec_depend>
+  <exec_depend>prompt_transcriber</exec_depend>
 </package>

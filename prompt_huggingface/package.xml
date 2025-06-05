@@ -1,17 +1,10 @@
 <?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>prompt_provider</name>
+  <name>prompt_huggingface</name>
   <version>0.1.0</version>
-  <description>
-    This package provides a prompt provider plugin for different language models
-  </description>
-
-  <maintainer email="michael.pritchard@canberra.edu.au">Michael Pritchard</maintainer>
+  <description>This package provides a prompt plugin for huggingface models</description>
   <maintainer email="kalana.ratnayakemudiyanselage@canberra.edu.au">Kalana Ratnayake</maintainer>
-  <maintainer email="mppritchard3@hotmail.com">mik-p</maintainer>
-
-  <author email="michael.pritchard@canberra.edu.au">Michael Pritchard</author>
-
   <license>MIT</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>

@@ -1,5 +1,5 @@
-cmake_minimum_required(VERSION 3.10)
-project(prompt_provider)
+cmake_minimum_required(VERSION 3.8)
+project(prompt_transcriber)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
@@ -27,7 +27,7 @@ include_directories(include)
 
 # Library
 add_library(${PROJECT_NAME} SHARED
-  src/prompt_provider.cpp
+  src/transcriber_provider.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

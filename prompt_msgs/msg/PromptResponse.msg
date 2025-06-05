@@ -4,6 +4,6 @@
 string response
 bool buffered
 bool success
-float32 accuracy
-float32 confidence
-float32 risk
+float64 accuracy
+float64 confidence
+float64 risk

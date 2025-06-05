@@ -1,46 +1,27 @@
 # config for prompt_bridge
 /**:
   ros__parameters:
-    loop_rate: 10.0
+    # general config
+    use_prompt_provider: true
+    use_prompt_transcriber: true
+    use_prompt_sentiment_analyzer: true
+
     frame_id: prompt_bridge
     cached_transactions: 10
-    offer_service: true
-    use_scheme: true
-    prompt_provider: prompt_provider::rest::ChatPromptProviderOpenAI
-    prompt_scheme: prompt_scheme::BufferScheme
 
-    # provider config
-    rest:
-      SinglePromptProviderOllama:
-        uri: http://10.0.0.246:11434/api/generate         # crlab local ollama container
-        # uri: http://ollama:11434/api/generate             # docker container with name 'ollama' running on the same computer
-        # uri: http://ollama:11434/v1/completions           # docker container with name 'ollama' and openai api compat version
-        method: POST
-        auth_type: Bearer
-        ssl_verify: false
+    prompt_provider: prompt::ChatPromptProviderOpenAI
+    # prompt_provider: prompt::SinglePromptProviderOpenAI
+    # prompt_provider: prompt::ChatPromptProviderOllama
+    # prompt_provider: prompt::SinglePromptProviderOllama
 
-      SinglePromptProviderOpenAI:
-        uri: https://api.openai.com/v1/completions          # openai endpoint for gpt models
-        method: POST
-        auth_type: Bearer
-        ssl_verify: true
+    prompt_transcriber: prompt::WhisperAPI
+    prompt_sentiment_analyzer: prompt::SentimentAnalysis
 
-      ChatPromptProviderOllama:
-        uri: http://10.0.0.246:11434/api/chat             # crlab local ollama container
-        # uri: http://ollama:11434/api/generate             # docker container with name 'ollama' running on the same computer
-        # uri: http://ollama:11434/v1/completions           # docker container with name 'ollama' and openai api compat version
-        method: POST
-        auth_type: Bearer
-        ssl_verify: false
-
-      ChatPromptProviderOpenAI:
-        uri: https://api.openai.com/v1/chat/completions     # openai endpoint for gpt models
-        method: POST
-        auth_type: Bearer
-        ssl_verify: true
-
-    # scheme config
-    BufferScheme:
+    ChatPromptProviderOpenAI:
+      uri: https://api.openai.com/v1/chat/completions # openai endpoint for gpt models
+      method: POST
+      auth_type: Bearer
+      ssl_verify: true
       override_model_options: true
       prompt_option_keys: [stream, model]
       prompt_options:
@@ -48,5 +29,75 @@
           value: false
           type: bool
         model:
-          # value: llama3.2
           value: gpt-4o
+          type: string
+
+    SinglePromptProviderOpenAI:
+      uri: https://api.openai.com/v1/completions # openai endpoint for gpt models
+      method: POST
+      auth_type: Bearer
+      ssl_verify: true
+      override_model_options: true
+      prompt_option_keys: [stream, model]
+      prompt_options:
+        stream:
+          value: false
+          type: bool
+        model:
+          value: gpt-4o
+          type: string
+
+    SinglePromptProviderOllama:
+      uri: http://10.0.0.246:11434/api/generate # crlab local ollama container
+      # uri: http://ollama:11434/api/generate             # docker container with name 'ollama' running on the same computer
+      # uri: http://ollama:11434/v1/completions           # docker container with name 'ollama' and openai api compat version
+      method: POST
+      auth_type: Bearer
+      ssl_verify: false
+      override_model_options: true
+      prompt_option_keys: [stream, model]
+      prompt_options:
+        stream:
+          value: false
+          type: bool
+        model:
+          value: llama3.2
+          type: string
+
+    ChatPromptProviderOllama:
+      uri: http://10.0.0.246:11434/api/chat # crlab local ollama container
+      # uri: http://ollama:11434/api/generate             # docker container with name 'ollama' running on the same computer
+      # uri: http://ollama:11434/v1/completions           # docker container with name 'ollama' and openai api compat version
+      method: POST
+      auth_type: Bearer
+      ssl_verify: false
+      override_model_options: true
+      prompt_option_keys: [stream, model]
+      prompt_options:
+        stream:
+          value: false
+          type: bool
+        model:
+          value: llama3.2
+          type: string
+
+    SentimentAnalysis:
+      uri: https://router.huggingface.co/hf-inference/models/distilbert/distilbert-base-uncased-finetuned-sst-2-english
+      method: POST
+      auth_type: Bearer
+      ssl_verify: true
+
+    WhisperAPI:
+      uri: https://api.openai.com/v1/audio/transcriptions
+      method: POST
+      auth_type: Bearer
+      ssl_verify: true
+      override_model_options: true
+      prompt_option_keys: [model]
+      prompt_options:
+        model:
+          value: gpt-4o-transcribe
+          # value: gpt-4o-mini-transcribe
+          # value: whisper-1
+          type: string
+        
