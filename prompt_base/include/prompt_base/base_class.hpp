@@ -36,7 +36,7 @@ public:
    * 
    * @param node rclcpp::Node::SharedPtr ROS node
    */
-  virtual void initalize_base(rclcpp::Node::SharedPtr node, std::string plugin_name = "BaseClass")
+  virtual void initialize_base(rclcpp::Node::SharedPtr node, std::string plugin_name = "BaseClass")
   {
     // set the node pointer
     node_ = node;

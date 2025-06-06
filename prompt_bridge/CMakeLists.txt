@@ -14,9 +14,7 @@ find_package(rclcpp_components REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(prompt_msgs REQUIRED)
-find_package(prompt_provider REQUIRED)
-find_package(prompt_scheme REQUIRED)
-find_package(prompt_utils REQUIRED)
+find_package(prompt_base REQUIRED)
 find_package(backward_ros REQUIRED)
 
 include_directories(
@@ -34,9 +32,7 @@ ament_target_dependencies(${PROJECT_NAME}
   rclcpp_action
   pluginlib
   prompt_msgs
-  prompt_provider
-  prompt_scheme
-  prompt_utils
+  prompt_base
 )
 
 # register component

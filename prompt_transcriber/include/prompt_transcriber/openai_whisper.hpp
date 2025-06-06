@@ -75,7 +75,7 @@ public:
 
     // create a new request
     prompt::PromptRequest request;
-    request.prompt = req;
+    request = req;
 
     // check if we should override model options if so do it
     if (override_)

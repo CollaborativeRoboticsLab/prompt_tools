@@ -1,7 +1,7 @@
 #pragma once
 #include <prompt_msgs/msg/prompt.hpp>
 #include <prompt_msgs/msg/prompt_response.hpp>
-#include <prompt_utils/structs.hpp>
+#include <prompt_base/utils/structs.hpp>
 
 namespace prompt
 {
@@ -21,7 +21,10 @@ static const prompt::PromptRequest fromMsg(const prompt_msgs::msg::Prompt& promp
   result.flush  = prompt.flush;
   result.contains_audio = prompt.contains_audio;
   result.file_type = prompt.file_type;
-  result.audio_buffer = prompt.audio_buffer;
+  result.audio_chunk_size = prompt.audio_buffer.layout.dim[1].size;
+  result.audio_sample_size = prompt.audio_buffer.layout.dim[0].size;
+  result.audio_buffer = prompt.audio_buffer.data;
+
   for (const auto& option : prompt.options)
   {
     result.options.push_back(prompt::PromptOption{ option.key, option.value, option.type });

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <exception>
-#include <prompt_utils/structs.hpp>
+#include <prompt_base/utils/structs.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <vector>

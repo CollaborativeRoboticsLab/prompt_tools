@@ -4,8 +4,8 @@
 #include <memory>
 #include <pluginlib/class_loader.hpp>
 #include <prompt_base/base_class.hpp>
-#include <prompt_base/conversions.hpp>
-#include <prompt_base/exceptions.hpp>
+#include <prompt_base/utils/conversions.hpp>
+#include <prompt_base/utils/exceptions.hpp>
 #include <prompt_msgs/msg/prompt_history.hpp>
 #include <prompt_msgs/msg/prompt_transaction.hpp>
 #include <prompt_msgs/srv/prompt.hpp>
@@ -27,7 +27,11 @@ class PromptBridge : public rclcpp::Node
   using PromptSrv = prompt_msgs::srv::Prompt;
 
 public:
-  PromptBridge(const rclcpp::NodeOptions& options = rclcpp::NodeOptions()) : Node("prompt_bridge", options)
+  PromptBridge(const rclcpp::NodeOptions& options = rclcpp::NodeOptions())
+    : Node("prompt_bridge", options)
+    , prompt_provider_loader_("prompt_provider", "prompt::BaseClass")
+    , prompt_transcriber_loader_("prompt_transcriber", "prompt::BaseClass")
+    , prompt_sentiment_loader_("prompt_sentiment", "prompt::BaseClass")
   {
     this->declare_parameter("use_prompt_provider", false);
     this->declare_parameter("use_prompt_transcriber", false);
@@ -61,7 +65,7 @@ public:
       RCLCPP_INFO(this->get_logger(), "Loading prompt provider plugin: '%s'", provider_name_.c_str());
 
       prompt_provider_ = prompt_provider_loader_.createSharedInstance(provider_name_);
-      prompt_provider_->initalize(shared_from_this());
+      prompt_provider_->initialize(shared_from_this());
       RCLCPP_INFO(this->get_logger(), "Prompt provider '%s' initialized", provider_name_.c_str());
     }
     else
@@ -89,7 +93,7 @@ public:
       RCLCPP_INFO(this->get_logger(), "Loading prompt transcriber plugin: '%s'", transcriber_name_.c_str());
 
       prompt_transcriber_ = prompt_transcriber_loader_.createSharedInstance(transcriber_name_);
-      prompt_transcriber_->initalize(shared_from_this());
+      prompt_transcriber_->initialize(shared_from_this());
       RCLCPP_INFO(this->get_logger(), "Prompt transcriber '%s' initialized", transcriber_name_.c_str());
     }
     else
@@ -117,7 +121,7 @@ public:
       RCLCPP_INFO(this->get_logger(), "Loading prompt sentiment analyzer plugin: '%s'", sentiment_name_.c_str());
 
       prompt_sentiment_analyzer_ = prompt_sentiment_loader_.createSharedInstance(sentiment_name_);
-      prompt_sentiment_analyzer_->initalize(shared_from_this());
+      prompt_sentiment_analyzer_->initialize(shared_from_this());
       RCLCPP_INFO(this->get_logger(), "Prompt sentiment analyzer '%s' initialized", sentiment_name_.c_str());
     }
     else
@@ -282,8 +286,8 @@ private:
     prompt_history_pub_->publish(prompt_history_);
   }
 
-  void update_prompt_history(std::string prompt, std::string response, rclcpp::Time prompt_time,
-                             rclcpp::Time response_time)
+  void update_prompt_history(prompt_msgs::msg::Prompt prompt, prompt_msgs::msg::PromptResponse response,
+                             rclcpp::Time prompt_time, rclcpp::Time response_time)
   {
     // create the prompt transaction
     prompt_msgs::msg::PromptTransaction prompt_transaction = prompt_msgs::msg::PromptTransaction();
