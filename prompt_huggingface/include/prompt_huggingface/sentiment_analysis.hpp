@@ -10,11 +10,11 @@
 #include <Poco/Net/NetException.h>
 #include <Poco/URI.h>
 
-#include <rclcpp/rclcpp.hpp>
-#include <prompt_msgs/msg/prompt.hpp>
+#include <prompt_base/rest_base_class.hpp>
 #include <prompt_base/utils/exceptions.hpp>
 #include <prompt_base/utils/structs.hpp>
-#include <prompt_base/rest_base_class.hpp>
+#include <prompt_msgs/msg/prompt.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 namespace prompt
 {
@@ -97,17 +97,10 @@ protected:
         if (!outerArray->empty())
         {
           auto inner = outerArray->getArray(0);
-          for (size_t i = 0; i < inner->size(); ++i)
-          {
-            auto item = inner->getObject(i);
-            std::string label = item->getValue<std::string>("label");
-            double score = item->getValue<double>("score");
+          auto item = inner->getObject(0);
 
-            // You can use the first label as the main response
-            if (i == 0)
-              res.response = label;
-              res.confidence = score;
-          }
+          res.response = item->getValue<std::string>("label");
+          res.confidence = item->getValue<double>("score");
         }
       }
     }
