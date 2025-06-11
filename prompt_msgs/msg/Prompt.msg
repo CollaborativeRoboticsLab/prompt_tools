@@ -11,7 +11,13 @@ bool contains_audio
 string file_type
 
 # the audio buffer if the prompt contains a file
-std_msgs/Int16MultiArray audio_buffer
+int16[] samples
+
+# the audio metadata
+int32 sample_rate
+int32 channels
+int32 chunk_size
+int32 chunk_count
 
 # the options for the prompt, which can include model options, temperature, etc.
 prompt_msgs/ModelOption[] options

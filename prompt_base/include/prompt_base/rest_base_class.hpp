@@ -267,7 +267,7 @@ public:
     {
       std::ostream& os = session_ptr->sendRequest(request);
 
-      if (req.contains_audio && !req.audio_buffer.empty())
+      if (req.contains_audio && !req.samples.empty())
       {
         // Use multipart form for audio buffer
         Poco::Net::HTMLForm form;
@@ -311,7 +311,7 @@ public:
           form.set("prompt", req.prompt);
         }
 
-        form.addPart("file", new FilePartSource(req.file_type, req.audio_buffer));
+        form.addPart("file", new FilePartSource(req.file_type, req.samples));
         form.prepareSubmit(request);
         form.write(os);
       }

@@ -21,9 +21,11 @@ static const prompt::PromptRequest fromMsg(const prompt_msgs::msg::Prompt& promp
   result.flush  = prompt.flush;
   result.contains_audio = prompt.contains_audio;
   result.file_type = prompt.file_type;
-  result.audio_chunk_size = prompt.audio_buffer.layout.dim[1].size;
-  result.audio_sample_size = prompt.audio_buffer.layout.dim[0].size;
-  result.audio_buffer = prompt.audio_buffer.data;
+  result.sample_rate = prompt.sample_rate;
+  result.channels = prompt.channels;
+  result.chunk_size = prompt.chunk_size;
+  result.chunk_count = prompt.chunk_count;
+  result.samples = prompt.samples;
 
   for (const auto& option : prompt.options)
   {
