@@ -4,6 +4,7 @@ project(prompt_bridge)
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -21,7 +22,32 @@ include_directories(
   include
 )
 
-# component library
+
+############################################################################
+# prompt bridge server executable
+############################################################################
+
+add_executable(${PROJECT_NAME}_node
+  src/prompt_bridge_node.cpp
+)
+
+ament_target_dependencies(${PROJECT_NAME}_node
+  rclcpp
+  rclcpp_action
+  pluginlib
+  prompt_msgs
+  prompt_base
+)
+
+install(TARGETS ${PROJECT_NAME}_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+
+############################################################################
+# prompt bridge server component
+############################################################################
+
 add_library(${PROJECT_NAME} SHARED
   src/prompt_bridge.cpp
 )
@@ -37,18 +63,22 @@ ament_target_dependencies(${PROJECT_NAME}
 
 # register component
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "prompt_bridge::PromptBridge"
-  EXECUTABLE prompt_bridge_node
+  PLUGIN "prompt::PromptBridge"
+  EXECUTABLE prompt_bridge_comp
 )
 
-ament_export_targets(prompt_bridge_node)
+ament_export_targets(prompt_bridge_comp)
 
 install(TARGETS ${PROJECT_NAME}
-  EXPORT prompt_bridge_node
+  EXPORT prompt_bridge_comp
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
 )
+
+############################################################################
+# Miscellaneous installations
+############################################################################
 
 install(DIRECTORY include/
   DESTINATION include

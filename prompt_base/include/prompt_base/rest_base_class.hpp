@@ -79,6 +79,7 @@ public:
         api_key_ = "";
       }
     }
+    else
     {
       RCLCPP_INFO(node_->get_logger(), "An API key is not used for this plugin, using empty string");
       api_key_ = "";

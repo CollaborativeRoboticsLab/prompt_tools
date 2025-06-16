@@ -27,12 +27,40 @@ class PromptBridge : public rclcpp::Node
   using PromptSrv = prompt_msgs::srv::Prompt;
 
 public:
+/**
+ * @brief Construct a new Prompt Bridge object
+ * 
+ * @param options Node options for the PromptBridge node
+ */
   PromptBridge(const rclcpp::NodeOptions& options = rclcpp::NodeOptions())
     : Node("prompt_bridge", options)
     , prompt_provider_loader_("prompt_provider", "prompt::BaseClass")
     , prompt_transcriber_loader_("prompt_transcriber", "prompt::BaseClass")
-    , prompt_sentiment_loader_("prompt_sentiment", "prompt::BaseClass")
+    , prompt_sentiment_loader_("prompt_huggingface", "prompt::BaseClass")
   {
+    try
+    {
+      if (shared_from_this())
+      {
+        initialize();
+      }
+    }
+    catch (const std::bad_weak_ptr&)
+    {
+      // Not yet safe — probably standalone without make_shared
+    }
+  }
+
+  /**
+   * @brief Initialize the PromptBridge node
+   *
+   * This method initializes the PromptBridge node by declaring parameters and loading plugins.
+   */
+  void initialize()
+  {
+    /*************************************************************************
+     * Declare parameters
+     ************************************************************************/
     this->declare_parameter("use_prompt_provider", false);
     this->declare_parameter("use_prompt_transcriber", false);
     this->declare_parameter("use_prompt_sentiment_analyzer", false);
@@ -53,7 +81,7 @@ public:
     {
       RCLCPP_INFO(this->get_logger(), "Prompt provider is enabled");
 
-      this->declare_parameter("prompt_provider", "prompt_provider::DefaultPromptProvider");
+      this->declare_parameter("prompt_provider", "prompt::DefaultPromptProvider");
       provider_name_ = this->get_parameter("prompt_provider").as_string();
 
       if (provider_name_.empty())
@@ -81,7 +109,7 @@ public:
     {
       RCLCPP_INFO(this->get_logger(), "Prompt transcriber is enabled");
 
-      this->declare_parameter("prompt_transcriber", "prompt_transcriber::DefaultPromptTranscriber");
+      this->declare_parameter("prompt_transcriber", "prompt::DefaultPromptTranscriber");
       transcriber_name_ = this->get_parameter("prompt_transcriber").as_string();
 
       if (transcriber_name_.empty())
@@ -109,7 +137,7 @@ public:
     {
       RCLCPP_INFO(this->get_logger(), "Prompt sentiment analyzer is enabled");
 
-      this->declare_parameter("prompt_sentiment_analyzer", "prompt_sentiment_analyzer::DefaultSentimentAnalyzer");
+      this->declare_parameter("prompt_sentiment_analyzer", "prompt::DefaultSentimentAnalyzer");
       sentiment_name_ = this->get_parameter("prompt_sentiment_analyzer").as_string();
 
       if (sentiment_name_.empty())

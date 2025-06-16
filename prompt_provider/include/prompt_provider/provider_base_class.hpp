@@ -26,13 +26,15 @@ public:
    *
    * This method initializes the ProviderBaseClass with parameters from the ROS parameter server.
    *
-   * @param node rclcpp::Node::SharedPtr ROS node
+   * @param node rclcpp::Node::SharedPtr ROS nodea word
+   * @param plugin_name The name of the plugin to initialize.
+   * @param api_key_name The name of the API key parameter (optional).
    */
   virtual void initialize_provider_base(rclcpp::Node::SharedPtr node, std::string plugin_name = "ProviderBaseClass",
                                         std::string api_key_name = "")
   {
     // initialize base class
-    initialize_rest_base(node, plugin_name, "");
+    initialize_rest_base(node, plugin_name, api_key_name);
 
     // declare parameters
     node_->declare_parameter(plugin_name_ + ".override_model_options", false);
@@ -50,7 +52,6 @@ public:
       RCLCPP_INFO(node_->get_logger(), "Using model options from prompt request");
     }
   }
-
 
   /**
    * @brief sendPrompt send a prompt to a prompt provider using REST
