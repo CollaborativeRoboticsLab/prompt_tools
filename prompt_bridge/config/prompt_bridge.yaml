@@ -3,7 +3,6 @@
   ros__parameters:
     # general config
     use_prompt_provider: true
-    use_prompt_transcriber: true
     use_prompt_sentiment_analyzer: true
 
     frame_id: prompt_bridge
@@ -14,7 +13,6 @@
     # prompt_provider: prompt::ChatOllamaProvider
     # prompt_provider: prompt::SingleOllamaProvider
 
-    prompt_transcriber: prompt::WhisperAPI
     prompt_sentiment_analyzer: prompt::SentimentAnalysis
 
     ChatOpenAIProvider:

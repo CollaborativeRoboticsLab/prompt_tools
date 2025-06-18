@@ -46,7 +46,7 @@ ament_target_dependencies(${PROJECT_NAME}
 )
 
 # Plugin description file
-pluginlib_export_plugin_description_file(${PROJECT_NAME} plugins.xml)
+pluginlib_export_plugin_description_file(prompt_base plugins.xml)
 
 install(TARGETS ${PROJECT_NAME}
   EXPORT ${PROJECT_NAME}

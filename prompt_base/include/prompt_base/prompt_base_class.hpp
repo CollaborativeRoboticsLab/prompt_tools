@@ -17,7 +17,7 @@ namespace prompt
 class PromptBaseClass : public RestBaseClass
 {
 public:
-  PromptBaseClass() : RestBaseClass()
+  PromptBaseClass()
   {
   }
 

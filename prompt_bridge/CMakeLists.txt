@@ -43,16 +43,15 @@ install(TARGETS ${PROJECT_NAME}_node
   DESTINATION lib/${PROJECT_NAME}
 )
 
-
 ############################################################################
 # prompt bridge server component
 ############################################################################
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}_comp SHARED
   src/prompt_bridge.cpp
 )
 
-ament_target_dependencies(${PROJECT_NAME}
+ament_target_dependencies(${PROJECT_NAME}_comp
   rclcpp
   rclcpp_components
   rclcpp_action
@@ -62,15 +61,15 @@ ament_target_dependencies(${PROJECT_NAME}
 )
 
 # register component
-rclcpp_components_register_node(${PROJECT_NAME}
+rclcpp_components_register_node(${PROJECT_NAME}_comp
   PLUGIN "prompt::PromptBridge"
-  EXECUTABLE prompt_bridge_comp
+  EXECUTABLE prompt_bridge_component
 )
 
-ament_export_targets(prompt_bridge_comp)
+ament_export_targets(prompt_bridge_component)
 
-install(TARGETS ${PROJECT_NAME}
-  EXPORT prompt_bridge_comp
+install(TARGETS ${PROJECT_NAME}_comp
+  EXPORT prompt_bridge_component
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
@@ -92,4 +91,6 @@ install(DIRECTORY config
   DESTINATION share/${PROJECT_NAME}
 )
 
+ament_export_include_directories(include)
+ament_export_libraries(${PROJECT_NAME}_comp)
 ament_package()

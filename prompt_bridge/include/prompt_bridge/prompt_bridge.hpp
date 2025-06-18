@@ -34,8 +34,8 @@ public:
  */
   PromptBridge(const rclcpp::NodeOptions& options = rclcpp::NodeOptions())
     : Node("prompt_bridge", options)
-    , prompt_provider_loader_("prompt_provider", "prompt::BaseClass")
-    , prompt_sentiment_loader_("prompt_huggingface", "prompt::BaseClass")
+    , prompt_provider_loader_("prompt_base", "prompt::BaseClass")
+    , prompt_sentiment_loader_("prompt_base", "prompt::BaseClass")
   {
     try
     {

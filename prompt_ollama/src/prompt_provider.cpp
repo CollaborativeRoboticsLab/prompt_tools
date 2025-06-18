@@ -1,6 +1,6 @@
+#include <prompt_base/base_class.hpp>
 #include <prompt_ollama/single_provider.hpp>
 #include <prompt_ollama/chat_provider.hpp>
-#include <prompt_base/base_class.hpp>
 #include <pluginlib/class_list_macros.hpp>
 
 // plugin

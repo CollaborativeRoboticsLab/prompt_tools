@@ -24,7 +24,7 @@ def generate_launch_description():
         name='prompt_bridge_container',
         namespace='',
         package='rclcpp_components',
-        executable='component_container',
+        executable='component_container_mt',
         output='screen',
         arguments=['--ros-args', '--log-level', 'info'],
         composable_node_descriptions=[

@@ -20,7 +20,7 @@ public:
    * @brief Construct a new Chat Prompt Provider Ollama object
    *
    */
-  ChatOllamaProvider() : PromptBaseClass()
+  ChatOllamaProvider()
   {
   }
 
