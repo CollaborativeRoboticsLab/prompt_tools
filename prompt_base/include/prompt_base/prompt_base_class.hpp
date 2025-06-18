@@ -9,28 +9,28 @@ namespace prompt
 {
 
 /**
- * @brief ProviderBaseClass
+ * @brief PromptBaseClass
  *
  * This is the base class for prompt providers that use REST APIs.
  * It provides a common interface for sending prompts and receiving responses.
  */
-class ProviderBaseClass : public RestBaseClass
+class PromptBaseClass : public RestBaseClass
 {
 public:
-  ProviderBaseClass() : RestBaseClass()
+  PromptBaseClass() : RestBaseClass()
   {
   }
 
   /**
-   * @brief Initialize the ProviderBaseClass
+   * @brief Initialize the PromptBaseClass
    *
-   * This method initializes the ProviderBaseClass with parameters from the ROS parameter server.
+   * This method initializes the PromptBaseClass with parameters from the ROS parameter server.
    *
    * @param node rclcpp::Node::SharedPtr ROS nodea word
    * @param plugin_name The name of the plugin to initialize.
    * @param api_key_name The name of the API key parameter (optional).
    */
-  virtual void initialize_provider_base(rclcpp::Node::SharedPtr node, std::string plugin_name = "ProviderBaseClass",
+  virtual void initialize_provider_base(rclcpp::Node::SharedPtr node, std::string plugin_name = "PromptBaseClass",
                                         std::string api_key_name = "")
   {
     // initialize base class

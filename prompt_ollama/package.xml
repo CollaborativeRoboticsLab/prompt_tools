@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>prompt_provider</name>
+  <name>prompt_ollama</name>
   <version>0.1.0</version>
   <description>
     This package provides a prompt provider plugin for different language models

@@ -9,15 +9,15 @@
     frame_id: prompt_bridge
     cached_transactions: 10
 
-    prompt_provider: prompt::ChatPromptProviderOpenAI
-    # prompt_provider: prompt::SinglePromptProviderOpenAI
-    # prompt_provider: prompt::ChatPromptProviderOllama
-    # prompt_provider: prompt::SinglePromptProviderOllama
+    prompt_provider: prompt::ChatOpenAIProvider
+    # prompt_provider: prompt::SingleOpenAIProvider
+    # prompt_provider: prompt::ChatOllamaProvider
+    # prompt_provider: prompt::SingleOllamaProvider
 
     prompt_transcriber: prompt::WhisperAPI
     prompt_sentiment_analyzer: prompt::SentimentAnalysis
 
-    ChatPromptProviderOpenAI:
+    ChatOpenAIProvider:
       rest:
         uri: https://api.openai.com/v1/chat/completions # openai endpoint for gpt models
         method: POST
@@ -33,7 +33,7 @@
           value: gpt-4o
           type: string
 
-    SinglePromptProviderOpenAI:
+    SingleOpenAIProvider:
       rest:
         uri: https://api.openai.com/v1/completions # openai endpoint for gpt models
         method: POST
@@ -49,7 +49,7 @@
           value: gpt-4o
           type: string
 
-    SinglePromptProviderOllama:
+    SingleOllamaProvider:
       rest:
         uri: http://10.0.0.246:11434/api/generate # crlab local ollama container
         # uri: http://ollama:11434/api/generate             # docker container with name 'ollama' running on the same computer
@@ -67,7 +67,7 @@
           value: llama3.2
           type: string
 
-    ChatPromptProviderOllama:
+    ChatOllamaProvider:
       rest:
         uri: http://10.0.0.246:11434/api/chat # crlab local ollama container
         # uri: http://ollama:11434/api/generate             # docker container with name 'ollama' running on the same computer
@@ -91,18 +91,4 @@
         method: POST
         auth_type: Bearer
         ssl_verify: true
-
-    WhisperAPI:
-
-      override_model_options: false
-      prompt_option_keys: [model, response_format]
-      prompt_options:
-        model:
-          value: gpt-4o-transcribe
-          # value: gpt-4o-mini-transcribe
-          # value: whisper-1
-          type: string
-        response_format:
-          value: json
-          type: string
         

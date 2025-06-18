@@ -1,40 +1,40 @@
 #pragma once
 
-#include <prompt_provider/provider_base_class.hpp>
+#include <prompt_base/prompt_base_class.hpp>
 
 namespace prompt
 {
 
 /**
- * @brief SinglePromptProviderOpenAI
+ * @brief SingleOpenAIProvider
  *
  * This is a prompt provider that uses a REST API to send and receive prompts
  * the typical rest api uses application/json content type so that is what is
  * supported
  *
  */
-class SinglePromptProviderOpenAI : public ProviderBaseClass
+class SingleOpenAIProvider : public PromptBaseClass
 {
 public:
   /**
    * @brief Construct a new Single Prompt Provider OpenAI object
    *
    */
-  SinglePromptProviderOpenAI() : ProviderBaseClass()
+  SingleOpenAIProvider() : PromptBaseClass()
   {
   }
 
   /**
-   * @brief Initialize the SinglePromptProviderOpenAI
+   * @brief Initialize the SingleOpenAIProvider
    *
-   * This method initializes the SinglePromptProviderOpenAI with parameters from the ROS parameter server.
+   * This method initializes the SingleOpenAIProvider with parameters from the ROS parameter server.
    *
    * @param node rclcpp::Node::SharedPtr ROS node
    */
   virtual void initialize(rclcpp::Node::SharedPtr node) override
   {
     // initialize base class
-    initialize_provider_base(node, "SinglePromptProviderOpenAI", "OPENAI_API_KEY");
+    initialize_provider_base(node, "SingleOpenAIProvider", "OPENAI_API_KEY");
   }
 
     /**
