@@ -35,7 +35,6 @@ public:
   PromptBridge(const rclcpp::NodeOptions& options = rclcpp::NodeOptions())
     : Node("prompt_bridge", options)
     , prompt_provider_loader_("prompt_provider", "prompt::BaseClass")
-    , prompt_transcriber_loader_("prompt_transcriber", "prompt::BaseClass")
     , prompt_sentiment_loader_("prompt_huggingface", "prompt::BaseClass")
   {
     try
@@ -62,13 +61,11 @@ public:
      * Declare parameters
      ************************************************************************/
     this->declare_parameter("use_prompt_provider", false);
-    this->declare_parameter("use_prompt_transcriber", false);
     this->declare_parameter("use_prompt_sentiment_analyzer", false);
     this->declare_parameter("frame_id", "agent");
     this->declare_parameter("cached_transactions", 10);
 
     use_prompt_provider_ = this->get_parameter("use_prompt_provider").as_bool();
-    use_prompt_transcriber_ = this->get_parameter("use_prompt_transcriber").as_bool();
     use_prompt_sentiment_analyzer_ = this->get_parameter("use_prompt_sentiment_analyzer").as_bool();
     frame_id_ = this->get_parameter("frame_id").as_string();
     transaction_limit_ = this->get_parameter("cached_transactions").as_int();
@@ -99,34 +96,6 @@ public:
     else
     {
       RCLCPP_INFO(this->get_logger(), "Not using prompt provider");
-    }
-
-    /*************************************************************************
-     * prompt transcribe plugin class loader and scheme pointer
-     ************************************************************************/
-
-    if (use_prompt_transcriber_)
-    {
-      RCLCPP_INFO(this->get_logger(), "Prompt transcriber is enabled");
-
-      this->declare_parameter("prompt_transcriber", "prompt::DefaultPromptTranscriber");
-      transcriber_name_ = this->get_parameter("prompt_transcriber").as_string();
-
-      if (transcriber_name_.empty())
-      {
-        RCLCPP_ERROR(this->get_logger(), "Prompt transcriber name is empty, use a valid transcriber name");
-        throw prompt::PromptException("Prompt transcriber name is empty, use a valid transcriber name");
-      }
-
-      RCLCPP_INFO(this->get_logger(), "Loading prompt transcriber plugin: '%s'", transcriber_name_.c_str());
-
-      prompt_transcriber_ = prompt_transcriber_loader_.createSharedInstance(transcriber_name_);
-      prompt_transcriber_->initialize(shared_from_this());
-      RCLCPP_INFO(this->get_logger(), "Prompt transcriber '%s' initialized", transcriber_name_.c_str());
-    }
-    else
-    {
-      RCLCPP_INFO(this->get_logger(), "Not using prompt transcriber");
     }
 
     /*************************************************************************
@@ -175,12 +144,6 @@ public:
 
     RCLCPP_INFO(this->get_logger(), "Prompt service created at 'prompt_bridge/prompt'");
 
-    transcribe_service_ = this->create_service<PromptSrv>(
-        "prompt_bridge/transcribe",
-        std::bind(&PromptBridge::transcribe_service_cb, this, std::placeholders::_1, std::placeholders::_2));
-
-    RCLCPP_INFO(this->get_logger(), "Transcribe service created at 'prompt_bridge/transcribe'");
-
     sentiment_service_ = this->create_service<PromptSrv>(
         "prompt_bridge/sentiment",
         std::bind(&PromptBridge::sentiment_service_cb, this, std::placeholders::_1, std::placeholders::_2));
@@ -226,41 +189,6 @@ public:
     {
       RCLCPP_ERROR_STREAM(this->get_logger(), "Prompt scheme failed to process prompt: " << e.what());
       throw prompt::PromptException("Prompt scheme failed to send prompt");
-    }
-
-    // set the response message
-    res->response = prompt::toMsg(result);
-
-    update_prompt_history(req->prompt, res->response, pre_send_time, this->now());
-  }
-
-  /**
-   * @brief transcribe service callback
-   *
-   * This function is called when a transcribe service request is received. It processes the transcribe request
-   * using the prompt transcriber, and sends the response back to the client.
-   *
-   * @param req the service request. contains a simple prompt and audio, which is processed by the transcriber
-   * @param res the service response. contains the processed transcribe response.
-   *
-   * @throws prompt::PromptException if the prompt transcriber fails to process the prompt
-   */
-  void transcribe_service_cb(const std::shared_ptr<PromptSrv::Request> req, std::shared_ptr<PromptSrv::Response> res)
-  {
-    // pre send time
-    auto pre_send_time = this->now();
-
-    prompt::PromptRequest input = prompt::fromMsg(req->prompt);
-    prompt::PromptResponse result;
-
-    try
-    {
-      result = prompt_transcriber_->sendPromptAudio(input);
-    }
-    catch (const prompt::PromptException& e)
-    {
-      RCLCPP_ERROR_STREAM(this->get_logger(), "Prompt transcriber failed to process prompt: " << e.what());
-      throw prompt::PromptException("Prompt transcriber failed to send prompt");
     }
 
     // set the response message
@@ -340,14 +268,12 @@ private:
 private:
   // ros params
   bool use_prompt_provider_;
-  bool use_prompt_transcriber_;
   bool use_prompt_sentiment_analyzer_;
 
   std::string frame_id_;            // frame id
   unsigned int transaction_limit_;  // number of transactions stored in history
 
   std::string provider_name_;
-  std::string transcriber_name_;
   std::string sentiment_name_;
 
   // prompt history
@@ -355,14 +281,10 @@ private:
 
   // loaders
   pluginlib::ClassLoader<prompt::BaseClass> prompt_provider_loader_;
-  pluginlib::ClassLoader<prompt::BaseClass> prompt_transcriber_loader_;
   pluginlib::ClassLoader<prompt::BaseClass> prompt_sentiment_loader_;
 
   // prompt provider
   std::shared_ptr<prompt::BaseClass> prompt_provider_;
-
-  // prompt scheme
-  std::shared_ptr<prompt::BaseClass> prompt_transcriber_;
 
   // prompt sentiment
   std::shared_ptr<prompt::BaseClass> prompt_sentiment_analyzer_;
@@ -372,7 +294,6 @@ private:
 
   // services
   rclcpp::Service<PromptSrv>::SharedPtr prompt_service_;
-  rclcpp::Service<PromptSrv>::SharedPtr transcribe_service_;
   rclcpp::Service<PromptSrv>::SharedPtr sentiment_service_;
 
   // actions

@@ -4,20 +4,5 @@ string prompt
 # whether to flush the prompt
 bool flush
 
-# whether the prompt contains a file
-bool contains_audio
-
-# the type of the file, e.g., "audio/wav"
-string file_type
-
-# the audio buffer if the prompt contains a file
-int16[] samples
-
-# the audio metadata
-int32 sample_rate
-int32 channels
-int32 chunk_size
-int32 chunk_count
-
 # the options for the prompt, which can include model options, temperature, etc.
 prompt_msgs/ModelOption[] options

@@ -24,13 +24,6 @@ namespace prompt
     {
         std::string prompt;
         bool flush;
-        bool contains_audio;
-        std::string file_type;
-        int sample_rate;
-        int channels;
-        int chunk_size;
-        int chunk_count;
-        std::vector<int16_t> samples;
         std::vector<PromptOption> options;
     };
 

@@ -1,8 +1,0 @@
-<library path="prompt_transcriber">
-  <class type="prompt::WhisperAPI" base_class_type="prompt::BaseClass">
-    <description>
-      A plugin that provides REST based pluging for audio transcription using OpenAI's Whisper API.
-      It uses the Whisper API to transcribe audio files into text.
-    </description>
-  </class>
-</library>

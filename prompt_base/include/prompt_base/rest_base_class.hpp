@@ -14,7 +14,6 @@
 #include <Poco/URI.h>
 
 #include <prompt_base/base_class.hpp>
-#include <prompt_base/utils/file_part_source.hpp>
 #include <prompt_msgs/msg/prompt.hpp>
 
 namespace prompt
@@ -29,10 +28,20 @@ namespace prompt
 class RestBaseClass : public BaseClass
 {
 public:
+  /**
+   * @brief Constructor
+   *
+   * Initializes the RestBaseClass with default values.
+   */
   RestBaseClass() : uri_("")
   {
   }
 
+  /**
+   * @brief Destructor
+   *
+   * Cleans up resources used by the RestBaseClass.
+   */
   virtual ~RestBaseClass() = default;
 
   /**
@@ -223,144 +232,6 @@ public:
     prompt::PromptResponse res = fromJson(object);
 
     return res;
-  }
-
-  /**
-   * @brief sendPrompt send a prompt to a prompt provider using REST
-   *
-   * Typical providers offer stream based responses which is also supported
-   *
-   * @param req
-   * @return const PromptResponse
-   */
-  virtual prompt::PromptResponse sendPromptAudio(const prompt::PromptRequest& req)
-  {
-    Poco::URI uri(uri_);
-
-    // Create HTTP(S) session
-    std::unique_ptr<Poco::Net::HTTPClientSession> session_ptr;
-
-    if (uri.getScheme() == "https")
-    {
-      Poco::Net::Context::Params params;
-      params.verificationMode = ssl_verify_ ? Poco::Net::Context::VERIFY_STRICT : Poco::Net::Context::VERIFY_NONE;
-      params.caLocation = "/etc/ssl/certs";
-
-      Poco::Net::Context::Ptr context = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, params);
-      session_ptr = std::make_unique<Poco::Net::HTTPSClientSession>(uri.getHost(), uri.getPort(), context);
-      RCLCPP_DEBUG(node_->get_logger(), "Secure session created");
-    }
-    else
-    {
-      session_ptr = std::make_unique<Poco::Net::HTTPClientSession>(uri.getHost(), uri.getPort());
-      RCLCPP_WARN(node_->get_logger(), "Insecure session created");
-    }
-
-    // Prepare request
-    Poco::Net::HTTPRequest request(method_, uri.getPathAndQuery(), Poco::Net::HTTPMessage::HTTP_1_1);
-
-    if (auth_type_ == "Bearer")
-      request.set("Authorization", "Bearer " + api_key_);
-    else
-      RCLCPP_WARN(node_->get_logger(), "Unsupported auth type: %s", auth_type_.c_str());
-
-    try
-    {
-      std::ostream& os = session_ptr->sendRequest(request);
-
-      if (req.contains_audio && !req.samples.empty())
-      {
-        // Use multipart form for audio buffer
-        Poco::Net::HTMLForm form;
-        form.setEncoding(Poco::Net::HTMLForm::ENCODING_MULTIPART);
-
-        // check for model option
-        bool is_model_set = false;
-        bool is_response_format_set = false;
-
-        for (const auto& opt : req.options)
-        {
-          if (opt.key != "is_memory_audio" && opt.key != "file_type")
-            form.set(opt.key, opt.value);
-
-          if (opt.key == "model")
-            is_model_set = true;
-
-          if (opt.key == "response_format")
-            is_response_format_set = true;
-        }
-
-        if (!is_model_set)
-        {
-          RCLCPP_WARN(node_->get_logger(), "Model option not set, using default model");
-          form.set("model", "gpt-4o-transcribe");
-        }
-
-        if (!is_response_format_set)
-        {
-          RCLCPP_WARN(node_->get_logger(), "Response format option not set, using default response format");
-          form.set("response_format", "json");
-        }
-
-        if (req.prompt.empty())
-        {
-          RCLCPP_WARN(node_->get_logger(), "Prompt is empty, using default prompt");
-          form.set("prompt", "Transcribe the audio");
-        }
-        else
-        {
-          form.set("prompt", req.prompt);
-        }
-
-        form.addPart("file", new FilePartSource(req.file_type, req.samples));
-        form.prepareSubmit(request);
-        form.write(os);
-      }
-      else
-      {
-        // Fall back to JSON
-        Poco::JSON::Object body_json = toJson(req);
-        std::ostringstream body_stream;
-        body_json.stringify(body_stream);
-
-        request.setContentType("application/json");
-        request.setContentLength(body_stream.str().size());
-        os << body_stream.str();
-      }
-    }
-    catch (const Poco::Exception& e)
-    {
-      RCLCPP_ERROR(node_->get_logger(), "Request error: %s", e.what());
-      throw prompt::PromptException("Request error: " + std::string(e.what()));
-    }
-
-    // Receive response
-    Poco::Net::HTTPResponse response;
-    std::istream& rs = session_ptr->receiveResponse(response);
-
-    if (response.getStatus() != Poco::Net::HTTPResponse::HTTP_OK)
-    {
-      RCLCPP_ERROR(node_->get_logger(), "HTTP Error: %i, %s", response.getStatus(), response.getReason().c_str());
-      throw prompt::PromptException("HTTP Error: " + std::to_string(response.getStatus()) + " " + response.getReason());
-    }
-
-    if (response.getContentType() == "text/event-stream" || response.getContentType() == "application/x-ndjson")
-    {
-      RCLCPP_ERROR(node_->get_logger(), "HTTP streaming not supported");
-      throw prompt::PromptException("HTTP stream not supported");
-    }
-
-    if (response.getChunkedTransferEncoding())
-    {
-      RCLCPP_ERROR(node_->get_logger(), "HTTP Chunked Transfer Encoding not supported");
-      throw prompt::PromptException("HTTP Chunked Transfer Encoding not supported");
-    }
-
-    Poco::JSON::Parser parser;
-    Poco::Dynamic::Var result = parser.parse(rs);
-    Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
-
-    return fromJson(object);
   }
 
   /**

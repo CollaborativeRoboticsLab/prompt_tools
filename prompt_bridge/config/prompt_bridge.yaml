@@ -93,17 +93,16 @@
         ssl_verify: true
 
     WhisperAPI:
-      rest:
-        uri: https://api.openai.com/v1/audio/transcriptions
-        method: POST
-        auth_type: Bearer
-        ssl_verify: true
-      override_model_options: true
-      prompt_option_keys: [model]
+
+      override_model_options: false
+      prompt_option_keys: [model, response_format]
       prompt_options:
         model:
           value: gpt-4o-transcribe
           # value: gpt-4o-mini-transcribe
           # value: whisper-1
+          type: string
+        response_format:
+          value: json
           type: string
         

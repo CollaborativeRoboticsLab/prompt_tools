@@ -19,13 +19,6 @@ static const prompt::PromptRequest fromMsg(const prompt_msgs::msg::Prompt& promp
 
   result.prompt = prompt.prompt;
   result.flush  = prompt.flush;
-  result.contains_audio = prompt.contains_audio;
-  result.file_type = prompt.file_type;
-  result.sample_rate = prompt.sample_rate;
-  result.channels = prompt.channels;
-  result.chunk_size = prompt.chunk_size;
-  result.chunk_count = prompt.chunk_count;
-  result.samples = prompt.samples;
 
   for (const auto& option : prompt.options)
   {
