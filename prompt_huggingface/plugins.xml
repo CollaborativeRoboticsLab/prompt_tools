@@ -1,8 +1,0 @@
-<library path="prompt_huggingface">
-  <class type="prompt::SentimentAnalysis" base_class_type="prompt::BaseClass">
-    <description>
-      A plugin that provides REST based pluging for sentiment analysis using Hugging Face models.
-      It uses the Hugging Face Inference API to perform sentiment analysis on text inputs.
-    </description>
-  </class>
-</library>

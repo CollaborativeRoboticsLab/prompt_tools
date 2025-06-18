@@ -35,7 +35,6 @@ public:
   PromptBridge(const rclcpp::NodeOptions& options = rclcpp::NodeOptions())
     : Node("prompt_bridge", options)
     , prompt_provider_loader_("prompt_base", "prompt::BaseClass")
-    , prompt_sentiment_loader_("prompt_base", "prompt::BaseClass")
   {
     try
     {
@@ -61,12 +60,10 @@ public:
      * Declare parameters
      ************************************************************************/
     this->declare_parameter("use_prompt_provider", false);
-    this->declare_parameter("use_prompt_sentiment_analyzer", false);
     this->declare_parameter("frame_id", "agent");
     this->declare_parameter("cached_transactions", 10);
 
     use_prompt_provider_ = this->get_parameter("use_prompt_provider").as_bool();
-    use_prompt_sentiment_analyzer_ = this->get_parameter("use_prompt_sentiment_analyzer").as_bool();
     frame_id_ = this->get_parameter("frame_id").as_string();
     transaction_limit_ = this->get_parameter("cached_transactions").as_int();
 
@@ -99,34 +96,6 @@ public:
     }
 
     /*************************************************************************
-     * prompt sentiment analyzer plugin class loader and scheme pointer
-     ************************************************************************/
-
-    if (use_prompt_sentiment_analyzer_)
-    {
-      RCLCPP_INFO(this->get_logger(), "Prompt sentiment analyzer is enabled");
-
-      this->declare_parameter("prompt_sentiment_analyzer", "prompt::DefaultSentimentAnalyzer");
-      sentiment_name_ = this->get_parameter("prompt_sentiment_analyzer").as_string();
-
-      if (sentiment_name_.empty())
-      {
-        RCLCPP_ERROR(this->get_logger(), "Prompt sentiment analyzer name is empty, use a valid analyzer name");
-        throw prompt::PromptException("Prompt sentiment analyzer name is empty, use a valid analyzer name");
-      }
-
-      RCLCPP_INFO(this->get_logger(), "Loading prompt sentiment analyzer plugin: '%s'", sentiment_name_.c_str());
-
-      prompt_sentiment_analyzer_ = prompt_sentiment_loader_.createSharedInstance(sentiment_name_);
-      prompt_sentiment_analyzer_->initialize(shared_from_this());
-      RCLCPP_INFO(this->get_logger(), "Prompt sentiment analyzer '%s' initialized", sentiment_name_.c_str());
-    }
-    else
-    {
-      RCLCPP_INFO(this->get_logger(), "Not using prompt sentiment analyzer");
-    }
-
-    /*************************************************************************
      * prompt service and history ros interfaces
      ************************************************************************/
 
@@ -143,12 +112,6 @@ public:
         std::bind(&PromptBridge::prompt_service_cb, this, std::placeholders::_1, std::placeholders::_2));
 
     RCLCPP_INFO(this->get_logger(), "Prompt service created at 'prompt_bridge/prompt'");
-
-    sentiment_service_ = this->create_service<PromptSrv>(
-        "prompt_bridge/sentiment",
-        std::bind(&PromptBridge::sentiment_service_cb, this, std::placeholders::_1, std::placeholders::_2));
-
-    RCLCPP_INFO(this->get_logger(), "Sentiment service created at 'prompt_bridge/sentiment'");
 
     // prompt action server
     // TODO: add support for streaming (prompt action server)
@@ -197,41 +160,6 @@ public:
     update_prompt_history(req->prompt, res->response, pre_send_time, this->now());
   }
 
-  /**
-   * @brief sentiment service callback
-   *
-   * This function is called when a sentiment service request is received. It processes the sentiment request
-   * using the prompt sentiment analyzer, and sends the response back to the client.
-   *
-   * @param req the service request. contains a simple prompt, which is processed by the sentiment analyzer
-   * @param res the service response. contains the processed sentiment response.
-   *
-   * @throws prompt::PromptException if the prompt sentiment analyzer fails to process the prompt
-   */
-  void sentiment_service_cb(const std::shared_ptr<PromptSrv::Request> req, std::shared_ptr<PromptSrv::Response> res)
-  {
-    // pre send time
-    auto pre_send_time = this->now();
-
-    prompt::PromptRequest input = prompt::fromMsg(req->prompt);
-    prompt::PromptResponse result;
-
-    try
-    {
-      result = prompt_sentiment_analyzer_->sendPrompt(input);
-    }
-    catch (const prompt::PromptException& e)
-    {
-      RCLCPP_ERROR_STREAM(this->get_logger(), "Prompt sentiment analyzer failed to process prompt: " << e.what());
-      throw prompt::PromptException("Prompt sentiment analyzer failed to send prompt");
-    }
-
-    // set the response message
-    res->response = prompt::toMsg(result);
-
-    update_prompt_history(req->prompt, res->response, pre_send_time, this->now());
-  }
-
 private:
   // history pub timer callback
   void history_timer()
@@ -268,33 +196,26 @@ private:
 private:
   // ros params
   bool use_prompt_provider_;
-  bool use_prompt_sentiment_analyzer_;
 
   std::string frame_id_;            // frame id
   unsigned int transaction_limit_;  // number of transactions stored in history
 
   std::string provider_name_;
-  std::string sentiment_name_;
 
   // prompt history
   prompt_msgs::msg::PromptHistory prompt_history_;
 
   // loaders
   pluginlib::ClassLoader<prompt::BaseClass> prompt_provider_loader_;
-  pluginlib::ClassLoader<prompt::BaseClass> prompt_sentiment_loader_;
 
   // prompt provider
   std::shared_ptr<prompt::BaseClass> prompt_provider_;
-
-  // prompt sentiment
-  std::shared_ptr<prompt::BaseClass> prompt_sentiment_analyzer_;
 
   // pubs
   rclcpp::Publisher<prompt_msgs::msg::PromptHistory>::SharedPtr prompt_history_pub_;
 
   // services
   rclcpp::Service<PromptSrv>::SharedPtr prompt_service_;
-  rclcpp::Service<PromptSrv>::SharedPtr sentiment_service_;
 
   // actions
   // rclcpp_action::Client<prompt_msgs::action::Prompt>::SharedPtr prompt_action_client_;
