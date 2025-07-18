@@ -75,7 +75,7 @@ protected:
 
     return result;
   }
-  
+
   /**
    * @brief Convert a JSON object to a prompt response
    *
@@ -129,7 +129,25 @@ protected:
     {
       if ((it->first != "choices") && (it->first != "usage"))
       {
-        res.options.push_back(prompt::PromptOption{ it->first, it->second.convert<std::string>(), "" });
+        try
+        {
+          if (!it->second.isEmpty() && it->second.isString())
+          {
+            res.options.push_back(prompt::PromptOption{ it->first, it->second.convert<std::string>(), "" });
+          }
+          else if (!it->second.isEmpty())
+          {
+            res.options.push_back(prompt::PromptOption{ it->first, it->second.toString(), "" });
+          }
+          else
+          {
+            res.options.push_back(prompt::PromptOption{ it->first, "[null]", "" });
+          }
+        }
+        catch (const Poco::Exception& ex)
+        {
+          RCLCPP_WARN(node_->get_logger(), "Failed to convert JSON key '%s': %s", it->first.c_str(), ex.what());
+        }
       }
     }
 
