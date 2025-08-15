@@ -22,4 +22,8 @@
   <exec_depend>prompt_base</exec_depend>
   <exec_depend>prompt_huggingface</exec_depend>
   <exec_depend>prompt_transcriber</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
 </package>
