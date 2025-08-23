@@ -89,7 +89,6 @@ protected:
   {
     std::ostringstream jsonStream;
     object->stringify(jsonStream);
-    RCLCPP_INFO(node_->get_logger(), "Poco JSON Object: %s", jsonStream.str().c_str());
 
     // TODO: create custom parsers for specific options from different apis
     // res.success = object->get("success").convert<bool>();
