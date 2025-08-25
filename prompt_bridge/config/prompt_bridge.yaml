@@ -27,7 +27,9 @@
           value: false
           type: bool
         model:
-          value: gpt-4o
+        #   value: gpt-4o
+        #   value: gpt-4.1
+          value: gpt-5
           type: string
 
     SingleOpenAIProvider:
@@ -43,7 +45,9 @@
           value: false
           type: bool
         model:
-          value: gpt-4o
+        #   value: gpt-4o
+        #   value: gpt-4.1
+          value: gpt-5
           type: string
 
     SingleOllamaProvider:
