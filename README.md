@@ -84,17 +84,3 @@ ros2 launch prompt_bridge prompt_bridge.launch.py
 source install/setup.bash
 ros2 launch prompt_planner prompt_planner.launch.py
 ```
-
-## Citation
-
-If you use this work in an academic context, please cite the following publication(s):
-
-```bibtex
-@inproceedings{,
-  title={A Framework for Integrating Large Language Models in Distributed Robotic Applications},
-  author={},
-  booktitle={},
-  pages={},
-  year={2023}
-}
-```
