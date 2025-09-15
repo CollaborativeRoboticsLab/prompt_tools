@@ -52,7 +52,7 @@
 
     SingleOllamaProvider:
       rest:
-        uri: http://10.0.0.246:11434/api/generate # crlab local ollama container
+        uri: http://10.0.0.246:11434/api/generate # local ollama container
         # uri: http://ollama:11434/api/generate             # docker container with name 'ollama' running on the same computer
         # uri: http://ollama:11434/v1/completions           # docker container with name 'ollama' and openai api compat version
         method: POST
@@ -70,7 +70,7 @@
 
     ChatOllamaProvider:
       rest:
-        uri: http://10.0.0.246:11434/api/chat # crlab local ollama container
+        uri: http://10.0.0.246:11434/api/chat # local ollama container
         # uri: http://ollama:11434/api/generate             # docker container with name 'ollama' running on the same computer
         # uri: http://ollama:11434/v1/completions           # docker container with name 'ollama' and openai api compat version
         method: POST
@@ -85,5 +85,3 @@
         model:
           value: llama3.2
           type: string
-
-        

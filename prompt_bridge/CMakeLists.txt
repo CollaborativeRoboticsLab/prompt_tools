@@ -16,7 +16,6 @@ find_package(rclcpp_action REQUIRED)
 find_package(pluginlib REQUIRED)
 find_package(prompt_msgs REQUIRED)
 find_package(prompt_base REQUIRED)
-find_package(backward_ros REQUIRED)
 
 include_directories(
   include
