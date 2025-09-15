@@ -8,11 +8,9 @@
 
 ROS2 meta-package with tools for working with prompted systems such as large language models and their responses in a distributed data driven robotic system application (ROS) including generic ROS message types for LLM prompts.
 
-If using a local LLM model, use [CollaborativeRoboticsLab/ollama-docker](https://github.com/CollaborativeRoboticsLab/ollama-docker) to startup docker based local system
+This package contains one main component;
 
-This package contain two main components as,
-- [prompt_bridge](./prompt_bridge/readme.md) 
-- prompt_planner (experimental)
+- [prompt_bridge](./prompt_bridge/readme.md)
 
 ### Entities
 
@@ -62,9 +60,11 @@ If not connecting to a Online API, a local LLM running on docker can be used. Se
 ### Using OpenAI api
 
 Run the following command with the actual `OPENAI_API_KEY` in place of `<open-ai-api-key>`
+
 ```bash
 export PROMPT_PROVIDER_API_KEY="<open-ai-api-key>"
 ```
+
 and then update the config file with the correct api endpoints and model names and run,
 
 ```bash
@@ -76,11 +76,4 @@ colcon build
 ```bash
 source install/setup.bash
 ros2 launch prompt_bridge prompt_bridge.launch.py
-```
-
-### Start the Prompt Planner
-
-```bash
-source install/setup.bash
-ros2 launch prompt_planner prompt_planner.launch.py
 ```

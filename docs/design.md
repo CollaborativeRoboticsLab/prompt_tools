@@ -1,6 +1,6 @@
-# Design
+# Design V1
 
-The prompt tools are designed to leverage the resource model design of a ROS system to provide a distributed data interface designed for model prompts and robots. The tools are intended to be used predominantly with large language models (LLMs) and their responses translated into native ROS data types.
+The prompt tools leverage the ROS resource model design to provide a distributed data interface for model prompts and robots. The tools are intended to be used predominantly with large language models (LLMs) and their responses translated into native ROS data types.
 
 A ROS system is a distributed system of nodes that communicate with each other using messages, services, and actions. These data types are defined in ROS message packages. The ROS data types are more structured than the data types used by LLMs. These tools provide a more structured prompt and response system for LLMs which can be interpreted by subsystems in a ROS network, and used to perform robotic tasks.
 
@@ -8,11 +8,11 @@ Typical robotic tasks include navigation, manipulation, and perception. These ta
 
 The advantage of using the prompt tools is that the LLM can be used to perform robotic tasks without having to be trained on the specific robotic tasks, or the specific robot. The LLM can be trained on a large corpus of data, and then used to perform robotic tasks by translating the LLM's prompts and responses into ROS data types that can be distributed to the relevant control system and commission a series of robotic actions or behaviours.
 
-The prompt tools are designed to be used with a ROS system that has a resource model. The resource model is a model of the resources available to the ROS system. The resource model is used to determine which subsystems are available to perform robotic tasks.
+The prompt tools are designed to be used with a ROS system that has a subsystem resource model. The subsystem resource model is a semantic representation of the resources available in the ROS system. The model is used to determine which subsystems should be used to perform robotic tasks.
 
-## Capability Model as a Resource Model
+## Capabilities
 
-The resource model used in this approach is a capability model. The capability model is a model of the capabilities of the ROS system. The capabilities are defined by the subsystems in the ROS system. Capabilities can be registered and deregistered by the subsystems for translating to prompts and responses. The capabilities are used to determine which subsystems are available to perform robotic tasks.
+One particular example of a subsystem resource model is a capability. Capabilities represent higher level robot skills or behaviours present in a robot. A capability may be composed of multiple actions, services, and topics.
 
 ## Translation
 

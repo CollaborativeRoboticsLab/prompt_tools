@@ -7,7 +7,7 @@
   <maintainer email="michael.pritchard@canberra.edu.au">Michael Pritchard</maintainer>
   <maintainer email="mppritchard3@hotmail.com">mik-p</maintainer>
   <maintainer email="kalana.ratnayakemudiyanselage@canberra.edu.au">Kalana Ratnayake</maintainer>
-  
+
   <author email="thomas.muller-dardelin@canberra.edu.au">Thomas Muller-Dardelin</author>
   <author email="michael.pritchard@canberra.edu.au">Michael Pritchard</author>
 
@@ -20,8 +20,6 @@
   <exec_depend>prompt_openai</exec_depend>
   <exec_depend>prompt_ollama</exec_depend>
   <exec_depend>prompt_base</exec_depend>
-  <exec_depend>prompt_huggingface</exec_depend>
-  <exec_depend>prompt_transcriber</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
