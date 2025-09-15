@@ -1,0 +1,12 @@
+<library path="prompt_ollama">
+  <class type="prompt::SingleOllamaProvider" base_class_type="prompt::BaseClass">
+    <description>
+      A plugin that provides REST based single prompt provider for /api/generate api endpoint of Ollama
+    </description>
+  </class>
+  <class type="prompt::ChatOllamaProvider" base_class_type="prompt::BaseClass">
+    <description>
+      A plugin that provides REST based chat prompt provider for /api/chat api endpoint of ollama
+    </description>
+  </class>
+</library>

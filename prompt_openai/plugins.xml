@@ -1,0 +1,12 @@
+<library path="prompt_openai">
+  <class type="prompt::SingleOpenAIProvider" base_class_type="prompt::BaseClass">
+    <description>
+      A plugin that provides REST based single prompt provider for /v1/completions api endpoint of OpenAI
+    </description>
+  </class>
+  <class type="prompt::ChatOpenAIProvider" base_class_type="prompt::BaseClass">
+    <description>
+      A plugin that provides REST based chat prompt provider for /v1/chat/completions api endpoint of OpenAI
+    </description>
+  </class>
+</library>

@@ -1,16 +1,15 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>prompt_bridge</name>
+  <name>prompt_ollama</name>
   <version>0.1.0</version>
   <description>
-    This package provides a prompt bridge service prompts from large models
+    This package provides a prompt provider plugin for different language models
   </description>
 
   <maintainer email="michael.pritchard@canberra.edu.au">Michael Pritchard</maintainer>
-  <maintainer email="mppritchard3@hotmail.com">mik-p</maintainer>
   <maintainer email="kalana.ratnayakemudiyanselage@canberra.edu.au">Kalana Ratnayake</maintainer>
+  <maintainer email="mppritchard3@hotmail.com">mik-p</maintainer>
 
-  <author email="thomas.muller-dardelin@canberra.edu.au">Thomas Muller-Dardelin</author>
   <author email="michael.pritchard@canberra.edu.au">Michael Pritchard</author>
 
   <license>MIT</license>
@@ -18,13 +17,11 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
-  <depend>rclcpp_components</depend>
-  <depend>rclcpp_action</depend>
   <depend>pluginlib</depend>
   <depend>prompt_msgs</depend>
-  <depend>prompt_base</depend>]
+  <depend>prompt_base</depend>
 
-  <exec_depend>launch_ros</exec_depend>
+  <depend>libpoco-dev</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

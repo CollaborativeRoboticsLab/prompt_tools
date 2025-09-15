@@ -1,46 +1,25 @@
 # config for prompt_bridge
 /**:
   ros__parameters:
-    loop_rate: 10.0
+    # general config
+    use_prompt_provider: true
+
     frame_id: prompt_bridge
     cached_transactions: 10
-    offer_service: true
-    use_scheme: true
-    prompt_provider: prompt_provider::rest::ChatPromptProviderOpenAI
-    prompt_scheme: prompt_scheme::BufferScheme
 
-    # provider config
-    rest:
-      SinglePromptProviderOllama:
-        uri: http://10.0.0.246:11434/api/generate         # crlab local ollama container
-        # uri: http://ollama:11434/api/generate             # docker container with name 'ollama' running on the same computer
-        # uri: http://ollama:11434/v1/completions           # docker container with name 'ollama' and openai api compat version
-        method: POST
-        auth_type: Bearer
-        ssl_verify: false
+    prompt_provider: prompt::ChatOpenAIProvider
+    # prompt_provider: prompt::SingleOpenAIProvider
+    # prompt_provider: prompt::ChatOllamaProvider
+    # prompt_provider: prompt::SingleOllamaProvider
 
-      SinglePromptProviderOpenAI:
-        uri: https://api.openai.com/v1/completions          # openai endpoint for gpt models
+    prompt_sentiment_analyzer: prompt::SentimentAnalysis
+
+    ChatOpenAIProvider:
+      rest:
+        uri: https://api.openai.com/v1/chat/completions # openai endpoint for gpt models
         method: POST
         auth_type: Bearer
         ssl_verify: true
-
-      ChatPromptProviderOllama:
-        uri: http://10.0.0.246:11434/api/chat             # crlab local ollama container
-        # uri: http://ollama:11434/api/generate             # docker container with name 'ollama' running on the same computer
-        # uri: http://ollama:11434/v1/completions           # docker container with name 'ollama' and openai api compat version
-        method: POST
-        auth_type: Bearer
-        ssl_verify: false
-
-      ChatPromptProviderOpenAI:
-        uri: https://api.openai.com/v1/chat/completions     # openai endpoint for gpt models
-        method: POST
-        auth_type: Bearer
-        ssl_verify: true
-
-    # scheme config
-    BufferScheme:
       override_model_options: true
       prompt_option_keys: [stream, model]
       prompt_options:
@@ -48,5 +27,63 @@
           value: false
           type: bool
         model:
-          # value: llama3.2
-          value: gpt-4o
+        #   value: gpt-4o
+        #   value: gpt-4.1
+          value: gpt-5
+          type: string
+
+    SingleOpenAIProvider:
+      rest:
+        uri: https://api.openai.com/v1/completions # openai endpoint for gpt models
+        method: POST
+        auth_type: Bearer
+        ssl_verify: true
+      override_model_options: true
+      prompt_option_keys: [stream, model]
+      prompt_options:
+        stream:
+          value: false
+          type: bool
+        model:
+        #   value: gpt-4o
+        #   value: gpt-4.1
+          value: gpt-5
+          type: string
+
+    SingleOllamaProvider:
+      rest:
+        uri: http://10.0.0.246:11434/api/generate # crlab local ollama container
+        # uri: http://ollama:11434/api/generate             # docker container with name 'ollama' running on the same computer
+        # uri: http://ollama:11434/v1/completions           # docker container with name 'ollama' and openai api compat version
+        method: POST
+        auth_type: Bearer
+        ssl_verify: false
+      override_model_options: true
+      prompt_option_keys: [stream, model]
+      prompt_options:
+        stream:
+          value: false
+          type: bool
+        model:
+          value: llama3.2
+          type: string
+
+    ChatOllamaProvider:
+      rest:
+        uri: http://10.0.0.246:11434/api/chat # crlab local ollama container
+        # uri: http://ollama:11434/api/generate             # docker container with name 'ollama' running on the same computer
+        # uri: http://ollama:11434/v1/completions           # docker container with name 'ollama' and openai api compat version
+        method: POST
+        auth_type: Bearer
+        ssl_verify: false
+      override_model_options: true
+      prompt_option_keys: [stream, model]
+      prompt_options:
+        stream:
+          value: false
+          type: bool
+        model:
+          value: llama3.2
+          type: string
+
+        
