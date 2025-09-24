@@ -12,24 +12,18 @@ This package contains one main component;
 
 - [prompt_bridge](./prompt_bridge/readme.md)
 
-### Entities
+And provide interfaces for follwoing providers via following plugins
 
-| Entity | Package | Description |
-| --- | --- | --- |
-| [Providers](./prompt_provider/readme.md) | prompt_provider | The interface that connects bridge with the LLM. Implemented as a plugin |
-| [Schemes](./prompt_scheme/readme.md) | prompt_scheme | Additional rule-sets to augments the prompts |
+| Provider | Plugin |
+| --- | --- |
+| OpenAI | [prompt_openai](./prompt_openai/readme.md)  |
+| Ollama | [prompt_ollama](./prompt_ollama/readme.md)  |
 
 ## Prompt Bridge
 
-The main system that connects ROS2 data and a LLM. Utilizes Provider plugins for connection interfaces.
+The main system that connects ROS2 data and a LLM. Utilizes plugins for connection interfaces.
 
-![system structure](./docs/images/bridge-structure.png)
-
-## Prompt Planner (experimental)
-
-The system that connects ROS2 data and a LLM. Utilizes Schemes to introduce additional rulesets to augment the prompts and responses. Also utilizes Provider plugins for connection interfaces.
-
-![system structure](./docs/images/planner-structure.png)
+![system structure](./docs/images/plugin-structure.png)
 
 ## Install
 
@@ -39,7 +33,7 @@ Clone the prompt tools package.
 
 ```bash
 cd src
-git clone https://github.com/CollaborativeRoboticsLab/prompt_tools.git -b develop
+git clone https://github.com/CollaborativeRoboticsLab/prompt_tools.git
 ```
 
 ### Dependency Installation

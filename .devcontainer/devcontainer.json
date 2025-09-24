@@ -1,5 +1,5 @@
 {
-  "name": "prompt_tools in jazzy base",
+  "name": "prompt_tools in humble base",
   "dockerFile": "Dockerfile",
   "remoteUser": "ubuntu",
   "containerEnv": {

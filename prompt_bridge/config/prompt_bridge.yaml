@@ -11,9 +11,7 @@
     # prompt_provider: prompt::SingleOpenAIProvider
     # prompt_provider: prompt::ChatOllamaProvider
     # prompt_provider: prompt::SingleOllamaProvider
-
-    prompt_sentiment_analyzer: prompt::SentimentAnalysis
-
+    
     ChatOpenAIProvider:
       rest:
         uri: https://api.openai.com/v1/chat/completions # openai endpoint for gpt models
