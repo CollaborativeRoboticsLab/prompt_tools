@@ -13,5 +13,13 @@
   "workspaceFolder": "/home/ubuntu/colcon_ws",
   "mounts": [
     "source=${localEnv:HOME}${localEnv:USERPROFILE}/.bash_history,target=/home/ubuntu/.bash_history,type=bind"
-  ]
+  ],
+  "customizations": {
+    "vscode": {
+        "extensions": [
+            "ms-vscode.cpptools",
+            "ms-vscode.cmake-tools"
+        ]
+    }
+  }
 }
