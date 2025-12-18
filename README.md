@@ -56,7 +56,7 @@ If not connecting to a Online API, a local LLM running on docker can be used. Se
 Run the following command with the actual `OPENAI_API_KEY` in place of `<open-ai-api-key>`
 
 ```bash
-export PROMPT_PROVIDER_API_KEY="<open-ai-api-key>"
+export OPENAI_API_KEY="<open-ai-api-key>"
 ```
 
 and then update the config file with the correct api endpoints and model names and run,
@@ -65,9 +65,14 @@ and then update the config file with the correct api endpoints and model names a
 colcon build
 ```
 
+### Using the devcontainer
+
+Rename the `.devcontainer/devcontainer-empty.env` as `.devcontainer/devcontainer.env` and update it with your API Keys. Then rebuild the container
+
 ### Start the Prompt Bridge
 
 ```bash
 source install/setup.bash
 ros2 launch prompt_bridge prompt_bridge.launch.py
 ```
+

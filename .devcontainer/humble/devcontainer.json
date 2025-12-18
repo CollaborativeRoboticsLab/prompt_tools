@@ -7,7 +7,9 @@
   },
   "runArgs": [
     "--privileged",
-    "--network=host"
+    "--network=host",
+    "--env-file",
+    "${localWorkspaceFolder}/.devcontainer/devcontainer.env"
   ],
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/ubuntu/colcon_ws/src/${localWorkspaceFolderBasename},type=bind",
   "workspaceFolder": "/home/ubuntu/colcon_ws",
