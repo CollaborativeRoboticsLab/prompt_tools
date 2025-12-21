@@ -27,13 +27,14 @@ class PromptBridge : public rclcpp::Node
   using PromptSrv = prompt_msgs::srv::Prompt;
 
 public:
-  /**
-   * @brief Construct a new Prompt Bridge object
-   *
-   * @param options Node options for the PromptBridge node
-   */
+/**
+ * @brief Construct a new Prompt Bridge object
+ * 
+ * @param options Node options for the PromptBridge node
+ */
   PromptBridge(const rclcpp::NodeOptions& options = rclcpp::NodeOptions())
-    : Node("prompt_bridge", options), prompt_provider_loader_("prompt_bridge", "prompt::BaseClass")
+    : Node("prompt_bridge", options)
+    , prompt_provider_loader_("prompt_bridge", "prompt::BaseClass")
   {
     try
     {
@@ -62,6 +63,7 @@ public:
     this->declare_parameter("frame_id", "agent");
     this->declare_parameter("cached_transactions", 10);
 
+    use_prompt_provider_ = this->get_parameter("use_prompt_provider").as_bool();
     frame_id_ = this->get_parameter("frame_id").as_string();
     transaction_limit_ = this->get_parameter("cached_transactions").as_int();
 
@@ -69,45 +71,55 @@ public:
      * prompt provider plugin class loader and provider pointer
      ************************************************************************/
 
-    this->declare_parameter("prompt_provider", "prompt::DefaultPromptProvider");
-    provider_name_ = this->get_parameter("prompt_provider").as_string();
-
-    if (provider_name_.empty())
+    if (use_prompt_provider_)
     {
-      RCLCPP_ERROR(this->get_logger(), "Prompt provider name is empty, use avalid provider name");
-      throw prompt::PromptException("Prompt provider name is empty, use avalid provider name");
+      RCLCPP_INFO(this->get_logger(), "Prompt provider is enabled");
+
+      this->declare_parameter("prompt_provider", "prompt::DefaultPromptProvider");
+      provider_name_ = this->get_parameter("prompt_provider").as_string();
+
+      if (provider_name_.empty())
+      {
+        RCLCPP_ERROR(this->get_logger(), "Prompt provider name is empty, use avalid provider name");
+        throw prompt::PromptException("Prompt provider name is empty, use avalid provider name");
+      }
+
+      RCLCPP_INFO(this->get_logger(), "Loading prompt provider plugin: '%s'", provider_name_.c_str());
+
+      prompt_provider_ = prompt_provider_loader_.createSharedInstance(provider_name_);
+      prompt_provider_->initialize(shared_from_this());
+      RCLCPP_INFO(this->get_logger(), "Prompt provider '%s' initialized", provider_name_.c_str());
     }
     else
     {
-      RCLCPP_INFO(this->get_logger(), "Loading prompt provider plugin: '%s'", provider_name_.c_str());
+      RCLCPP_INFO(this->get_logger(), "Not using prompt provider");
     }
-
-    main_prompt_provider_ = prompt_provider_loader_.createSharedInstance(provider_name_);
-    main_prompt_provider_->initialize(shared_from_this());
-    RCLCPP_INFO(this->get_logger(), "Prompt provider '%s' initialized", provider_name_.c_str());
 
     /*************************************************************************
      * prompt service and history ros interfaces
      ************************************************************************/
 
     // history publisher
-    prompt_history_pub_ = this->create_publisher<prompt_msgs::msg::PromptHistory>("prompt/history", 1);
+    prompt_history_pub_ = this->create_publisher<prompt_msgs::msg::PromptHistory>("/history/prompt_bridge", 1);
 
     // history publisher timer
     history_pub_timer_ =
         this->create_wall_timer(std::chrono::duration<double>(1.0), std::bind(&PromptBridge::history_timer, this));
 
     // prompt service interface
-    prompt_service_ =
-        this->create_service<PromptSrv>("prompt/prompt", std::bind(&PromptBridge::prompt_service_cb, this,
-                                                                   std::placeholders::_1, std::placeholders::_2));
+    prompt_service_ = this->create_service<PromptSrv>(
+        "prompt_bridge/prompt",
+        std::bind(&PromptBridge::prompt_service_cb, this, std::placeholders::_1, std::placeholders::_2));
 
-    instance_prompt_service_ =
-        this->create_service<PromptSrv>("prompt/concurrent", std::bind(&PromptBridge::prompt_concurrent_cb, this,
-                                                                     std::placeholders::_1, std::placeholders::_2));
+    RCLCPP_INFO(this->get_logger(), "Prompt service created at 'prompt_bridge/prompt'");
 
-    RCLCPP_INFO(this->get_logger(), "Prompt service created at 'prompt/prompt'");
-    RCLCPP_INFO(this->get_logger(), "Concurrent prompt service created at 'prompt/concurrent'");
+    // prompt action server
+    // TODO: add support for streaming (prompt action server)
+    // this->prompt_action_server_ = rclcpp_action::create_server<prompt_msgs::action::Prompt>(
+    //     this, "~/prompt", std::bind(&PromptBridge::handle_goal, this, std::placeholders::_1,
+    //     std::placeholders::_2), std::bind(&PromptBridge::handle_cancel, this, std::placeholders::_1),
+    //     std::bind(&PromptBridge::handle_accepted, this, std::placeholders::_1));
+
     RCLCPP_INFO(this->get_logger(), "PromptBridge initialized");
   }
 
@@ -126,47 +138,6 @@ public:
    */
   void prompt_service_cb(const std::shared_ptr<PromptSrv::Request> req, std::shared_ptr<PromptSrv::Response> res)
   {
-    // pre send time
-    auto pre_send_time = this->now();
-
-    prompt::PromptRequest input = prompt::fromMsg(req->prompt);
-    prompt::PromptResponse result;
-
-    try
-    {
-      result = main_prompt_provider_->sendPrompt(input);
-    }
-    catch (const prompt::PromptException& e)
-    {
-      RCLCPP_ERROR_STREAM(this->get_logger(), "Prompt scheme failed to process prompt: " << e.what());
-      throw prompt::PromptException("Prompt scheme failed to send prompt");
-    }
-
-    // set the response message
-    res->response = prompt::toMsg(result);
-
-    update_prompt_history(req->prompt, res->response, pre_send_time, this->now());
-  }
-
-  /**
-   * @brief prompt service callback for instance prompts
-   *
-   * This function is called when a prompt service request is received. It processes the prompt request with a new
-   * instance of the prompt provider and allows for concurrent prompt handling. It processes the prompt request
-   * using the prompt provider, and sends the response back to the client.
-   *
-   * @param req the prompt service request. contains a prompt message, which is processed by the prompt provider
-   * @param res the prompt service response. contains the processed prompt response.
-   *
-   * @throws prompt::PromptException if the prompt provider fails to process the prompt
-   */
-  void prompt_concurrent_cb(const std::shared_ptr<PromptSrv::Request> req, std::shared_ptr<PromptSrv::Response> res)
-  {
-    // prompt provider
-    std::shared_ptr<prompt::BaseClass> prompt_provider_;
-    prompt_provider_ = prompt_provider_loader_.createSharedInstance(provider_name_);
-    prompt_provider_->initialize(shared_from_this());
-
     // pre send time
     auto pre_send_time = this->now();
 
@@ -223,6 +194,9 @@ private:
   }
 
 private:
+  // ros params
+  bool use_prompt_provider_;
+
   std::string frame_id_;            // frame id
   unsigned int transaction_limit_;  // number of transactions stored in history
 
@@ -235,13 +209,17 @@ private:
   pluginlib::ClassLoader<prompt::BaseClass> prompt_provider_loader_;
 
   // prompt provider
-  std::shared_ptr<prompt::BaseClass> main_prompt_provider_;
+  std::shared_ptr<prompt::BaseClass> prompt_provider_;
 
   // pubs
   rclcpp::Publisher<prompt_msgs::msg::PromptHistory>::SharedPtr prompt_history_pub_;
 
   // services
-  rclcpp::Service<PromptSrv>::SharedPtr prompt_service_, instance_prompt_service_;
+  rclcpp::Service<PromptSrv>::SharedPtr prompt_service_;
+
+  // actions
+  // rclcpp_action::Client<prompt_msgs::action::Prompt>::SharedPtr prompt_action_client_;
+  // rclcpp_action::Server<PromptPlan>::SharedPtr plan_action_server_;
 
   // timers
   rclcpp::TimerBase::SharedPtr history_pub_timer_;
