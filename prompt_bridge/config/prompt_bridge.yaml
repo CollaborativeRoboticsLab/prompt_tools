@@ -1,16 +1,17 @@
 # config for prompt_bridge
 /**:
   ros__parameters:
-    # general config
-    use_prompt_provider: true
-
     frame_id: prompt_bridge
     cached_transactions: 10
 
-    prompt_provider: prompt::ChatOpenAIProvider
-    # prompt_provider: prompt::SingleOpenAIProvider
-    # prompt_provider: prompt::ChatOllamaProvider
-    # prompt_provider: prompt::SingleOllamaProvider
+    model_family_names: [openai, ollama]
+    model_family_plugins:
+      openai:
+        single_prompt_plugin: prompt::SingleOpenAIProvider
+        chat_prompt_plugin: prompt::ChatOpenAIProvider
+      ollama:
+        single_prompt_plugin: prompt::SingleOllamaProvider
+        chat_prompt_plugin: prompt::ChatOllamaProvider
     
     ChatOpenAIProvider:
       rest:
@@ -18,8 +19,7 @@
         method: POST
         auth_type: Bearer
         ssl_verify: true
-      override_model_options: true
-      prompt_option_keys: [stream, model]
+      prompt_option_keys: [stream, model] # options will be used if model options are not set in the prompt requests
       prompt_options:
         stream:
           value: false
@@ -34,8 +34,7 @@
         method: POST
         auth_type: Bearer
         ssl_verify: true
-      override_model_options: true
-      prompt_option_keys: [stream, model]
+      prompt_option_keys: [stream, model] # options will be used if model options are not set in the prompt requests
       prompt_options:
         stream:
           value: false
@@ -52,8 +51,7 @@
         method: POST
         auth_type: Bearer
         ssl_verify: false
-      override_model_options: true
-      prompt_option_keys: [stream, model]
+      prompt_option_keys: [stream, model] # options will be used if model options are not set in the prompt requests
       prompt_options:
         stream:
           value: false
@@ -70,8 +68,7 @@
         method: POST
         auth_type: Bearer
         ssl_verify: false
-      override_model_options: true
-      prompt_option_keys: [stream, model]
+      prompt_option_keys: [stream, model] # options will be used if model options are not set in the prompt requests
       prompt_options:
         stream:
           value: false

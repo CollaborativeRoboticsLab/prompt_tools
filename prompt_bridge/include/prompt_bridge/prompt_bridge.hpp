@@ -1,11 +1,14 @@
 #pragma once
 
+#include <uuid/uuid.h>
+
 #include <functional>
 #include <memory>
 #include <pluginlib/class_loader.hpp>
 #include <prompt_base/base_class.hpp>
 #include <prompt_base/utils/conversions.hpp>
 #include <prompt_base/utils/exceptions.hpp>
+#include <prompt_base/utils/model_family_options.hpp>
 #include <prompt_msgs/msg/prompt_history.hpp>
 #include <prompt_msgs/msg/prompt_transaction.hpp>
 #include <prompt_msgs/srv/prompt.hpp>
@@ -58,7 +61,6 @@ public:
     /*************************************************************************
      * Declare parameters
      ************************************************************************/
-    this->declare_parameter("use_prompt_provider", false);
     this->declare_parameter("frame_id", "agent");
     this->declare_parameter("cached_transactions", 10);
 
@@ -66,28 +68,13 @@ public:
     transaction_limit_ = this->get_parameter("cached_transactions").as_int();
 
     /*************************************************************************
-     * prompt provider plugin class loader and provider pointer
+     * load model family plugins
      ************************************************************************/
 
-    this->declare_parameter("prompt_provider", "prompt::DefaultPromptProvider");
-    provider_name_ = this->get_parameter("prompt_provider").as_string();
-
-    if (provider_name_.empty())
-    {
-      RCLCPP_ERROR(this->get_logger(), "Prompt provider name is empty, use avalid provider name");
-      throw prompt::PromptException("Prompt provider name is empty, use avalid provider name");
-    }
-    else
-    {
-      RCLCPP_INFO(this->get_logger(), "Loading prompt provider plugin: '%s'", provider_name_.c_str());
-    }
-
-    main_prompt_provider_ = prompt_provider_loader_.createSharedInstance(provider_name_);
-    main_prompt_provider_->initialize(shared_from_this());
-    RCLCPP_INFO(this->get_logger(), "Prompt provider '%s' initialized", provider_name_.c_str());
+    model_families_names_ = prompt::load_model_families(shared_from_this());
 
     /*************************************************************************
-     * prompt service and history ros interfaces
+     * prompt history ros interfaces
      ************************************************************************/
 
     // history publisher
@@ -97,55 +84,30 @@ public:
     history_pub_timer_ =
         this->create_wall_timer(std::chrono::duration<double>(1.0), std::bind(&PromptBridge::history_timer, this));
 
-    // prompt service interface
+    /*************************************************************************
+     * prompt service ros interfaces
+     ************************************************************************/
+
     prompt_service_ =
         this->create_service<PromptSrv>("prompt/prompt", std::bind(&PromptBridge::prompt_service_cb, this,
                                                                    std::placeholders::_1, std::placeholders::_2));
 
-    instance_prompt_service_ =
-        this->create_service<PromptSrv>("prompt/concurrent", std::bind(&PromptBridge::prompt_concurrent_cb, this,
-                                                                     std::placeholders::_1, std::placeholders::_2));
-
     RCLCPP_INFO(this->get_logger(), "Prompt service created at 'prompt/prompt'");
-    RCLCPP_INFO(this->get_logger(), "Concurrent prompt service created at 'prompt/concurrent'");
     RCLCPP_INFO(this->get_logger(), "PromptBridge initialized");
   }
 
   ~PromptBridge() = default;
 
   /**
-   * @brief prompt service callback
-   *
-   * This function is called when a prompt service request is received. It processes the prompt request
-   * using the prompt provider, and sends the response back to the client.
-   *
-   * @param req the prompt service request. contains a prompt message, which is processed by the prompt provider
-   * @param res the prompt service response. contains the processed prompt response.
-   *
-   * @throws prompt::PromptException if the prompt provider fails to process the prompt
+   * @brief Generate a UUID string for prompt tracking
    */
-  void prompt_service_cb(const std::shared_ptr<PromptSrv::Request> req, std::shared_ptr<PromptSrv::Response> res)
+  static const std::string generate_uuid()
   {
-    // pre send time
-    auto pre_send_time = this->now();
-
-    prompt::PromptRequest input = prompt::fromMsg(req->prompt);
-    prompt::PromptResponse result;
-
-    try
-    {
-      result = main_prompt_provider_->sendPrompt(input);
-    }
-    catch (const prompt::PromptException& e)
-    {
-      RCLCPP_ERROR_STREAM(this->get_logger(), "Prompt scheme failed to process prompt: " << e.what());
-      throw prompt::PromptException("Prompt scheme failed to send prompt");
-    }
-
-    // set the response message
-    res->response = prompt::toMsg(result);
-
-    update_prompt_history(req->prompt, res->response, pre_send_time, this->now());
+    uuid_t uuid;
+    uuid_generate_random(uuid);
+    char uuid_str[40];
+    uuid_unparse(uuid, uuid_str);
+    return std::string(uuid_str);
   }
 
   /**
@@ -160,12 +122,10 @@ public:
    *
    * @throws prompt::PromptException if the prompt provider fails to process the prompt
    */
-  void prompt_concurrent_cb(const std::shared_ptr<PromptSrv::Request> req, std::shared_ptr<PromptSrv::Response> res)
+  void prompt_service_cb(const std::shared_ptr<PromptSrv::Request> req, std::shared_ptr<PromptSrv::Response> res)
   {
     // prompt provider
     std::shared_ptr<prompt::BaseClass> prompt_provider_;
-    prompt_provider_ = prompt_provider_loader_.createSharedInstance(provider_name_);
-    prompt_provider_->initialize(shared_from_this());
 
     // pre send time
     auto pre_send_time = this->now();
@@ -173,20 +133,32 @@ public:
     prompt::PromptRequest input = prompt::fromMsg(req->prompt);
     prompt::PromptResponse result;
 
-    try
+    // check if the model family exists
+    const std::string& model_family = input.model_family;
+    if (model_families_names_.find(model_family) != model_families_names_.end())
     {
-      result = prompt_provider_->sendPrompt(input);
-    }
-    catch (const prompt::PromptException& e)
-    {
-      RCLCPP_ERROR_STREAM(this->get_logger(), "Prompt scheme failed to process prompt: " << e.what());
-      throw prompt::PromptException("Prompt scheme failed to send prompt");
-    }
+      // check if the prompt type plugin exists
+      const std::string prompt_type = input.use_chat_mode ? "chat" : "single";
 
-    // set the response message
-    res->response = prompt::toMsg(result);
+      if (model_families_names_[model_family].find(prompt_type) != model_families_names_[model_family].end())
+      {
+        prompt_provider_ =
+            prompt_provider_loader_.createSharedInstance(model_families_names_[model_family][prompt_type]);
+        prompt_provider_->initialize(shared_from_this());
 
-    update_prompt_history(req->prompt, res->response, pre_send_time, this->now());
+        result = prompt_provider_->sendPrompt(input);
+
+        // set the response message
+        res->response = prompt::toMsg(result);
+
+        update_prompt_history(req->prompt, res->response, pre_send_time, this->now());
+      }
+      else
+      {
+        RCLCPP_ERROR(this->get_logger(), "Prompt type plugin not found for model family");
+        throw prompt::PromptException("Prompt type plugin not found for model family");
+      }
+    }
   }
 
 private:
@@ -235,16 +207,19 @@ private:
   pluginlib::ClassLoader<prompt::BaseClass> prompt_provider_loader_;
 
   // prompt provider
-  std::shared_ptr<prompt::BaseClass> main_prompt_provider_;
+  std::shared_ptr<prompt::BaseClass> prompt_provider_;
 
   // pubs
   rclcpp::Publisher<prompt_msgs::msg::PromptHistory>::SharedPtr prompt_history_pub_;
 
   // services
-  rclcpp::Service<PromptSrv>::SharedPtr prompt_service_, instance_prompt_service_;
+  rclcpp::Service<PromptSrv>::SharedPtr prompt_service_;
 
   // timers
   rclcpp::TimerBase::SharedPtr history_pub_timer_;
+
+  // model families
+  std::map<std::string, std::map<std::string, std::string>> model_families_names_;
 };
 
 }  // namespace prompt

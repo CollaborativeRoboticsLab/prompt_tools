@@ -167,14 +167,12 @@ public:
       Poco::Net::Context::Ptr context = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, params);
 
       // create secure session
-      // Poco::Net::HTTPSClientSession session(uri.getHost(), uri.getPort(), context);
       session_ptr = std::make_unique<Poco::Net::HTTPSClientSession>(uri.getHost(), uri.getPort(), context);
       RCLCPP_DEBUG(node_->get_logger(), "secure session created");
     }
     else
     {
       // create insecure session
-      // Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
       session_ptr = std::make_unique<Poco::Net::HTTPClientSession>(uri.getHost(), uri.getPort());
       RCLCPP_WARN(node_->get_logger(), "insecure session created");
     }

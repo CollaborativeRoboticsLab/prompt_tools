@@ -17,8 +17,12 @@ find_package(pluginlib REQUIRED)
 find_package(prompt_msgs REQUIRED)
 find_package(prompt_base REQUIRED)
 
+find_package(PkgConfig)
+pkg_check_modules(UUID REQUIRED uuid)
+
 include_directories(
   include
+  ${UUID_INCLUDE_DIRS}
 )
 
 
@@ -36,6 +40,7 @@ ament_target_dependencies(${PROJECT_NAME}_node
   pluginlib
   prompt_msgs
   prompt_base
+  UUID
 )
 
 install(TARGETS ${PROJECT_NAME}_node
@@ -57,6 +62,7 @@ ament_target_dependencies(${PROJECT_NAME}_comp
   pluginlib
   prompt_msgs
   prompt_base
+  UUID
 )
 
 # register component

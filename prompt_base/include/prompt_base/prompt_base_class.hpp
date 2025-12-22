@@ -36,21 +36,8 @@ public:
     // initialize base class
     initialize_rest_base(node, plugin_name, api_key_name);
 
-    // declare parameters
-    node_->declare_parameter(plugin_name_ + ".override_model_options", false);
-
-    // get parameters from the parameter server
-    override_ = node_->get_parameter(plugin_name_ + ".override_model_options").as_bool();
-
-    if (override_)
-    {
-      RCLCPP_INFO(node_->get_logger(), "Overriding model options from parameters");
-      prompt_options_ = prompt::load_from_paramters(node_, plugin_name_);
-    }
-    else
-    {
-      RCLCPP_INFO(node_->get_logger(), "Using model options from prompt request");
-    }
+    RCLCPP_INFO(node_->get_logger(), "Loaded model options from parameters.");
+    prompt_options_ = prompt::load_from_paramters(node_, plugin_name_);
   }
 
   /**
@@ -65,38 +52,52 @@ public:
   {
     prompt::PromptResponse response;
 
-    // add to the buffer
-    prompt_buffer_.push_back(req.prompt);
-
-    if (req.flush)
+    if (req.use_cache)
     {
-      // create a string to fill with all buffered prompts
-      std::string prompt_cache = "";
+      // add to the buffer
+      prompt_buffer_.push_back(req.prompt);
 
-      // fill the string with buffered prompts
-      for (const auto& prompt_string : prompt_buffer_)
+      if (req.flush_cache)
       {
-        prompt_cache = prompt_cache + " " + prompt_string + ". ";
+        // create a string to fill with all buffered prompts
+        std::string prompt_cache = "";
+
+        // fill the string with buffered prompts
+        for (const auto& prompt_string : prompt_buffer_)
+        {
+          prompt_cache = prompt_cache + " " + prompt_string + ". ";
+        }
+
+        // create a new request
+        prompt::PromptRequest request;
+        request.prompt = prompt_cache;
+        request.options = req.options;
+
+        // check if we should override model options if so do it
+        if (override_)
+          request.options = prompt_options_;
+
+        // send the prompt request to the prompt_provider
+        response = RestBaseClass::sendPrompt(request);
+        response.buffered = false;
+
+        prompt_buffer_.clear();
       }
-
-      // create a new request
-      prompt::PromptRequest request;
-      request.prompt = prompt_cache;
-      request.options = req.options;
-
+      else
+      {
+        response.buffered = true;
+      }
+    }
+    else
+    {
       // check if we should override model options if so do it
+      prompt::PromptRequest request = req;
       if (override_)
         request.options = prompt_options_;
 
       // send the prompt request to the prompt_provider
       response = RestBaseClass::sendPrompt(request);
       response.buffered = false;
-
-      prompt_buffer_.clear();
-    }
-    else
-    {
-      response.buffered = true;
     }
 
     return response;

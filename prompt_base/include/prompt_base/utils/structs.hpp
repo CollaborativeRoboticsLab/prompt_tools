@@ -23,7 +23,10 @@ namespace prompt
     struct PromptRequest
     {
         std::string prompt;
-        bool flush;
+        bool use_cache;
+        bool flush_cache;
+        bool use_chat_mode;
+        std::string model_family;
         std::vector<PromptOption> options;
     };
 
