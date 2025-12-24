@@ -148,7 +148,7 @@ public:
   {
     // verify and add required model options
     check_model_options(latest_request);
-    
+
     // prepare request body
     Poco::JSON::Object body_json = toJsonConversation(latest_request, conversation);
 
@@ -156,7 +156,7 @@ public:
     Poco::JSON::Object::Ptr object = process(body_json, chat_uri_);
 
     // create prompt provider response container
-    prompt::PromptResponse res = fromJson(object);
+    prompt::PromptResponse res = fromJsonConversation(object);
 
     return res;
   }
@@ -377,7 +377,7 @@ protected:
    * @param prompt The prompt request to convert
    * @return A JSON object representing the prompt request
    */
-  virtual Poco::JSON::Object toJson(const prompt::PromptRequest& prompt) = 0;
+  virtual Poco::JSON::Object toJson(prompt::PromptRequest& prompt) = 0;
 
   /**
    * @brief Convert a prompt request with conversation history to a JSON object
@@ -389,8 +389,8 @@ protected:
    * @param conversation The conversation history to include
    * @return A JSON object representing the prompt request with conversation history
    */
-  virtual Poco::JSON::Object toJsonConversation(const prompt::PromptRequest& latest_request,
-                                                const std::vector<PromptDialogue>& conversation) = 0;
+  virtual Poco::JSON::Object toJsonConversation(prompt::PromptRequest& latest_request,
+                                                std::vector<PromptDialogue>& conversation) = 0;
 
   /**
    * @brief Convert a JSON object to a prompt response
@@ -402,6 +402,18 @@ protected:
    * @return A PromptResponse object containing the response data
    */
   virtual prompt::PromptResponse fromJson(const Poco::JSON::Object::Ptr object) = 0;
+
+  /**
+   * @brief Convert a JSON object to a prompt response with conversation history
+   *
+   * This method converts a JSON object received from the prompt plugin into a prompt response,
+   * taking into account the conversation history.
+   * It extracts the relevant fields from the JSON object and returns a PromptResponse object.
+   *
+   * @param object The JSON object to convert
+   * @return A PromptResponse object containing the response data
+   */
+  virtual prompt::PromptResponse fromJsonConversation(const Poco::JSON::Object::Ptr object) = 0;
 
   std::string uri_;
   std::string chat_uri_;
