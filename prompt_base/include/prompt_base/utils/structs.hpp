@@ -12,7 +12,7 @@ namespace prompt
         std::string type;
     };
 
-    // Prompt Conversation struct
+    // Prompt Dialog struct
     struct PromptDialogue
     {
         std::string role;

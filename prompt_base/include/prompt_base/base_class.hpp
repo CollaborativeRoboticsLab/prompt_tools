@@ -1,21 +1,20 @@
 #pragma once
 
-#include <rclcpp/rclcpp.hpp>
 #include <prompt_base/utils/exceptions.hpp>
 #include <prompt_base/utils/structs.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 namespace prompt
 {
 /**
  * @brief PromptProviderBase
  *
- * This is the base class for prompt plugins it provides a common interface for all prompt 
+ * This is the base class for prompt plugins it provides a common interface for all prompt
  * plugins where the main functions are to send a prompt and recieve a response
  *
  */
 class BaseClass
 {
-  
 public:
   BaseClass() = default;
   virtual ~BaseClass() = default;
@@ -33,7 +32,7 @@ public:
    * @brief Initialize the prompt base class
    *
    * This method initializes the baseclass with parameters from the ROS parameter server.
-   * 
+   *
    * @param node rclcpp::Node::SharedPtr ROS node
    */
   virtual void initialize_base(rclcpp::Node::SharedPtr node, std::string plugin_name = "BaseClass")
@@ -57,21 +56,37 @@ public:
    * @return The response from the prompt provider.
    * @throws prompt::PromptException if the method is not implemented in the derived class.
    */
-  virtual prompt::PromptResponse sendPrompt(const prompt::PromptRequest& req)
+  virtual prompt::PromptResponse sendPrompt(prompt::PromptRequest& req)
+  {
+    throw prompt::PromptException("sendPrompt not implemented in base class");
+  }
+
+  /**
+   * @brief Send a prompt to the prompt plugin
+   *
+   * This method sends a prompt request to the prompt plugin and returns a response.
+   *
+   * @param latest_request The prompt request containing the prompt and options.
+   * @param conversation The conversation history for context.
+   * @return The response from the prompt provider.
+   * @throws prompt::PromptException if the method is not implemented in the derived class.
+   */
+  virtual prompt::PromptResponse sendConversation(prompt::PromptRequest& latest_request,
+                                                        std::vector<PromptDialogue>& conversation)
   {
     throw prompt::PromptException("sendPrompt not implemented in base class");
   }
 
   /**
    * @brief Send a prompt with a file to the prompt plugin
-   * 
+   *
    * This method sends a prompt request with a file to the prompt plugin and returns a response.
-   * 
+   *
    * @param req The prompt request containing the prompt, options, and file.
    * @return prompt::PromptResponse from the prompt provider.
    * @throws prompt::PromptException if the method is not implemented in the derived class.
    */
-  virtual prompt::PromptResponse sendPromptAudio(const prompt::PromptRequest& req)
+  virtual prompt::PromptResponse sendPromptAudio(prompt::PromptRequest& req)
   {
     throw prompt::PromptException("sendPromptAudio not implemented in base class");
   }

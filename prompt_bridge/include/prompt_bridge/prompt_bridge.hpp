@@ -8,7 +8,6 @@
 #include <prompt_base/base_class.hpp>
 #include <prompt_base/utils/conversions.hpp>
 #include <prompt_base/utils/exceptions.hpp>
-#include <prompt_base/utils/model_family_options.hpp>
 #include <prompt_msgs/msg/prompt_history.hpp>
 #include <prompt_msgs/msg/prompt_transaction.hpp>
 #include <prompt_msgs/srv/prompt.hpp>
@@ -61,6 +60,7 @@ public:
     /*************************************************************************
      * Declare parameters
      ************************************************************************/
+
     this->declare_parameter("frame_id", "agent");
     this->declare_parameter("cached_transactions", 10);
 
@@ -71,7 +71,15 @@ public:
      * load model family plugins
      ************************************************************************/
 
-    model_families_names_ = prompt::load_model_families(shared_from_this());
+    this->declare_parameter("model_family_names", rclcpp::ParameterValue(std::vector<std::string>{}));
+    model_families_keys_ = this->get_parameter("model_family_names").as_string_array();
+
+    for (const auto& family_key : model_families_keys_)
+    {
+      this->declare_parameter("model_family_plugins." + family_key, rclcpp::ParameterValue(""));
+      std::string plugin = this->get_parameter("model_family_plugins." + family_key).as_string();
+      model_families_names_[family_key] = plugin;
+    }
 
     /*************************************************************************
      * prompt history ros interfaces
@@ -110,6 +118,27 @@ public:
     return std::string(uuid_str);
   }
 
+  std::shared_ptr<prompt::BaseClass> load_model(std::string model_family)
+  {
+    std::shared_ptr<prompt::BaseClass> prompt_provider_instance_;
+
+    // check if the model family exists
+    if (model_families_names_.find(model_family) != model_families_names_.end())
+    {
+      prompt_provider_instance_ = prompt_provider_loader_.createSharedInstance(model_families_names_[model_family]);
+      prompt_provider_instance_->initialize(shared_from_this());
+
+      return prompt_provider_instance_;
+    }
+    else
+    {
+      RCLCPP_ERROR(this->get_logger(), "Model family not found");
+      throw prompt::PromptException("Model family not found");
+
+      return nullptr;
+    }
+  }
+
   /**
    * @brief prompt service callback for instance prompts
    *
@@ -126,39 +155,290 @@ public:
   {
     // prompt provider
     std::shared_ptr<prompt::BaseClass> prompt_provider_;
+    prompt_provider_ = load_model(req->prompt.model_family);
 
-    // pre send time
-    auto pre_send_time = this->now();
+    std::string uuid;
 
     prompt::PromptRequest input = prompt::fromMsg(req->prompt);
     prompt::PromptResponse result;
 
-    // check if the model family exists
-    const std::string& model_family = input.model_family;
-    if (model_families_names_.find(model_family) != model_families_names_.end())
+    // pre send time
+    auto pre_send_time = this->now();
+
+    // check if chat mode is enabled
+    if (req->prompt.use_chat_mode)
     {
-      // check if the prompt type plugin exists
-      const std::string prompt_type = input.use_chat_mode ? "chat" : "single";
-
-      if (model_families_names_[model_family].find(prompt_type) != model_families_names_[model_family].end())
+      // chat mode is enabled. requests and response are part of a conversation and they are stored accordingly.
+      // check if this is a new prompt or a continuation of a previous prompt
+      if (req->uuid == "")
       {
-        prompt_provider_ =
-            prompt_provider_loader_.createSharedInstance(model_families_names_[model_family][prompt_type]);
-        prompt_provider_->initialize(shared_from_this());
+        // since uuid is empty, This is a new prompt request. Check if caching is requested.
+        if (req->prompt.use_cache)
+        {
+          // new prompt with caching requested. check if flushing cache is requested
+          if (req->prompt.flush_cache)
+          {
+            // flushing cache on new prompt doesn't make sense, log a warning and process the prompt directly
+            RCLCPP_WARN(this->get_logger(), "Flushing cache requested on new prompt with no uuid. Prompt will be "
+                                            "processed without caching.");
 
-        result = prompt_provider_->sendPrompt(input);
+            // continue caching, generate a new uuid for tracking
+            result = prompt_provider_->sendPrompt(input);
+            result.buffered = false;
 
-        // set the response message
-        res->response = prompt::toMsg(result);
+            // generate a new uuid for tracking since chat mode is enabled
+            uuid = generate_uuid();
 
-        update_prompt_history(req->prompt, res->response, pre_send_time, this->now());
+            // store the user prompt in the conversation history
+            PromptDialogue dialogue;
+            dialogue.role = "user";
+            dialogue.content = req->prompt.prompt;
+            prompt_conversations_[uuid].push_back(dialogue);
+
+            // store the assistant response in the conversation history
+            PromptDialogue dialogue2;
+            dialogue2.role = "assistant";
+            dialogue2.content = result.response;
+            prompt_conversations_[uuid].push_back(dialogue2);
+
+            // convert the result to message and return the uuid to the client for future reference
+            res->response = prompt::toMsg(result);
+            res->uuid = uuid;
+            RCLCPP_INFO(this->get_logger(), "New chat prompt processed. Generated UUID: %s", uuid.c_str());
+          }
+          else
+          {
+            // continue caching, generate a new uuid for tracking
+            uuid = generate_uuid();
+
+            PromptDialogue dialogue;
+            dialogue.role = "user";
+            dialogue.content = req->prompt.prompt;
+            prompt_conversations_[uuid].push_back(dialogue);
+
+            result.buffered = true;
+
+            // convert the result to message and return the uuid to the client for future reference
+            res->response = prompt::toMsg(result);
+            res->uuid = uuid;
+
+            RCLCPP_INFO(this->get_logger(), "New chat prompt cached. Generated UUID: %s", uuid.c_str());
+          }
+        }
+        else
+        {
+          // no caching, process the prompt directly
+          // generate a new uuid for tracking since chat mode is enabled
+          uuid = generate_uuid();
+
+          // no caching required, process the prompt directly
+          result = prompt_provider_->sendPrompt(input);
+          result.buffered = false;
+
+          // store the user prompt in the conversation history
+          PromptDialogue dialogue;
+          dialogue.role = "user";
+          dialogue.content = req->prompt.prompt;
+          prompt_conversations_[uuid].push_back(dialogue);
+
+          // store the assistant response in the conversation history
+          PromptDialogue dialogue2;
+          dialogue2.role = "assistant";
+          dialogue2.content = result.response;
+          prompt_conversations_[uuid].push_back(dialogue2);
+
+          // convert the result to message and return the uuid to the client for future reference
+          res->response = prompt::toMsg(result);
+          res->uuid = uuid;
+
+          RCLCPP_INFO(this->get_logger(), "New chat prompt processed. Generated UUID: %s", uuid.c_str());
+        }
       }
       else
       {
-        RCLCPP_ERROR(this->get_logger(), "Prompt type plugin not found for model family");
-        throw prompt::PromptException("Prompt type plugin not found for model family");
+        // Since uuid is provided, this is a continuation of a previous prompt request
+        if (req->prompt.use_cache)
+        {
+          if (req->prompt.flush_cache)
+          {
+            // flushing the cache, retrieve the conversation history using the provided uuid
+            uuid = req->uuid;
+
+            // prompt the provider with the conversation history
+            result = prompt_provider_->sendConversation(input, prompt_conversations_[uuid]);
+            result.buffered = false;
+
+            // store the user prompt in the conversation history
+            PromptDialogue dialogue;
+            dialogue.role = "user";
+            dialogue.content = req->prompt.prompt;
+            prompt_conversations_[uuid].push_back(dialogue);
+
+            // store the assistant response in the conversation history
+            PromptDialogue dialogue2;
+            dialogue2.role = "assistant";
+            dialogue2.content = result.response;
+            prompt_conversations_[uuid].push_back(dialogue2);
+
+            // convert the result to message and return the uuid to the client for future reference
+            res->response = prompt::toMsg(result);
+            res->uuid = uuid;
+            RCLCPP_INFO(this->get_logger(), "Chat prompt processed with flushed cache. UUID: %s", uuid.c_str());
+          }
+          else
+          {
+            // continue caching, retrieve the conversation history using the provided uuid
+            uuid = req->uuid;
+
+            // find the last dialogue related to the uuid from conversation and update the prompt in order to cache
+            prompt_conversations_[uuid][-1].content += " " + req->prompt.prompt;
+            result.buffered = true;
+
+            // convert the result to message and return the uuid to the client for future reference
+            res->response = prompt::toMsg(result);
+            res->uuid = uuid;
+
+            RCLCPP_INFO(this->get_logger(), "Chat prompt cached. UUID: %s", uuid.c_str());
+          }
+        }
+        else
+        {
+          // no caching, process the prompt directly.
+          // retrieve the conversation history using the provided uuid
+          uuid = req->uuid;
+
+          // prompt the provider with the conversation history
+          result = prompt_provider_->sendConversation(input, prompt_conversations_[uuid]);
+          result.buffered = false;
+
+          // store the user prompt in the conversation history
+          PromptDialogue dialogue;
+          dialogue.role = "user";
+          dialogue.content = req->prompt.prompt;
+          prompt_conversations_[uuid].push_back(dialogue);
+
+          // store the assistant response in the conversation history
+          PromptDialogue dialogue2;
+          dialogue2.role = "assistant";
+          dialogue2.content = result.response;
+          prompt_conversations_[uuid].push_back(dialogue2);
+
+          // convert the result to message and return the uuid to the client for future reference
+          res->response = prompt::toMsg(result);
+          res->uuid = uuid;
+
+          RCLCPP_INFO(this->get_logger(), "Chat prompt processed. UUID: %s", uuid.c_str());
+        }
       }
     }
+    else
+    {
+      // chat mode is not enabled, process the prompt individually. check if this is a new prompt or
+      // a continuation of caching of a previous prompt. Since chat mode is not enabled, caching is only
+      // used to collect inputs from multiple sources and only containes the role of "user".
+      if (req->uuid == "")
+      {
+        // since uuid is empty, This is a new prompt request. Check if caching is requested.
+        if (req->prompt.use_cache)
+        {
+          if (req->prompt.flush_cache)
+          {
+            // flushing cache on new prompt doesn't make sense, log a warning and process prompt imidiately
+            RCLCPP_WARN(this->get_logger(), "Flushing cache requested on new prompt with no uuid. Prompt will be "
+                                            "processed without caching.");
+
+            // continue caching, generate a new uuid for tracking
+            result = prompt_provider_->sendPrompt(input);
+            result.buffered = false;
+
+            res->response = prompt::toMsg(result);
+            res->uuid = "";
+            RCLCPP_INFO(this->get_logger(), "New chat prompt processed. No UUID generated due to flush request and "
+                                            "disabled chat mode");
+          }
+          else
+          {
+            // no flush requst thus continue caching, since uuid is not provided, generate a new uuid for tracking
+            uuid = generate_uuid();
+
+            PromptDialogue dialogue;
+            dialogue.role = "user";
+            dialogue.content = req->prompt.prompt;
+
+            prompt_conversations_[uuid].push_back(dialogue);
+
+            result.buffered = true;
+
+            // convert the result to message and return the uuid to the client for future reference
+            res->response = prompt::toMsg(result);
+            res->uuid = uuid;
+
+            RCLCPP_INFO(this->get_logger(), "New prompt cached. Generated UUID: %s", uuid.c_str());
+          }
+        }
+        else
+        {
+          // no caching, and no uuid. process the prompt directly. since chat mode is not enabled,
+          // no need to store the prompt in conversation history. not reuqired to return a uuid either.
+          result = prompt_provider_->sendPrompt(input);
+          result.buffered = false;
+
+          // convert the result to message and return
+          res->response = prompt::toMsg(result);
+          res->uuid = "";
+          RCLCPP_INFO(this->get_logger(), "New prompt processed.");
+        }
+      }
+      else
+      {
+        // since uuid is provided, this is a continuation of a previous prompt request. since chat mode is not enabled,
+        // the conversation history only contains "user" role prompts and using caching to collect multiple inputs.
+        if (req->prompt.use_cache)
+        {
+          if (req->prompt.flush_cache)
+          {
+            // flushing the cache, retrieve the conversation history using the provided uuid
+            uuid = req->uuid;
+
+            result = prompt_provider_->sendConversation(input, prompt_conversations_[uuid]);
+            result.buffered = false;
+
+            // convert the result to message and discontinue the uuid since chat mode disabled
+            res->response = prompt::toMsg(result);
+            res->uuid = "";
+
+            RCLCPP_INFO(this->get_logger(), "Prompt processed with flushed cache. UUID: %s discontinued.",
+                        uuid.c_str());
+          }
+          else
+          {
+            // flushing not requested, continue caching, retrieve the conversation history using the provided uuid
+            uuid = req->uuid;
+
+            // get the last dialogue from the conversation and append the new prompt to that for caching
+            prompt_conversations_[uuid][-1].content += " " + req->prompt.prompt;
+            result.buffered = true;
+          }
+        }
+        else
+        {
+          // no use of cache, chat mode is not enabled, process the prompt directly. No use in uuid either. ignore the
+          // uuid provided and process the prompt directly. give a warning.
+          RCLCPP_WARN(this->get_logger(), "UUID provided for non-chat prompt with no caching. Ignoring UUID and "
+                                          "processing as a generic prompt");
+
+          result = prompt_provider_->sendPrompt(input);
+          result.buffered = false;
+
+          // convert the result to message and return
+          res->response = prompt::toMsg(result);
+          res->uuid = "";
+          RCLCPP_INFO(this->get_logger(), "Prompt processed.");
+        }
+      }
+    }
+
+    update_prompt_history(req->prompt, res->response, pre_send_time, this->now());
   }
 
 private:
@@ -206,9 +486,6 @@ private:
   // loaders
   pluginlib::ClassLoader<prompt::BaseClass> prompt_provider_loader_;
 
-  // prompt provider
-  std::shared_ptr<prompt::BaseClass> prompt_provider_;
-
   // pubs
   rclcpp::Publisher<prompt_msgs::msg::PromptHistory>::SharedPtr prompt_history_pub_;
 
@@ -219,7 +496,11 @@ private:
   rclcpp::TimerBase::SharedPtr history_pub_timer_;
 
   // model families
-  std::map<std::string, std::map<std::string, std::string>> model_families_names_;
+  std::vector<std::string> model_families_keys_;
+  std::map<std::string, std::string> model_families_names_;
+
+  // prompt conversations
+  std::map<std::string, std::vector<prompt::PromptDialogue>> prompt_conversations_;
 };
 
 }  // namespace prompt
