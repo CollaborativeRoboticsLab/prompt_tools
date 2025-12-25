@@ -11,8 +11,9 @@
 
     OpenAIProvider:
       rest:
-        uri: https://api.openai.com/v1/completions # openai endpoint for gpt models
-        chat_uri: https://api.openai.com/v1/chat/completions # openai chat endpoint for gpt models
+        # OpenAI Responses API endpoint (used for both single prompts and conversations)
+        uri: https://api.openai.com/v1/responses
+        chat_uri: https://api.openai.com/v1/responses
         method: POST
         auth_type: Bearer
         ssl_verify: true
@@ -22,7 +23,7 @@
           value: false
           type: bool
         model:
-          value: gpt-5    # gpt-4o, gpt-4.1, gpt-4o-mini, gpt-5
+          value: gpt-5    # e.g., gpt-4o, gpt-4.1, gpt-4o-mini
           type: string
 
     OllamaProvider:

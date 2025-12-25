@@ -81,6 +81,25 @@ install(TARGETS ${PROJECT_NAME}_comp
 )
 
 ############################################################################
+# test node for prompt_bridge
+############################################################################
+
+
+# Use .cpp for test node source to ensure CMake detects C++ language
+add_executable(test_prompt_node
+  test/test_prompt.cpp
+)
+
+ament_target_dependencies(test_prompt_node
+  rclcpp
+  prompt_msgs
+)
+
+install(TARGETS test_prompt_node
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+############################################################################
 # Miscellaneous installations
 ############################################################################
 

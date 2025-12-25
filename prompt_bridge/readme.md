@@ -57,13 +57,14 @@ ros__parameters:
 
 Each plugin (e.g., OpenAIProvider, OllamaProvider) can have its own set of configuration parameters, such as API endpoints, authentication, and default prompt options. For details, see [docs/plugin_parameters](../docs/plugin_parameters.md).
 
+
 ## Usage
 
 1. Configure your desired plugins and parameters in a YAML file (see above).
-2. Launch the node with your config:
-   ```bash
-   ros2 run prompt_bridge prompt_bridge_node --ros-args --params-file config/prompt_bridge.yaml
-   ```
+2. Launch the main node with your config:
+    ```bash
+    ros2 run prompt_bridge prompt_bridge_node --ros-args --params-file config/prompt_bridge.yaml
+    ```
 3. Use the provided ROS service to send prompts and receive responses.
 
 ## Extending

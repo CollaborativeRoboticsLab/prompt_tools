@@ -69,10 +69,20 @@ colcon build
 
 Rename the `.devcontainer/devcontainer-empty.env` as `.devcontainer/devcontainer.env` and update it with your API Keys. Then rebuild the container
 
-### Start the Prompt Bridge
+## Starting the Prompt Bridge
 
 ```bash
 source install/setup.bash
 ros2 launch prompt_bridge prompt_bridge.launch.py
 ```
 
+## Testing
+
+To build and run the test node that exercises all features of prompt_bridge:
+
+```bash
+source install/setup.bash
+ros2 run prompt_bridge test_prompt_node
+```
+
+This will run the test node and print results for stateless, chat, caching, and model selection features.

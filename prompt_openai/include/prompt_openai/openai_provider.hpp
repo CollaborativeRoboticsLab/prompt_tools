@@ -49,11 +49,12 @@ protected:
    */
   virtual Poco::JSON::Object toJson(prompt::PromptRequest& prompt)
   {
-    // add options
+    // add options (model, temperature, etc.)
     Poco::JSON::Object result = handle_options(prompt);
 
-    // add prompt
-    result.set("prompt", prompt.prompt);
+    // /v1/responses uses `input` instead of `prompt`
+    // For simple one-shot prompts, send the text directly as a string.
+    result.set("input", prompt.prompt);
 
     return result;
   }
@@ -71,32 +72,46 @@ protected:
   virtual Poco::JSON::Object toJsonConversation(prompt::PromptRequest& prompt,
                                                 std::vector<PromptDialogue>& conversation)
   {
-    // add options
+    // add options (model, temperature, etc.)
     Poco::JSON::Object result = handle_options(prompt);
 
-    // build messages array
-    Poco::JSON::Array messages_array;
+    // /v1/responses represents conversational input as an array of "message" items
+    // Each message has: role + content array with input_text/output_text entries.
+    Poco::JSON::Array input_array;
 
     // add previous conversation
     for (const prompt::PromptDialogue& dialog_ : conversation)
     {
-      Poco::JSON::Object dialog_object_;
+      Poco::JSON::Object message_obj;
+      message_obj.set("type", "message");
+      message_obj.set("role", dialog_.role);
 
-      dialog_object_.set("role", dialog_.role);
-      dialog_object_.set("content", dialog_.content);
+      Poco::JSON::Array content_array;
+      Poco::JSON::Object content_obj;
+      content_obj.set("type", "input_text");
+      content_obj.set("text", dialog_.content);
+      content_array.add(content_obj);
 
-      messages_array.add(dialog_object_);
+      message_obj.set("content", content_array);
+      input_array.add(message_obj);
     }
 
-    // add latest prompt
-    Poco::JSON::Object latest_dialog_object_;
-    latest_dialog_object_.set("role", "user");
-    latest_dialog_object_.set("content", prompt.prompt);
+    // add latest user prompt as the final message
+    Poco::JSON::Object latest_message;
+    latest_message.set("type", "message");
+    latest_message.set("role", "user");
 
-    messages_array.add(latest_dialog_object_);
+    Poco::JSON::Array latest_content_array;
+    Poco::JSON::Object latest_content_obj;
+    latest_content_obj.set("type", "input_text");
+    latest_content_obj.set("text", prompt.prompt);
+    latest_content_array.add(latest_content_obj);
 
-    // add messages to result
-    result.set("messages", messages_array);
+    latest_message.set("content", latest_content_array);
+    input_array.add(latest_message);
+
+    // attach to body as `input`
+    result.set("input", input_array);
 
     return result;
   }
@@ -114,19 +129,66 @@ protected:
   {
     prompt::PromptResponse res;
 
-    // try parse response
-    if (object->get("response"))
-      res.response = object->get("response").toString();
+    // Extract assistant text from /v1/responses `output` structure
+    if (object->has("output"))
+    {
+      try
+      {
+        Poco::JSON::Array::Ptr output_array = object->getArray("output");
+        for (size_t i = 0; i < output_array->size(); ++i)
+        {
+          Poco::JSON::Object::Ptr out_item = output_array->getObject(i);
+          if (!out_item->has("content"))
+            continue;
 
-    // TODO: create custom parsers for specific options from different apis
-    // res.success = object->get("success").convert<bool>();
-    // res.accuracy = object->get("accuracy").convert<double>();
-    // res.confidence = object->get("confidence").convert<double>();
-    // res.risk = object->get("risk").convert<double>();
-    // for all other variables loop and push back to response key/values
+          Poco::JSON::Array::Ptr content_array = out_item->getArray("content");
+          for (size_t j = 0; j < content_array->size(); ++j)
+          {
+            Poco::JSON::Object::Ptr content_obj = content_array->getObject(j);
+            if (content_obj->has("text"))
+            {
+              res.response = content_obj->getValue<std::string>("text");
+              break;
+            }
+          }
+
+          if (!res.response.empty())
+            break;
+        }
+      }
+      catch (const Poco::Exception& ex)
+      {
+        RCLCPP_WARN(node_->get_logger(), "Failed to parse OpenAI /v1/responses output: %s", ex.what());
+      }
+    }
+
+    res.success = !res.response.empty();
+
+    // attach remaining top-level fields as options (excluding large nested structures)
     for (Poco::JSON::Object::ConstIterator it = object->begin(); it != object->end(); ++it)
     {
-      res.options.push_back(prompt::PromptOption{ it->first, it->second.convert<std::string>(), "" });
+      if ((it->first == "output") || (it->first == "usage"))
+        continue;
+
+      try
+      {
+        if (!it->second.isEmpty() && it->second.isString())
+        {
+          res.options.push_back(prompt::PromptOption{ it->first, it->second.convert<std::string>(), "" });
+        }
+        else if (!it->second.isEmpty())
+        {
+          res.options.push_back(prompt::PromptOption{ it->first, it->second.toString(), "" });
+        }
+        else
+        {
+          res.options.push_back(prompt::PromptOption{ it->first, "[null]", "" });
+        }
+      }
+      catch (const Poco::Exception& ex)
+      {
+        RCLCPP_WARN(node_->get_logger(), "Failed to convert JSON key '%s': %s", it->first.c_str(), ex.what());
+      }
     }
 
     return res;
@@ -144,79 +206,80 @@ protected:
    */
   virtual prompt::PromptResponse fromJsonConversation(const Poco::JSON::Object::Ptr object)
   {
-    std::ostringstream jsonStream;
-    object->stringify(jsonStream);
-
-    // TODO: create custom parsers for specific options from different apis
-    // res.success = object->get("success").convert<bool>();
-    // res.accuracy = object->get("accuracy").convert<double>();
-    // res.confidence = object->get("confidence").convert<double>();
-    // res.risk = object->get("risk").convert<double>();
-    // for all other variables loop and push back to response key/values
-
     prompt::PromptResponse res;
-
-    // Ensure "choices" exists
-    if (object->has("choices"))
+    // Parse the same /v1/responses structure for conversational responses
+    if (object->has("output"))
     {
-      Poco::JSON::Array::Ptr choicesArray = object->getArray("choices");
-
-      // Check if the array is not empty
-      if (choicesArray->size() > 0)
+      try
       {
-        // Extract the first object from the array
-        Poco::JSON::Object::Ptr choiceObj = choicesArray->getObject(0);
-
-        // Ensure "message" exists
-        if (choiceObj->has("message"))
+        Poco::JSON::Array::Ptr output_array = object->getArray("output");
+        for (size_t i = 0; i < output_array->size(); ++i)
         {
-          Poco::JSON::Object::Ptr messageObj = choiceObj->getObject("message");
+          Poco::JSON::Object::Ptr out_item = output_array->getObject(i);
+          if (!out_item->has("content"))
+            continue;
 
-          // Ensure "content" exists
-          if (messageObj->has("content"))
+          Poco::JSON::Array::Ptr content_array = out_item->getArray("content");
+          for (size_t j = 0; j < content_array->size(); ++j)
           {
-            res.response = messageObj->getValue<std::string>("content");
+            Poco::JSON::Object::Ptr content_obj = content_array->getObject(j);
+            if (content_obj->has("text"))
+            {
+              res.response = content_obj->getValue<std::string>("text");
+              break;
+            }
           }
+
+          if (!res.response.empty())
+            break;
         }
+      }
+      catch (const Poco::Exception& ex)
+      {
+        RCLCPP_WARN(node_->get_logger(), "Failed to parse OpenAI /v1/responses output (conversation): %s", ex.what());
       }
     }
 
+    res.success = !res.response.empty();
+
+    // Attach remaining top-level fields as options (excluding large nested structures)
     for (Poco::JSON::Object::ConstIterator it = object->begin(); it != object->end(); ++it)
     {
-      if ((it->first != "choices") && (it->first != "usage"))
+      if ((it->first == "output") || (it->first == "usage"))
+        continue;
+
+      try
       {
-        try
+        if (!it->second.isEmpty() && it->second.isString())
         {
-          if (!it->second.isEmpty() && it->second.isString())
-          {
-            res.options.push_back(prompt::PromptOption{ it->first, it->second.convert<std::string>(), "" });
-          }
-          else if (!it->second.isEmpty())
-          {
-            res.options.push_back(prompt::PromptOption{ it->first, it->second.toString(), "" });
-          }
-          else
-          {
-            res.options.push_back(prompt::PromptOption{ it->first, "[null]", "" });
-          }
+          res.options.push_back(prompt::PromptOption{ it->first, it->second.convert<std::string>(), "" });
         }
-        catch (const Poco::Exception& ex)
+        else if (!it->second.isEmpty())
         {
-          RCLCPP_WARN(node_->get_logger(), "Failed to convert JSON key '%s': %s", it->first.c_str(), ex.what());
+          res.options.push_back(prompt::PromptOption{ it->first, it->second.toString(), "" });
         }
+        else
+        {
+          res.options.push_back(prompt::PromptOption{ it->first, "[null]", "" });
+        }
+      }
+      catch (const Poco::Exception& ex)
+      {
+        RCLCPP_WARN(node_->get_logger(), "Failed to convert JSON key '%s': %s", it->first.c_str(), ex.what());
       }
     }
 
+    // Clean up any fenced XML blocks if present (for backward compatibility)
     size_t startPos = res.response.find("```xml\n");
     if (startPos != std::string::npos)
     {
-      res.response.replace(startPos, 6, "");  // Remove "```xml\n"
+      res.response.replace(startPos, 6, "");
     }
 
     size_t endPos = res.response.rfind("\n```");
     if (endPos != std::string::npos)
     {
-      res.response.replace(endPos, 4, "");  // Remove "\n```"
+      res.response.replace(endPos, 4, "");
     }
 
     return res;
