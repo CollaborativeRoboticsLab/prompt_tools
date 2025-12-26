@@ -451,13 +451,6 @@ public:
                         "Prompt cached without flushing in non-chat mode. UUID: %s.",
                         uuid.c_str());
 
-            // convert the (buffered-only) result to a message and return the same UUID so the client can continue
-            res->response = prompt::toMsg(result);
-            res->uuid = uuid;
-
-            RCLCPP_INFO(this->get_logger(),
-                        "Prompt cached without flushing in non-chat mode. UUID: %s.",
-                        uuid.c_str());
           }
         }
         else
