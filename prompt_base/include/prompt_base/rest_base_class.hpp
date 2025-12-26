@@ -213,14 +213,14 @@ protected:
    * as a Poco::JSON::Object::Ptr.
    *
    * @param body_json The JSON object containing the request body.
-   * @param uri_ The URI to send the request to.
+   * @param uri The URI to send the request to.
    * @return Poco::JSON::Object::Ptr The JSON object containing the response.
    * @throws prompt::PromptException if there is an error during the request.
    */
-  Poco::JSON::Object::Ptr process(Poco::JSON::Object& body_json, std::string& uri_)
+  Poco::JSON::Object::Ptr process(Poco::JSON::Object& body_json, std::string& uri)
   {
     // convert the uri
-    Poco::URI uri(uri_);
+    Poco::URI uri_obj(uri);
 
     // calculate body length
     std::ostringstream body_stream;
