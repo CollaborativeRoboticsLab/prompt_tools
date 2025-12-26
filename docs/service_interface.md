@@ -58,7 +58,7 @@ prompt_msgs/PromptResponse response
 - For follow-up prompts, set `uuid` to the previous response's `uuid` to continue the conversation.
 
 ### 3. Prompt caching (multi-input aggregation):
-- Set `use_cache` to `true` and `flush_cache` to `false` to cache prompts (without processing), a `uuid` will be returned on the reponse to access the cache in future.
+- Set `use_cache` to `true` and `flush_cache` to `false` to cache prompts (without processing), a `uuid` will be returned on the response to access the cache in future.
 - Set `use_cache` to `true` and `flush_cache` to `true` to process all cached prompts for the session (requires `uuid`).
 
 ### 4. Model selection and options:
