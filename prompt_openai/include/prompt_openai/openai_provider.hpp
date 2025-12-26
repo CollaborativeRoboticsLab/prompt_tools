@@ -204,7 +204,7 @@ protected:
    * @param object The JSON object to convert
    * @return A PromptResponse object containing the response data
    */
-  virtual prompt::PromptResponse fromJsonConversation(const Poco::JSON::Object::Ptr object)
+  virtual prompt::PromptResponse fromJsonConversation(const Poco::JSON::Object::Ptr object) override
   {
     prompt::PromptResponse res;
     // Parse the same /v1/responses structure for conversational responses
