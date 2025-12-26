@@ -70,12 +70,12 @@ prompt_msgs/PromptResponse response
 ```yaml
 uuid: ""
 prompt:
-	prompt: "What is the capital of France?"
-	use_cache: false
-	flush_cache: false
-	use_chat_mode: false
-	model_family: "openai"
-	options: []
+  prompt: "What is the capital of France?"
+  use_cache: false
+  flush_cache: false
+  use_chat_mode: false
+  model_family: "openai"
+  options: []
 ```
 
 ## Notes
