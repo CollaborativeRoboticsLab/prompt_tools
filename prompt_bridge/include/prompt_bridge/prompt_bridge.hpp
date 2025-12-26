@@ -429,6 +429,14 @@ public:
             // get the last dialogue from the conversation and append the new prompt to that for caching
             prompt_conversations_[uuid].back().content += " " + req->prompt.prompt;
             result.buffered = true;
+
+            // convert the (buffered-only) result to a message and return the same UUID so the client can continue
+            res->response = prompt::toMsg(result);
+            res->uuid = uuid;
+
+            RCLCPP_INFO(this->get_logger(),
+                        "Prompt cached without flushing in non-chat mode. UUID: %s.",
+                        uuid.c_str());
           }
         }
         else
