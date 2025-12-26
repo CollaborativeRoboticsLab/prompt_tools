@@ -390,7 +390,7 @@ public:
         else
         {
           // no caching, and no uuid. process the prompt directly. since chat mode is not enabled,
-          // no need to store the prompt in conversation history. not reuqired to return a uuid either.
+          // no need to store the prompt in conversation history. not required to return a uuid either.
           result = prompt_provider_->sendPrompt(input);
           result.buffered = false;
 
