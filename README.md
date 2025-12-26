@@ -6,7 +6,7 @@
 [![Open in Visual Studio Code](https://img.shields.io/badge/vscode-dev-blue)](https://open.vscode.dev/CollaborativeRoboticsLab/prompt_tools)
 <!-- [![DOI](https://zenodo.org/badge/DOI/10.1/zenodo.1.svg)](https://doi.org/10.1/zenodo.1) -->
 
-ROS2 meta-package with tools for working with prompted systems such as large language models and their responses in a distributed data driven robotic system application (ROS) including generic ROS message types for LLM prompts. And provide interfaces for follwoing providers via following plugins
+ROS2 meta-package with tools for working with prompted systems such as large language models and their responses in a distributed data driven robotic system application (ROS) including generic ROS message types for LLM prompts. And provide interfaces for following providers via following plugins
 
 | Provider | Plugin |
 | --- | --- |
