@@ -80,16 +80,16 @@ protected:
     Poco::JSON::Array input_array;
 
     // add previous conversation
-    for (const prompt::PromptDialogue& dialog_ : conversation)
+    for (const prompt::PromptDialogue& dialog : conversation)
     {
       Poco::JSON::Object message_obj;
       message_obj.set("type", "message");
-      message_obj.set("role", dialog_.role);
+      message_obj.set("role", dialog.role);
 
       Poco::JSON::Array content_array;
       Poco::JSON::Object content_obj;
       content_obj.set("type", "input_text");
-      content_obj.set("text", dialog_.content);
+      content_obj.set("text", dialog.content);
       content_array.add(content_obj);
 
       message_obj.set("content", content_array);
