@@ -109,7 +109,7 @@ public:
   /**
    * @brief Generate a UUID string for prompt tracking
    */
-  static const std::string generate_uuid()
+  static std::string generate_uuid()
   {
     uuid_t uuid;
     uuid_generate_random(uuid);
