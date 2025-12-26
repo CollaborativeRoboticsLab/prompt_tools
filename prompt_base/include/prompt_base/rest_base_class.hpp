@@ -253,7 +253,7 @@ protected:
     std::unique_ptr<Poco::Net::HTTPClientSession> session_ptr;
 
     // is the session secure?
-    if (uri.getScheme() == "https")
+    if (uri_obj.getScheme() == "https")
     {
       // context without certificate verification
       Poco::Net::Context::Params params;
@@ -271,13 +271,14 @@ protected:
       Poco::Net::Context::Ptr context = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, params);
 
       // create secure session
-      session_ptr = std::make_unique<Poco::Net::HTTPSClientSession>(uri.getHost(), uri.getPort(), context);
+      session_ptr = std::make_unique<Poco::Net::HTTPSClientSession>(uri_obj.getHost(), uri_obj.getPort(), context);
       RCLCPP_DEBUG(node_->get_logger(), "secure session created");
     }
     else
     {
       // create insecure session
-      session_ptr = std::make_unique<Poco::Net::HTTPClientSession>(uri.getHost(), uri.getPort());
+      session_ptr = std::make_unique<Poco::Net::HTTPClientSession>(uri_obj.getHost(), uri_obj.getPort());
+      
       RCLCPP_WARN(node_->get_logger(), "insecure session created");
     }
 
