@@ -354,7 +354,7 @@ public:
         {
           if (req->prompt.flush_cache)
           {
-            // flushing cache on new prompt doesn't make sense, log a warning and process prompt imidiately
+            // flushing cache on new prompt doesn't make sense, log a warning and process prompt immediately
             RCLCPP_WARN(this->get_logger(), "Flushing cache requested on new prompt with no uuid. Prompt will be "
                                             "processed without caching.");
 

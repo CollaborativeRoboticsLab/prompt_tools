@@ -1,1 +1,5 @@
 # TODO
+- [] refactor `prompt_service_cb` into smaller functions for clarity
+- [] add a check to verify that the UUID exists in prompt_conversations_ before accessing it.
+- [] Add mutex protection around all accesses to prompt_conversations_
+- [] implementing a cleanup strategy to prompt_conversations_ such as: LRU eviction, timestamp-based expiration, or a maximum number of concurrent conversations
