@@ -47,10 +47,10 @@ protected:
    * @param prompt The prompt request to convert
    * @return A JSON object representing the prompt request
    */
-  virtual Poco::JSON::Object toJson(prompt::PromptRequest& prompt)
+  virtual Poco::JSON::Object toJson(prompt::PromptRequest& prompt) override
   {
-    // add options (model, temperature, etc.)
-    Poco::JSON::Object result = handle_options(prompt);
+   // add options (model, temperature, etc.)
+   Poco::JSON::Object result = handle_options(prompt);
 
     // /v1/responses uses `input` instead of `prompt`
     // For simple one-shot prompts, send the text directly as a string.
