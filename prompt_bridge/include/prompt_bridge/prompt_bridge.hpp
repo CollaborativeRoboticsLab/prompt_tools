@@ -134,8 +134,6 @@ public:
     {
       RCLCPP_ERROR(this->get_logger(), "Model family not found");
       throw prompt::PromptException("Model family not found");
-
-      return nullptr;
     }
   }
 
