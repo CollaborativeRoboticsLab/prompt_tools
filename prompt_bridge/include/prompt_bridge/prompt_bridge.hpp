@@ -369,7 +369,7 @@ public:
           }
           else
           {
-            // no flush requst thus continue caching, since uuid is not provided, generate a new uuid for tracking
+            // no flush request thus continue caching, since uuid is not provided, generate a new uuid for tracking
             uuid = generate_uuid();
 
             PromptDialogue dialogue;
