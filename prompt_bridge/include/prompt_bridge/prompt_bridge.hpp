@@ -155,7 +155,20 @@ public:
   {
     // prompt provider
     std::shared_ptr<prompt::BaseClass> prompt_provider_;
-    prompt_provider_ = load_model(req->prompt.model_family);
+    try
+    {
+      prompt_provider_ = load_model(req->prompt.model_family);
+    }
+    catch (const prompt::PromptException& e)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Failed to load model: %s", e.what());
+      return;
+    }
+    catch (const std::exception& e)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Unexpected error while loading model: %s", e.what());
+      return;
+    }
 
     std::string uuid;
 
