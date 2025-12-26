@@ -302,7 +302,20 @@ public:
             uuid = req->uuid;
 
             // find the last dialogue related to the uuid from conversation and update the prompt in order to cache
-            prompt_conversations_[uuid].back().content += " " + req->prompt.prompt;
+            auto conv_it = prompt_conversations_.find(uuid);
+            if (conv_it != prompt_conversations_.end() && !conv_it->second.empty())
+            {
+              conv_it->second.back().content += " " + req->prompt.prompt;
+            }
+            else
+            {
+              // If the UUID is unknown or has no history, start a new dialogue entry instead of
+              // accessing back() on an empty conversation, which would be undefined behavior.
+              PromptDialogue dialogue;
+              dialogue.role = "user";
+              dialogue.content = req->prompt.prompt;
+              prompt_conversations_[uuid].push_back(dialogue);
+            }
             result.buffered = true;
 
             // convert the result to message and return the uuid to the client for future reference
