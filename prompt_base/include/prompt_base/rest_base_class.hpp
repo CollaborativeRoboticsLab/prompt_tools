@@ -61,12 +61,27 @@ public:
     // initialize base class
     initialize_base(node, plugin_name);
 
-    // declare parameters
-    node_->declare_parameter(plugin_name_ + ".rest.uri", "");
-    node_->declare_parameter(plugin_name_ + ".rest.chat_uri", "");
-    node_->declare_parameter(plugin_name_ + ".rest.method", "POST");
-    node_->declare_parameter(plugin_name_ + ".rest.ssl_verify", true);
-    node_->declare_parameter(plugin_name_ + ".rest.auth_type", "Bearer");
+    // declare parameters only if not already declared (idempotent init)
+    if (!node_->has_parameter(plugin_name_ + ".rest.uri"))
+    {
+      node_->declare_parameter(plugin_name_ + ".rest.uri", "");
+    }
+    if (!node_->has_parameter(plugin_name_ + ".rest.chat_uri"))
+    {
+      node_->declare_parameter(plugin_name_ + ".rest.chat_uri", "");
+    }
+    if (!node_->has_parameter(plugin_name_ + ".rest.method"))
+    {
+      node_->declare_parameter(plugin_name_ + ".rest.method", "POST");
+    }
+    if (!node_->has_parameter(plugin_name_ + ".rest.ssl_verify"))
+    {
+      node_->declare_parameter(plugin_name_ + ".rest.ssl_verify", true);
+    }
+    if (!node_->has_parameter(plugin_name_ + ".rest.auth_type"))
+    {
+      node_->declare_parameter(plugin_name_ + ".rest.auth_type", "Bearer");
+    }
 
     // get parameters from the parameter server
     uri_ = node_->get_parameter(plugin_name_ + ".rest.uri").as_string();
