@@ -1,7 +1,7 @@
 <library path="prompt_ollama">
   <class type="prompt::OllamaProvider" base_class_type="prompt::BaseClass">
     <description>
-      A plugin that provides REST based api endpoint of Ollama
+      A plugin that provides REST-based API endpoints for Ollama's /api/generate and /api/chat endpoints.
     </description>
   </class>
 </library>
