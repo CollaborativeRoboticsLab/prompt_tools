@@ -66,7 +66,7 @@ private:
     // 6. Non-chat flush cache (use uuid from previous response)
     if (!cache_uuid.empty())
     {
-      send_prompt("", true, true, false, "openai", cache_uuid);
+      send_prompt("Flushing cached non-chat prompt.", true, true, false, "openai", cache_uuid);
     }
   }
 
