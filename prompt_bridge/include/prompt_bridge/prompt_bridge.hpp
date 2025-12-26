@@ -160,11 +160,15 @@ public:
     catch (const prompt::PromptException& e)
     {
       RCLCPP_ERROR(this->get_logger(), "Failed to load model: %s", e.what());
+      res->response.success = false;
+      res->response.response = "Failed to load model: " + std::string(e.what());
       return;
     }
     catch (const std::exception& e)
     {
       RCLCPP_ERROR(this->get_logger(), "Unexpected error while loading model: %s", e.what());
+      res->response.success = false;
+      res->response.response = "Unexpected error while loading model: " + std::string(e.what());
       return;
     }
 

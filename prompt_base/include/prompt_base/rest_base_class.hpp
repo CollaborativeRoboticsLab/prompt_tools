@@ -227,7 +227,7 @@ protected:
     body_json.stringify(body_stream);
 
     // create request object
-    Poco::Net::HTTPRequest request(method_, uri.getPath());
+    Poco::Net::HTTPRequest request(method_, uri_obj.getPath());
     // set headers
     request.setContentType("application/json");
     request.setContentLength(body_stream.str().size());
