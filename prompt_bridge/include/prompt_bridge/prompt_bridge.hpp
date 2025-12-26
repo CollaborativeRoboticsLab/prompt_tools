@@ -302,7 +302,7 @@ public:
             uuid = req->uuid;
 
             // find the last dialogue related to the uuid from conversation and update the prompt in order to cache
-            prompt_conversations_[uuid][-1].content += " " + req->prompt.prompt;
+            prompt_conversations_[uuid].back().content += " " + req->prompt.prompt;
             result.buffered = true;
 
             // convert the result to message and return the uuid to the client for future reference
