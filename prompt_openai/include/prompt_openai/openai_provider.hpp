@@ -70,7 +70,7 @@ protected:
    * @return A JSON object representing the prompt request with conversation history
    */
   virtual Poco::JSON::Object toJsonConversation(prompt::PromptRequest& prompt,
-                                                std::vector<PromptDialogue>& conversation)
+                                                std::vector<PromptDialogue>& conversation) override
   {
     // add options (model, temperature, etc.)
     Poco::JSON::Object result = handle_options(prompt);
