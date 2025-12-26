@@ -416,7 +416,7 @@ public:
             uuid = req->uuid;
 
             // get the last dialogue from the conversation and append the new prompt to that for caching
-            prompt_conversations_[uuid][-1].content += " " + req->prompt.prompt;
+            prompt_conversations_[uuid].back().content += " " + req->prompt.prompt;
             result.buffered = true;
           }
         }
