@@ -1,4 +1,6 @@
 # prompt service send a prompt and recieve a response
+string uuid
 prompt_msgs/Prompt prompt
 ---
+string uuid
 prompt_msgs/PromptResponse response

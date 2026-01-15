@@ -18,7 +18,10 @@ static const prompt::PromptRequest fromMsg(const prompt_msgs::msg::Prompt& promp
   prompt::PromptRequest result;
 
   result.prompt = prompt.prompt;
-  result.flush  = prompt.flush;
+  result.use_cache  = prompt.use_cache;
+  result.flush_cache = prompt.flush_cache;
+  result.use_chat_mode = prompt.use_chat_mode;
+  result.model_family = prompt.model_family;
 
   for (const auto& option : prompt.options)
   {

@@ -7,12 +7,14 @@ int main(int argc, char* argv[])
 
   // Create a shared pointer to the CapabilitiesFabricClient
   auto node = std::make_shared<prompt::PromptBridge>();
-  
-  // Initialize the node
-  node->initialize();  // Call initialize after construction
 
-  // Spin the node to process callbacks
-  rclcpp::spin(node);
+  // Initialize the node after construction
+  node->initialize();
+
+  // Use a MultiThreadedExecutor to spin the node
+  rclcpp::executors::MultiThreadedExecutor executor;
+  executor.add_node(node);
+  executor.spin();
 
   rclcpp::shutdown();
 

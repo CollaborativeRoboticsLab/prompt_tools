@@ -3,21 +3,21 @@
 [![ROS2 Jazzy](https://img.shields.io/badge/ROS2-Jazzy-blue)](https://index.ros.org/doc/ros2/Releases/)
 [![ROS2 Humble](https://img.shields.io/badge/ROS2-Humble-blue)](https://index.ros.org/doc/ros2/Releases/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![Open in Visual Studio Code](https://img.shields.io/badge/vscode-dev-blue)](https://open.vscode.dev/airesearchlab/prompt_tools)
+[![Open in Visual Studio Code](https://img.shields.io/badge/vscode-dev-blue)](https://open.vscode.dev/CollaborativeRoboticsLab/prompt_tools)
 <!-- [![DOI](https://zenodo.org/badge/DOI/10.1/zenodo.1.svg)](https://doi.org/10.1/zenodo.1) -->
 
-ROS2 meta-package with tools for working with prompted systems such as large language models and their responses in a distributed data driven robotic system application (ROS) including generic ROS message types for LLM prompts.
-
-This package contains one main component;
-
-- [prompt_bridge](./prompt_bridge/readme.md)
-
-And provide interfaces for follwoing providers via following plugins
+ROS2 meta-package with tools for working with prompted systems such as large language models and their responses in a distributed data driven robotic system application (ROS) including generic ROS message types for LLM prompts. And provide interfaces for following providers via following plugins
 
 | Provider | Plugin |
 | --- | --- |
 | OpenAI | [prompt_openai](./prompt_openai/readme.md)  |
 | Ollama | [prompt_ollama](./prompt_ollama/readme.md)  |
+
+Read more about components and concepts;
+
+- [prompt_bridge](./prompt_bridge/readme.md)
+- [service_interface](./docs/service_interface.md)
+- [plugin parameters](./docs/plugin_parameters.md)
 
 ## Prompt Bridge
 
@@ -69,10 +69,20 @@ colcon build
 
 Rename the `.devcontainer/devcontainer-empty.env` as `.devcontainer/devcontainer.env` and update it with your API Keys. Then rebuild the container
 
-### Start the Prompt Bridge
+## Starting the Prompt Bridge
 
 ```bash
 source install/setup.bash
 ros2 launch prompt_bridge prompt_bridge.launch.py
 ```
 
+## Testing
+
+To build and run the test node that exercises all features of prompt_bridge:
+
+```bash
+source install/setup.bash
+ros2 run prompt_bridge test_prompt_node
+```
+
+This will run the test node and print results for stateless, chat, caching, and model selection features.

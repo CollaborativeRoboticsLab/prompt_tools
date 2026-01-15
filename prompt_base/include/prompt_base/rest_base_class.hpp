@@ -14,6 +14,7 @@
 #include <Poco/URI.h>
 
 #include <prompt_base/base_class.hpp>
+#include <prompt_base/utils/prompt_options.hpp>
 #include <prompt_msgs/msg/prompt.hpp>
 
 namespace prompt
@@ -33,7 +34,7 @@ public:
    *
    * Initializes the RestBaseClass with default values.
    */
-  RestBaseClass() : uri_("")
+  RestBaseClass() : uri_(""), chat_uri_("")
   {
   }
 
@@ -60,14 +61,31 @@ public:
     // initialize base class
     initialize_base(node, plugin_name);
 
-    // declare parameters
-    node_->declare_parameter(plugin_name_ + ".rest.uri", "http://localhost:8000/api/v1/prompt");
-    node_->declare_parameter(plugin_name_ + ".rest.method", "POST");
-    node_->declare_parameter(plugin_name_ + ".rest.ssl_verify", true);
-    node_->declare_parameter(plugin_name_ + ".rest.auth_type", "Bearer");
+    // declare parameters only if not already declared (idempotent init)
+    if (!node_->has_parameter(plugin_name_ + ".rest.uri"))
+    {
+      node_->declare_parameter(plugin_name_ + ".rest.uri", "");
+    }
+    if (!node_->has_parameter(plugin_name_ + ".rest.chat_uri"))
+    {
+      node_->declare_parameter(plugin_name_ + ".rest.chat_uri", "");
+    }
+    if (!node_->has_parameter(plugin_name_ + ".rest.method"))
+    {
+      node_->declare_parameter(plugin_name_ + ".rest.method", "POST");
+    }
+    if (!node_->has_parameter(plugin_name_ + ".rest.ssl_verify"))
+    {
+      node_->declare_parameter(plugin_name_ + ".rest.ssl_verify", true);
+    }
+    if (!node_->has_parameter(plugin_name_ + ".rest.auth_type"))
+    {
+      node_->declare_parameter(plugin_name_ + ".rest.auth_type", "Bearer");
+    }
 
     // get parameters from the parameter server
     uri_ = node_->get_parameter(plugin_name_ + ".rest.uri").as_string();
+    chat_uri_ = node_->get_parameter(plugin_name_ + ".rest.chat_uri").as_string();
     method_ = node_->get_parameter(plugin_name_ + ".rest.method").as_string();
     ssl_verify_ = node_->get_parameter(plugin_name_ + ".rest.ssl_verify").as_bool();
     auth_type_ = node_->get_parameter(plugin_name_ + ".rest.auth_type").as_string();
@@ -95,11 +113,15 @@ public:
     }
 
     // log the parameters
-    RCLCPP_INFO(node_->get_logger(), "%s URI: %s", plugin_name_.c_str(), uri_.c_str());
+    RCLCPP_INFO(node_->get_logger(), "%s Single URI: %s", plugin_name_.c_str(), uri_.c_str());
+    RCLCPP_INFO(node_->get_logger(), "%s Chat URI: %s", plugin_name_.c_str(), chat_uri_.c_str());
     RCLCPP_INFO(node_->get_logger(), "%s Method: %s", plugin_name_.c_str(), method_.c_str());
     RCLCPP_INFO(node_->get_logger(), "%s SSL Verify: %s", plugin_name_.c_str(), ssl_verify_ ? "true" : "false");
     RCLCPP_INFO(node_->get_logger(), "%s Auth Type: %s", plugin_name_.c_str(), auth_type_.c_str());
     RCLCPP_INFO(node_->get_logger(), "%s Plugin initialized", plugin_name_.c_str());
+
+    RCLCPP_INFO(node_->get_logger(), "Loading default model options from parameters.");
+    required_options_ = prompt::load_from_paramters(node_, plugin_name_);
   }
 
   /**
@@ -110,20 +132,102 @@ public:
    * @param req The prompt request containing the prompt and options.
    * @return const PromptResponse
    */
-  virtual prompt::PromptResponse sendPrompt(const prompt::PromptRequest& req)
+  virtual prompt::PromptResponse sendPrompt(prompt::PromptRequest& req)
   {
-    // uri
-    Poco::URI uri(uri_);
+    // verify and add required model options
+    check_model_options(req);
 
     // prepare request body
     Poco::JSON::Object body_json = toJson(req);
+
+    // process the prompt
+    Poco::JSON::Object::Ptr object = process(body_json, uri_);
+
+    // create prompt provider response container
+    prompt::PromptResponse res = fromJson(object);
+
+    return res;
+  }
+
+  /**
+   * @brief sendConversation send a prompt with conversation history to a prompt provider using REST
+   *
+   * Typical providers offer stream based responses which is also supported
+   *
+   * @param latest_request The prompt request containing the prompt and options.
+   * @param conversation The conversation history for context.
+   * @return const PromptResponse
+   */
+  virtual prompt::PromptResponse sendConversation(prompt::PromptRequest& latest_request,
+                                                  std::vector<PromptDialogue>& conversation)
+  {
+    // verify and add required model options
+    check_model_options(latest_request);
+
+    // prepare request body
+    Poco::JSON::Object body_json = toJsonConversation(latest_request, conversation);
+
+    // process the prompt
+    Poco::JSON::Object::Ptr object = process(body_json, chat_uri_);
+
+    // create prompt provider response container
+    prompt::PromptResponse res = fromJsonConversation(object);
+
+    return res;
+  }
+
+protected:
+  /**
+   * @brief Check and add required model options to the prompt request
+   *
+   * This method checks if the required model options are present in the prompt request.
+   * If any required option is missing, it adds it to the request.
+   *
+   * @param request The prompt request to check and modify.
+   */
+  void check_model_options(prompt::PromptRequest& request)
+  {
+    // check required options are available and if not add them
+    for (const auto& required_opt : required_options_)
+    {
+      bool found = false;
+      for (const auto& opt : request.options)
+      {
+        if (opt.key == required_opt.key)
+          found = true;
+      }
+
+      if (!found)
+      {
+        RCLCPP_WARN(node_->get_logger(), "Model option '%s' not found, Adding '%s'", required_opt.key.c_str(),
+                    required_opt.value.c_str());
+        request.options.push_back(required_opt);
+      }
+    }
+  }
+
+  /**
+   * @brief Process the HTTP request and return the response as a JSON object
+   *
+   * This method sends the HTTP request to the specified URI and returns the response
+   * as a Poco::JSON::Object::Ptr.
+   *
+   * @param body_json The JSON object containing the request body.
+   * @param uri The URI to send the request to.
+   * @return Poco::JSON::Object::Ptr The JSON object containing the response.
+   * @throws prompt::PromptException if there is an error during the request.
+   */
+  Poco::JSON::Object::Ptr process(Poco::JSON::Object& body_json, std::string& uri)
+  {
+    // convert the uri
+    Poco::URI uri_obj(uri);
 
     // calculate body length
     std::ostringstream body_stream;
     body_json.stringify(body_stream);
 
     // create request object
-    Poco::Net::HTTPRequest request(method_, uri.getPath());
+    Poco::Net::HTTPRequest request(method_, uri_obj.getPath());
     // set headers
     request.setContentType("application/json");
     request.setContentLength(body_stream.str().size());
@@ -149,7 +253,7 @@ public:
     std::unique_ptr<Poco::Net::HTTPClientSession> session_ptr;
 
     // is the session secure?
-    if (uri.getScheme() == "https")
+    if (uri_obj.getScheme() == "https")
     {
       // context without certificate verification
       Poco::Net::Context::Params params;
@@ -167,15 +271,14 @@ public:
       Poco::Net::Context::Ptr context = new Poco::Net::Context(Poco::Net::Context::CLIENT_USE, params);
 
       // create secure session
-      // Poco::Net::HTTPSClientSession session(uri.getHost(), uri.getPort(), context);
-      session_ptr = std::make_unique<Poco::Net::HTTPSClientSession>(uri.getHost(), uri.getPort(), context);
+      session_ptr = std::make_unique<Poco::Net::HTTPSClientSession>(uri_obj.getHost(), uri_obj.getPort(), context);
       RCLCPP_DEBUG(node_->get_logger(), "secure session created");
     }
     else
     {
       // create insecure session
-      // Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
-      session_ptr = std::make_unique<Poco::Net::HTTPClientSession>(uri.getHost(), uri.getPort());
+      session_ptr = std::make_unique<Poco::Net::HTTPClientSession>(uri_obj.getHost(), uri_obj.getPort());
+      
       RCLCPP_WARN(node_->get_logger(), "insecure session created");
     }
 
@@ -226,12 +329,7 @@ public:
     // parse response
     Poco::JSON::Parser parser;
     Poco::Dynamic::Var result = parser.parse(rs);
-    Poco::JSON::Object::Ptr object = result.extract<Poco::JSON::Object::Ptr>();
-
-    // create prompt provider response container
-    prompt::PromptResponse res = fromJson(object);
-
-    return res;
+    return result.extract<Poco::JSON::Object::Ptr>();
   }
 
   /**
@@ -295,7 +393,20 @@ protected:
    * @param prompt The prompt request to convert
    * @return A JSON object representing the prompt request
    */
-  virtual Poco::JSON::Object toJson(const prompt::PromptRequest& prompt) = 0;
+  virtual Poco::JSON::Object toJson(prompt::PromptRequest& prompt) = 0;
+
+  /**
+   * @brief Convert a prompt request with conversation history to a JSON object
+   *
+   * This method converts the prompt request and conversation history to a JSON object that can be sent to the prompt
+   * plugin. It includes the prompt text, options, and conversation history in the JSON object.
+   *
+   * @param latest_request The latest prompt request to convert
+   * @param conversation The conversation history to include
+   * @return A JSON object representing the prompt request with conversation history
+   */
+  virtual Poco::JSON::Object toJsonConversation(prompt::PromptRequest& latest_request,
+                                                std::vector<PromptDialogue>& conversation) = 0;
 
   /**
    * @brief Convert a JSON object to a prompt response
@@ -308,11 +419,36 @@ protected:
    */
   virtual prompt::PromptResponse fromJson(const Poco::JSON::Object::Ptr object) = 0;
 
+  /**
+   * @brief Convert a JSON object to a prompt response with conversation history
+   *
+   * This method converts a JSON object received from the prompt plugin into a prompt response,
+   * taking into account the conversation history.
+   * It extracts the relevant fields from the JSON object and returns a PromptResponse object.
+   *
+   * @param object The JSON object to convert
+   * @return A PromptResponse object containing the response data
+   */
+  virtual prompt::PromptResponse fromJsonConversation(const Poco::JSON::Object::Ptr object) = 0;
+
   std::string uri_;
+  std::string chat_uri_;
   std::string method_;
   bool ssl_verify_;
   std::string auth_type_;
+
+  /**
+   * @brief API key
+   */
   std::string api_key_;
+
+  /**
+   * @brief Model options
+   *
+   * This is the model options used by the prompt provider by default in case model options are not
+   * provided in the request
+   */
+  std::vector<prompt::PromptOption> required_options_;
 };
 
 }  // namespace prompt

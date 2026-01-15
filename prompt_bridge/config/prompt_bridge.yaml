@@ -1,81 +1,43 @@
 # config for prompt_bridge
 /**:
   ros__parameters:
-    # general config
-    use_prompt_provider: true
-
     frame_id: prompt_bridge
     cached_transactions: 10
 
-    prompt_provider: prompt::ChatOpenAIProvider
-    # prompt_provider: prompt::SingleOpenAIProvider
-    # prompt_provider: prompt::ChatOllamaProvider
-    # prompt_provider: prompt::SingleOllamaProvider
-    
-    ChatOpenAIProvider:
+    model_family_names: [openai, ollama]
+    model_family_plugins:
+      openai: prompt::OpenAIProvider
+      ollama: prompt::OllamaProvider
+
+    OpenAIProvider:
       rest:
-        uri: https://api.openai.com/v1/chat/completions # openai endpoint for gpt models
+        # OpenAI Responses API endpoint (used for both single prompts and conversations)
+        uri: https://api.openai.com/v1/responses
+        chat_uri: https://api.openai.com/v1/responses
         method: POST
         auth_type: Bearer
         ssl_verify: true
-      override_model_options: true
-      prompt_option_keys: [stream, model]
+      prompt_option_keys: [stream, model] # options will be used if model options are not set in the prompt requests
       prompt_options:
         stream:
           value: false
           type: bool
         model:
-        #   value: gpt-4o
-        #   value: gpt-4.1
-          value: gpt-5
+          value: gpt-5    # e.g., gpt-4o, gpt-4.1, gpt-4o-mini
           type: string
 
-    SingleOpenAIProvider:
+    OllamaProvider:
       rest:
-        uri: https://api.openai.com/v1/completions # openai endpoint for gpt models
-        method: POST
-        auth_type: Bearer
-        ssl_verify: true
-      override_model_options: true
-      prompt_option_keys: [stream, model]
-      prompt_options:
-        stream:
-          value: false
-          type: bool
-        model:
-        #   value: gpt-4o
-        #   value: gpt-4.1
-          value: gpt-5
-          type: string
-
-    SingleOllamaProvider:
-      rest:
-        uri: http://10.0.0.246:11434/api/generate # local ollama container
-        # uri: http://ollama:11434/api/generate             # docker container with name 'ollama' running on the same computer
-        # uri: http://ollama:11434/v1/completions           # docker container with name 'ollama' and openai api compat version
+        uri: http://10.0.0.246:11434/api/generate    # local ollama container
+        chat_uri: http://10.0.0.246:11434/api/chat          # local ollama container
+        # uri: http://ollama:11434/api/generate      # docker container with name 'ollama' running on the same computer
+        # chat_uri: http://ollama:11434/api/generate        # docker container with name 'ollama' running on the same computer
+        # uri: http://ollama:11434/v1/completions    # docker container with name 'ollama' and openai api compat version
+        # chat_uri: http://ollama:11434/v1/completions      # docker container with name 'ollama' and openai api compat version
         method: POST
         auth_type: Bearer
         ssl_verify: false
-      override_model_options: true
-      prompt_option_keys: [stream, model]
-      prompt_options:
-        stream:
-          value: false
-          type: bool
-        model:
-          value: llama3.2
-          type: string
-
-    ChatOllamaProvider:
-      rest:
-        uri: http://10.0.0.246:11434/api/chat # local ollama container
-        # uri: http://ollama:11434/api/generate             # docker container with name 'ollama' running on the same computer
-        # uri: http://ollama:11434/v1/completions           # docker container with name 'ollama' and openai api compat version
-        method: POST
-        auth_type: Bearer
-        ssl_verify: false
-      override_model_options: true
-      prompt_option_keys: [stream, model]
+      prompt_option_keys: [stream, model] # options will be used if model options are not set in the prompt requests
       prompt_options:
         stream:
           value: false
