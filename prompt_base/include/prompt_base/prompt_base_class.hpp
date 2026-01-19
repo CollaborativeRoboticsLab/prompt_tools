@@ -42,11 +42,11 @@ public:
    * @param api_key_name std::string Name of the API key parameter, if different from the default
    * @throws prompt::PromptException if there is an error during initialization
    */
-  virtual void initialize_prompt_base(rclcpp::Node::SharedPtr node, std::string plugin_name = "RestBaseClass",
+  virtual void initialize_prompt_base(rclcpp::Node::SharedPtr node, std::string plugin_name = "PromptBaseClass",
                                       std::string api_key_name = "")
   {
     // initialize base class
-    initialize_rest_base(node, plugin_name);
+    initialize_rest_base(node, plugin_name, api_key_name);
 
     // declare parameters only if not already declared (idempotent init)
     if (!node_->has_parameter(plugin_name_ + ".rest.uri"))
@@ -78,7 +78,7 @@ public:
   virtual prompt::PromptResponse sendPrompt(prompt::PromptRequest& req)
   {
     // verify and add required model options
-    check_model_options(req);
+    check_model_options(req.options);
 
     // prepare request body
     Poco::JSON::Object body_json = toJson(req);
@@ -105,7 +105,7 @@ public:
                                                   std::vector<PromptDialogue>& conversation)
   {
     // verify and add required model options
-    check_model_options(latest_request);
+    check_model_options(latest_request.options);
 
     // prepare request body
     Poco::JSON::Object body_json = toJsonConversation(latest_request, conversation);
@@ -167,7 +167,14 @@ protected:
    */
   virtual prompt::PromptResponse fromJsonConversation(const Poco::JSON::Object::Ptr object) = 0;
 
+  /**
+   * @brief URI for single prompt requests
+   */
   std::string uri_;
+
+  /**
+   * @brief URI for chat/conversation requests
+   */
   std::string chat_uri_;
 };
 

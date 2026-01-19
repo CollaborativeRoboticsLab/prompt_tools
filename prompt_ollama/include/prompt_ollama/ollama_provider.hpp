@@ -1,6 +1,6 @@
 #pragma once
 
-#include <prompt_base/rest_base_class.hpp>
+#include <prompt_base/prompt_base_class.hpp>
 
 namespace prompt
 {
@@ -51,7 +51,7 @@ protected:
   virtual Poco::JSON::Object toJson(prompt::PromptRequest& prompt) override
   {
     // add options
-    Poco::JSON::Object result = handle_options(prompt);
+    Poco::JSON::Object result = handle_options(prompt.options);
 
     // add prompt
     result.set("prompt", prompt.prompt);

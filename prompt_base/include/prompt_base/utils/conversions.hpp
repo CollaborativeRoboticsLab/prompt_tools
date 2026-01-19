@@ -2,6 +2,10 @@
 #include <prompt_base/utils/structs.hpp>
 #include <prompt_msgs/msg/prompt.hpp>
 #include <prompt_msgs/msg/prompt_response.hpp>
+#include <prompt_msgs/msg/embed.hpp>
+#include <prompt_msgs/msg/embed_response.hpp>
+#include <prompt_msgs/msg/model_option.hpp>
+#include <prompt_msgs/msg/embed_format.hpp>
 
 namespace prompt
 {
@@ -35,7 +39,7 @@ static const prompt::PromptRequest fromMsg(const prompt_msgs::msg::Prompt& promp
  * which is used internally in prompt tools
  *
  * @param prompt input ros2 message
- * @return const prompt::PromptRequest
+ * @return const prompt::EmbedRequest
  */
 static const prompt::EmbedRequest fromMsg(const prompt_msgs::msg::Embed& input)
 {
@@ -43,13 +47,12 @@ static const prompt::EmbedRequest fromMsg(const prompt_msgs::msg::Embed& input)
 
   result.text = input.text;
   result.model_family = input.model_family;
-  result.embed_type = static_cast<prompt::EmbedType>(input.embed_type);
 
-  if (input.embed_type == prompt_msgs::msg::EmbedFormat::FLOAT)
+  if (input.format.value == prompt_msgs::msg::EmbedFormat::FLOAT)
   {
     result.embed_type = prompt::EmbedType::Float;
   }
-  else if (input.embed_type == prompt_msgs::msg::EmbedFormat::BASE64)
+  else if (input.format.value == prompt_msgs::msg::EmbedFormat::BASE64)
   {
     result.embed_type = prompt::EmbedType::Base64;
   }
@@ -95,20 +98,20 @@ static const prompt_msgs::msg::EmbedResponse toMsg(const prompt::EmbedResponse& 
 {
   prompt_msgs::msg::EmbedResponse result;
 
-  if (EmbedType::Float == res.embed_type)
+  if (res.embed_type == prompt::EmbedType::Float)
   {
-    result.format = prompt_msgs::msg::EmbedFormat::FLOAT;
+    result.format.value = prompt_msgs::msg::EmbedFormat::FLOAT;
     result.float_embedding = res.float_embedding;
   }
-  else if (EmbedType::Base64 == res.embed_type)
+  else if (res.embed_type == prompt::EmbedType::Base64)
   {
-    result.format = prompt_msgs::msg::EmbedFormat::BASE64;
+    result.format.value = prompt_msgs::msg::EmbedFormat::BASE64;
     result.base64_embedding = res.base64_embedding;
   }
 
   for (const auto& option : res.options)
   {
-    prompt_msgs::msg::PromptOption msg_option;
+    prompt_msgs::msg::ModelOption msg_option;
     msg_option.key = option.key;
     msg_option.value = option.value;
     msg_option.type = option.type;

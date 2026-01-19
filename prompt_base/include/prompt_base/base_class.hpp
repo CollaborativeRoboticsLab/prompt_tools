@@ -29,12 +29,12 @@ public:
   virtual void initialize(rclcpp::Node::SharedPtr node) = 0;
 
   /**
-   * @brief get_embeddings sends a text to a embedding provider using REST
+   * @brief get_embeddings sends a text to an embedding provider using REST
    *
-   * @param req The prompt request containing the text and options.
-   * @return const PromptResponse
+   * @param req The embed request containing the text and options.
+   * @return const EmbedResponse
    */
-  virtual prompt::PromptResponse get_embeddings(prompt::PromptRequest& req)
+  virtual prompt::EmbedResponse get_embeddings(prompt::EmbedRequest& req)
   {
     throw prompt::PromptException("get_embeddings not implemented in base class");
   }

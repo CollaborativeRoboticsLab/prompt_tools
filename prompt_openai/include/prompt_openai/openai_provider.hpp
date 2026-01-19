@@ -1,6 +1,6 @@
 #pragma once
 
-#include <prompt_base/rest_base_class.hpp>
+#include <prompt_base/prompt_base_class.hpp>
 
 namespace prompt
 {

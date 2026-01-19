@@ -10,9 +10,9 @@
 #include <prompt_base/utils/exceptions.hpp>
 #include <prompt_msgs/msg/prompt_history.hpp>
 #include <prompt_msgs/msg/prompt_transaction.hpp>
+#include <prompt_msgs/srv/embedding.hpp>
 #include <prompt_msgs/srv/prompt.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <rclcpp_action/rclcpp_action.hpp>
 #include <thread>
 
 namespace prompt
@@ -36,7 +36,7 @@ public:
    * @param options Node options for the PromptBridge node
    */
   PromptBridge(const rclcpp::NodeOptions& options = rclcpp::NodeOptions())
-    : Node("prompt_bridge", options), prompt_provider_loader_("prompt_bridge", "prompt::BaseClass")
+    : Node("prompt_bridge", options), provider_loader_("prompt_bridge", "prompt::BaseClass")
   {
     try
     {
@@ -138,17 +138,51 @@ public:
     return std::string(uuid_str);
   }
 
-  std::shared_ptr<prompt::BaseClass> load_model(std::string prompt_family)
+  /**
+   * @brief Load a prompt model plugin based on the prompt family
+   *
+   * @param family The prompt family name
+   * @return std::shared_ptr<prompt::BaseClass> The loaded prompt provider instance
+   * @throws prompt::PromptException if the prompt family is not found
+   */
+  std::shared_ptr<prompt::BaseClass> load_prompt_model(std::string family)
   {
     std::shared_ptr<prompt::BaseClass> prompt_provider_instance_;
 
     // check if the prompt family exists
-    if (prompt_families_names_.find(prompt_family) != prompt_families_names_.end())
+    if (prompt_families_names_.find(family) != prompt_families_names_.end())
     {
-      prompt_provider_instance_ = prompt_provider_loader_.createSharedInstance(prompt_families_names_[prompt_family]);
+      prompt_provider_instance_ = provider_loader_.createSharedInstance(prompt_families_names_[family]);
       prompt_provider_instance_->initialize(shared_from_this());
 
       return prompt_provider_instance_;
+    }
+    else
+    {
+      RCLCPP_ERROR(this->get_logger(), "Prompt family not found");
+      throw prompt::PromptException("Prompt family not found");
+    }
+  }
+
+  /**
+   * @brief Load an embedding model plugin based on the embedding family
+   *
+   * @param family The embedding family name
+   * @return std::shared_ptr<prompt::BaseClass> The loaded embedding provider instance
+   *
+   * @throws prompt::PromptException if the embedding family is not found
+   */
+  std::shared_ptr<prompt::BaseClass> load_embedding_model(std::string family)
+  {
+    std::shared_ptr<prompt::BaseClass> embed_provider_instance_;
+
+    // check if the prompt family exists
+    if (embedding_families_names_.find(family) != embedding_families_names_.end())
+    {
+      embed_provider_instance_ = provider_loader_.createSharedInstance(embedding_families_names_[family]);
+      embed_provider_instance_->initialize(shared_from_this());
+
+      return embed_provider_instance_;
     }
     else
     {
@@ -175,7 +209,7 @@ public:
     std::shared_ptr<prompt::BaseClass> prompt_provider_;
     try
     {
-      prompt_provider_ = load_model(req->prompt.model_family);
+      prompt_provider_ = load_prompt_model(req->prompt.model_family);
     }
     catch (const prompt::PromptException& e)
     {
@@ -508,7 +542,7 @@ public:
     std::shared_ptr<prompt::BaseClass> embedding_provider_;
     try
     {
-      embedding_provider_ = load_model(req->input.model_family);
+      embedding_provider_ = load_embedding_model(req->input.model_family);
     }
     catch (const prompt::PromptException& e)
     {
@@ -531,6 +565,8 @@ public:
     // process the embedding request
     result = embedding_provider_->get_embeddings(input);
     res->output = prompt::toMsg(result);
+
+    RCLCPP_INFO(this->get_logger(), "Embedding request processed.");
   }
 
 private:
@@ -576,7 +612,7 @@ private:
   prompt_msgs::msg::PromptHistory prompt_history_;
 
   // loaders
-  pluginlib::ClassLoader<prompt::BaseClass> prompt_provider_loader_;
+  pluginlib::ClassLoader<prompt::BaseClass> provider_loader_;
 
   // pubs
   rclcpp::Publisher<prompt_msgs::msg::PromptHistory>::SharedPtr prompt_history_pub_;

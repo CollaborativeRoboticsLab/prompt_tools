@@ -1,6 +1,6 @@
-    # Embedding encoding formats
-uint8 FLOAT
-uint8 BASE64
+# Embedding encoding formats
+uint8 FLOAT=0
+uint8 BASE64=1
 
 # provided encoding format for the embedding vector
-uint8 encoding_format
+uint8 value

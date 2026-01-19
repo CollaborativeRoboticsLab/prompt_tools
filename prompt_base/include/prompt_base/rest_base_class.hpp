@@ -34,7 +34,7 @@ public:
    *
    * Initializes the RestBaseClass with default values.
    */
-  RestBaseClass() : uri_(""), chat_uri_("")
+  RestBaseClass() : BaseClass()
   {
   }
 
@@ -103,9 +103,6 @@ public:
     }
 
     // log the parameters
-    RCLCPP_INFO(node_->get_logger(), "%s Single URI: %s", plugin_name_.c_str(), uri_.c_str());
-    RCLCPP_INFO(node_->get_logger(), "%s Chat URI: %s", plugin_name_.c_str(), chat_uri_.c_str());
-    RCLCPP_INFO(node_->get_logger(), "%s Embedding URI: %s", plugin_name_.c_str(), embed_uri_.c_str());
     RCLCPP_INFO(node_->get_logger(), "%s Method: %s", plugin_name_.c_str(), method_.c_str());
     RCLCPP_INFO(node_->get_logger(), "%s SSL Verify: %s", plugin_name_.c_str(), ssl_verify_ ? "true" : "false");
     RCLCPP_INFO(node_->get_logger(), "%s Auth Type: %s", plugin_name_.c_str(), auth_type_.c_str());
@@ -124,13 +121,13 @@ protected:
    *
    * @param request The prompt request to check and modify.
    */
-  void check_model_options(prompt::PromptRequest& request)
+  void check_model_options(std::vector<prompt::PromptOption>& options)
   {
     // check required options are available and if not add them
     for (const auto& required_opt : required_options_)
     {
       bool found = false;
-      for (const auto& opt : request.options)
+      for (const auto& opt : options)
       {
         if (opt.key == required_opt.key)
           found = true;
@@ -140,7 +137,7 @@ protected:
       {
         RCLCPP_WARN(node_->get_logger(), "Model option '%s' not found, Adding '%s'", required_opt.key.c_str(),
                     required_opt.value.c_str());
-        request.options.push_back(required_opt);
+        options.push_back(required_opt);
       }
     }
   }

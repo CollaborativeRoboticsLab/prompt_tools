@@ -12,3 +12,6 @@ bool success
 
 # (optional) error message if the embedding generation failed
 string error
+
+# the options for the prompt, which can include model options, temperature, etc.
+prompt_msgs/ModelOption[] options

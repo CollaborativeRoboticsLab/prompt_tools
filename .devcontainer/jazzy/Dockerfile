@@ -17,6 +17,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     sudo \
     git \
     libpoco-dev \
+    libuuid-dev \
     && rm -rf /var/lib/apt/lists/*
     
 RUN echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \

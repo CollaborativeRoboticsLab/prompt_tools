@@ -38,6 +38,10 @@ git clone https://github.com/CollaborativeRoboticsLab/prompt_tools.git
 
 ### Dependency Installation
 
+```bash
+sudo apt update && sudo apt install -y libuuid-dev
+```
+
 Move to workspace root and run the following command to install dependencies
 
 ```bash

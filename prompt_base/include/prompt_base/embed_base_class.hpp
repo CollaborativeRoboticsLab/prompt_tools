@@ -61,17 +61,15 @@ public:
   }
 
   /**
-   * @brief get_embeddings send a prompt to a prompt provider using REST
+   * @brief get_embeddings sends a text to an embedding provider using REST
    *
-   * Typical providers offer stream based responses which is also supported
-   *
-   * @param req The prompt request containing the prompt and options.
+   * @param req The embed request containing the text and options.
    * @return const EmbedResponse
    */
-  virtual prompt::EmbedResponse get_embeddings(prompt::EmbedRequest& req)
+  virtual prompt::EmbedResponse get_embeddings(prompt::EmbedRequest& req) override
   {
     // verify and add required model options
-    check_model_options(req);
+    check_model_options(req.options);
 
     // prepare request body
     Poco::JSON::Object body_json = toJson(req);
@@ -108,6 +106,9 @@ protected:
    */
   virtual prompt::EmbedResponse fromJson(const Poco::JSON::Object::Ptr object) = 0;
 
+  /**
+   * @brief URI for embedding requests
+   */
   std::string embed_uri_;
 };
 

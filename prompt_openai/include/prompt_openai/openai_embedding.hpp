@@ -1,12 +1,12 @@
 #pragma once
 
-#include <prompt_base/rest_base_class.hpp>
+#include <prompt_base/embed_base_class.hpp>
 
 namespace prompt
 {
 
 /**
- * @brief OpenAIProvider
+ * @brief OpenAIEmbedding
  *
  * This is a prompt provider that uses a REST API to send and receive prompts
  * the typical rest api uses application/json content type so that is what is
@@ -83,7 +83,7 @@ protected:
             if (embed_obj->isArray("embedding"))
             {
               Poco::JSON::Array::Ptr embedding = embed_obj->getArray("embedding");
-              res.float_vector.clear();
+              res.float_embedding.clear();
               for (size_t i = 0; i < embedding->size(); ++i)
               {
                 res.float_embedding.push_back(static_cast<float>(embedding->get(i).convert<double>()));
@@ -91,11 +91,17 @@ protected:
               res.embed_type = prompt::EmbedType::Float;
               res.success = !res.float_embedding.empty();
             }
-            else if (embed_obj->isString("embedding"))
+            else // treat as string if not array
             {
-              res.base64_embedding = embed_obj->getValue<std::string>("embedding");
-              res.embed_type = prompt::EmbedType::Base64;
-              res.success = !res.base64_embedding.empty();
+              try {
+                res.base64_embedding = embed_obj->getValue<std::string>("embedding");
+                res.embed_type = prompt::EmbedType::Base64;
+                res.success = !res.base64_embedding.empty();
+              } catch (const Poco::Exception& ex) {
+                RCLCPP_WARN(node_->get_logger(), "Failed to get base64 embedding as string: %s", ex.what());
+                res.error = ex.what();
+                res.success = false;
+              }
             }
           }
         }
