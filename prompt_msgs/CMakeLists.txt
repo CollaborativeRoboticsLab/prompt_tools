@@ -21,10 +21,14 @@ set(msg_files
   "msg/PromptResponseStamped.msg"
   "msg/PromptTransaction.msg"
   "msg/PromptHistory.msg"
+  "msg/Embed.msg"
+  "msg/EmbedFormat.msg"
+  "msg/EmbedResponse.msg"
 )
 
 set(srv_files
   "srv/Prompt.srv"
+  "srv/Embedding.srv"
 )
 
 set(action_files

@@ -27,6 +27,7 @@ namespace prompt
 class PromptBridge : public rclcpp::Node
 {
   using PromptSrv = prompt_msgs::srv::Prompt;
+  using EmbeddingSrv = prompt_msgs::srv::Embedding;
 
 public:
   /**
@@ -68,17 +69,31 @@ public:
     transaction_limit_ = this->get_parameter("cached_transactions").as_int();
 
     /*************************************************************************
-     * load model family plugins
+     * load prompt family plugins
      ************************************************************************/
 
-    this->declare_parameter("model_family_names", rclcpp::ParameterValue(std::vector<std::string>{}));
-    model_families_keys_ = this->get_parameter("model_family_names").as_string_array();
+    this->declare_parameter("prompt_family_names", rclcpp::ParameterValue(std::vector<std::string>{}));
+    prompt_families_keys_ = this->get_parameter("prompt_family_names").as_string_array();
 
-    for (const auto& family_key : model_families_keys_)
+    for (const auto& family_key : prompt_families_keys_)
     {
-      this->declare_parameter("model_family_plugins." + family_key, rclcpp::ParameterValue(""));
-      std::string plugin = this->get_parameter("model_family_plugins." + family_key).as_string();
-      model_families_names_[family_key] = plugin;
+      this->declare_parameter("prompt_family_plugins." + family_key, rclcpp::ParameterValue(""));
+      std::string plugin = this->get_parameter("prompt_family_plugins." + family_key).as_string();
+      prompt_families_names_[family_key] = plugin;
+    }
+
+    /*************************************************************************
+     * load embedding family plugins
+     ************************************************************************/
+
+    this->declare_parameter("embedding_family_names", rclcpp::ParameterValue(std::vector<std::string>{}));
+    embedding_families_keys_ = this->get_parameter("embedding_family_names").as_string_array();
+
+    for (const auto& family_key : embedding_families_keys_)
+    {
+      this->declare_parameter("embedding_family_plugins." + family_key, rclcpp::ParameterValue(""));
+      std::string plugin = this->get_parameter("embedding_family_plugins." + family_key).as_string();
+      embedding_families_names_[family_key] = plugin;
     }
 
     /*************************************************************************
@@ -100,7 +115,12 @@ public:
         this->create_service<PromptSrv>("prompt/prompt", std::bind(&PromptBridge::prompt_service_cb, this,
                                                                    std::placeholders::_1, std::placeholders::_2));
 
+    embedding_service_ =
+        this->create_service<EmbeddingSrv>("prompt/embedding", std::bind(&PromptBridge::embedding_service_cb, this,
+                                                                         std::placeholders::_1, std::placeholders::_2));
+
     RCLCPP_INFO(this->get_logger(), "Prompt service created at 'prompt/prompt'");
+    RCLCPP_INFO(this->get_logger(), "Embedding service created at 'prompt/embedding'");
     RCLCPP_INFO(this->get_logger(), "PromptBridge initialized");
   }
 
@@ -118,22 +138,22 @@ public:
     return std::string(uuid_str);
   }
 
-  std::shared_ptr<prompt::BaseClass> load_model(std::string model_family)
+  std::shared_ptr<prompt::BaseClass> load_model(std::string prompt_family)
   {
     std::shared_ptr<prompt::BaseClass> prompt_provider_instance_;
 
-    // check if the model family exists
-    if (model_families_names_.find(model_family) != model_families_names_.end())
+    // check if the prompt family exists
+    if (prompt_families_names_.find(prompt_family) != prompt_families_names_.end())
     {
-      prompt_provider_instance_ = prompt_provider_loader_.createSharedInstance(model_families_names_[model_family]);
+      prompt_provider_instance_ = prompt_provider_loader_.createSharedInstance(prompt_families_names_[prompt_family]);
       prompt_provider_instance_->initialize(shared_from_this());
 
       return prompt_provider_instance_;
     }
     else
     {
-      RCLCPP_ERROR(this->get_logger(), "Model family not found");
-      throw prompt::PromptException("Model family not found");
+      RCLCPP_ERROR(this->get_logger(), "Prompt family not found");
+      throw prompt::PromptException("Prompt family not found");
     }
   }
 
@@ -451,10 +471,7 @@ public:
             res->response = prompt::toMsg(result);
             res->uuid = uuid;
 
-            RCLCPP_INFO(this->get_logger(),
-                        "Prompt cached without flushing in non-chat mode. UUID: %s.",
-                        uuid.c_str());
-
+            RCLCPP_INFO(this->get_logger(), "Prompt cached without flushing in non-chat mode. UUID: %s.", uuid.c_str());
           }
         }
         else
@@ -476,6 +493,44 @@ public:
     }
 
     update_prompt_history(req->prompt, res->response, pre_send_time, this->now());
+  }
+
+  /**
+   * @brief
+   *
+   * @param req
+   * @param res
+   */
+  void embedding_service_cb(const std::shared_ptr<EmbeddingSrv::Request> req,
+                            std::shared_ptr<EmbeddingSrv::Response> res)
+  {
+    // embedding provider
+    std::shared_ptr<prompt::BaseClass> embedding_provider_;
+    try
+    {
+      embedding_provider_ = load_model(req->input.model_family);
+    }
+    catch (const prompt::PromptException& e)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Failed to load model: %s", e.what());
+      res->output.success = false;
+      res->output.error = "Failed to load model: " + std::string(e.what());
+      return;
+    }
+    catch (const std::exception& e)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Unexpected error while loading model: %s", e.what());
+      res->output.success = false;
+      res->output.error = "Unexpected error while loading model: " + std::string(e.what());
+      return;
+    }
+
+    prompt::EmbedRequest input = prompt::fromMsg(req->input);
+    prompt::EmbedResponse result;
+
+    // process the embedding request
+    result = embedding_provider_->get_embeddings(input);
+    res->output = prompt::toMsg(result);
   }
 
 private:
@@ -528,13 +583,18 @@ private:
 
   // services
   rclcpp::Service<PromptSrv>::SharedPtr prompt_service_;
+  rclcpp::Service<EmbeddingSrv>::SharedPtr embedding_service_;
 
   // timers
   rclcpp::TimerBase::SharedPtr history_pub_timer_;
 
-  // model families
-  std::vector<std::string> model_families_keys_;
-  std::map<std::string, std::string> model_families_names_;
+  // prompt families
+  std::vector<std::string> prompt_families_keys_;
+  std::map<std::string, std::string> prompt_families_names_;
+
+  // embedding families
+  std::vector<std::string> embedding_families_keys_;
+  std::map<std::string, std::string> embedding_families_names_;
 
   // prompt conversations
   std::map<std::string, std::vector<prompt::PromptDialogue>> prompt_conversations_;
