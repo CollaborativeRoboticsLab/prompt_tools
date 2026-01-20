@@ -7,11 +7,10 @@ namespace prompt
 
 /**
  * @brief OpenAIEmbedding
- *
- * This is a prompt provider that uses a REST API to send and receive prompts
- * the typical rest api uses application/json content type so that is what is
- * supported
- *
+ * 
+ * This class implements an OpenAI embedding provider plugin. 
+ * It provides methods to initialize the plugin, convert embed requests to JSON,
+ * and parse JSON responses into embed responses.
  */
 class OpenAIEmbedding : public EmbedBaseClass
 {

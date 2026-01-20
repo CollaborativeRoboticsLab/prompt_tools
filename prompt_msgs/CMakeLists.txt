@@ -24,11 +24,14 @@ set(msg_files
   "msg/Embed.msg"
   "msg/EmbedResponse.msg"
   "msg/Embedding.msg"
+  "msg/Token.msg"
+  "msg/TokenResponse.msg"
 )
 
 set(srv_files
   "srv/Prompt.srv"
   "srv/Embedding.srv"
+  "srv/Tokenize.srv"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}

@@ -67,4 +67,22 @@ struct EmbedResponse
   int total_tokens{ 0 };
 };
 
+struct TokenRequest
+{
+  std::string text;
+  std::vector<int> tokens;
+  bool encode{ true };
+  std::string model_family;
+  std::vector<PromptOption> options;
+};
+
+struct TokenResponse
+{
+  std::vector<int> tokens;
+  std::string text;
+  bool success{ false };
+  std::string error;
+};
+
+
 }  // namespace prompt

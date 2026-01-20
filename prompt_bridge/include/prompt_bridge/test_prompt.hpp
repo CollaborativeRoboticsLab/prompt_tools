@@ -6,11 +6,12 @@
 #include <memory>
 #include <prompt_msgs/msg/embed.hpp>
 #include <prompt_msgs/msg/embed_response.hpp>
+#include <prompt_msgs/msg/model_option.hpp>
 #include <prompt_msgs/msg/prompt.hpp>
 #include <prompt_msgs/msg/prompt_response.hpp>
-#include <prompt_msgs/msg/model_option.hpp>
 #include <prompt_msgs/srv/embedding.hpp>
 #include <prompt_msgs/srv/prompt.hpp>
+#include <prompt_msgs/srv/tokenize.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <vector>
@@ -139,7 +140,6 @@ public:
   }
 
 private:
-
   void run_test()
   {
     if (!client_->wait_for_service(std::chrono::seconds(1)))
@@ -185,13 +185,14 @@ private:
       return;
     }
 
-    client_->async_send_request(req, std::bind(&TestEmbeddingNode::handle_embedding_response, this, std::placeholders::_1));
+    client_->async_send_request(req,
+                                std::bind(&TestEmbeddingNode::handle_embedding_response, this, std::placeholders::_1));
   }
 
   void handle_embedding_response(rclcpp::Client<prompt_msgs::srv::Embedding>::SharedFuture future)
   {
     auto res = future.get();
-    const auto & out = res->output;
+    const auto& out = res->output;
     size_t emb_count = out.embeddings.size();
     int first_index = (emb_count > 0) ? out.embeddings[0].index : -1;
     bool first_is_float = (emb_count > 0) ? out.embeddings[0].is_float : false;
@@ -199,9 +200,10 @@ private:
     size_t first_b64_len = (emb_count > 0) ? out.embeddings[0].base64_embedding.size() : 0;
 
     RCLCPP_INFO(this->get_logger(),
-                "Embedding response: success=%d, embeddings=%zu, first.index=%d, first.is_float=%d, float.size=%zu, base64.len=%zu, model='%s', prompt_tokens=%d, total_tokens=%d, error='%s'",
-                out.success, emb_count, first_index, first_is_float, first_float_size, first_b64_len,
-                out.model.c_str(), out.prompt_tokens, out.total_tokens, out.error.c_str());
+                "Embedding response: success=%d, embeddings=%zu, first.index=%d, first.is_float=%d, float.size=%zu, "
+                "base64.len=%zu, model='%s', prompt_tokens=%d, total_tokens=%d, error='%s'",
+                out.success, emb_count, first_index, first_is_float, first_float_size, first_b64_len, out.model.c_str(),
+                out.prompt_tokens, out.total_tokens, out.error.c_str());
 
     if (!out.success)
     {
@@ -259,4 +261,93 @@ private:
   rclcpp::CallbackGroup::SharedPtr client_group_;
   int test_step_ = 0;
 };
+
+class TestTokenizerNode : public rclcpp::Node
+{
+public:
+  TestTokenizerNode() : Node("test_tokenizer_node")
+  {
+    client_group_ = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
+    client_ = this->create_client<prompt_msgs::srv::Tokenize>("prompt/tokenizer", rmw_qos_profile_services_default,
+                                                              client_group_);
+    timer_ = this->create_wall_timer(std::chrono::seconds(2), std::bind(&TestTokenizerNode::run_test, this));
+  }
+
+private:
+  void run_test()
+  {
+    if (!client_->wait_for_service(std::chrono::seconds(1)))
+    {
+      RCLCPP_WARN(this->get_logger(), "Tokenizer service not available yet.");
+      return;
+    }
+    timer_->cancel();
+    RCLCPP_INFO(this->get_logger(), "Running tokenizer interface tests (ENCODE + DECODE)...");
+    test_step_ = 1;
+    send_next_tokenize();
+  }
+
+  void send_next_tokenize()
+  {
+    auto req = std::make_shared<prompt_msgs::srv::Tokenize::Request>();
+    req->input.model_family = "openai";
+    prompt_msgs::msg::ModelOption option;
+    option.key = "model";
+    option.value = "O200K_BASE";
+    option.type = prompt_msgs::msg::ModelOption::STRING_TYPE;
+    req->input.options.push_back(option);
+
+    if (test_step_ == 1)
+    {
+      req->input.text = "Encode this text to tokens.";
+      req->input.encode = true;
+      RCLCPP_INFO(this->get_logger(), "Requesting tokenization (encode) for: %s", req->input.text.c_str());
+    }
+    else if (test_step_ == 2)
+    {
+      req->input.tokens = last_tokens_;
+      req->input.encode = false;
+      RCLCPP_INFO(this->get_logger(), "Requesting detokenization (decode) for %zu tokens.", last_tokens_.size());
+    }
+    else
+    {
+      return;
+    }
+
+    client_->async_send_request(req,
+                                std::bind(&TestTokenizerNode::handle_tokenize_response, this, std::placeholders::_1));
+  }
+
+  void handle_tokenize_response(rclcpp::Client<prompt_msgs::srv::Tokenize>::SharedFuture future)
+  {
+    auto res = future.get();
+    const auto& out = res->output;
+    if (!out.success)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Tokenizer request failed: %s", out.error.c_str());
+      return;
+    }
+    if (test_step_ == 1)
+    {
+      last_tokens_ = out.tokens;
+      RCLCPP_INFO(this->get_logger(), "Encoded tokens: [%s] (count=%zu)",
+                  (out.tokens.empty() ? "" : std::to_string(out.tokens[0]).c_str()), out.tokens.size());
+      for (size_t i = 1; i < out.tokens.size(); ++i)
+        RCLCPP_INFO(this->get_logger(), "  token[%zu]=%d", i, out.tokens[i]);
+      ++test_step_;
+      send_next_tokenize();
+    }
+    else if (test_step_ == 2)
+    {
+      RCLCPP_INFO(this->get_logger(), "Decoded text: '%s'", out.text.c_str());
+    }
+  }
+
+  rclcpp::Client<prompt_msgs::srv::Tokenize>::SharedPtr client_;
+  rclcpp::TimerBase::SharedPtr timer_;
+  rclcpp::CallbackGroup::SharedPtr client_group_;
+  int test_step_ = 0;
+  std::vector<int32_t> last_tokens_;
+};
+
 }  // namespace prompt_test

@@ -12,6 +12,7 @@
 #include <prompt_msgs/msg/prompt_transaction.hpp>
 #include <prompt_msgs/srv/embedding.hpp>
 #include <prompt_msgs/srv/prompt.hpp>
+#include <prompt_msgs/srv/tokenize.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <thread>
 
@@ -28,6 +29,7 @@ class PromptBridge : public rclcpp::Node
 {
   using PromptSrv = prompt_msgs::srv::Prompt;
   using EmbeddingSrv = prompt_msgs::srv::Embedding;
+  using TokenizeSrv = prompt_msgs::srv::Tokenize;
 
 public:
   /**
@@ -36,7 +38,10 @@ public:
    * @param options Node options for the PromptBridge node
    */
   PromptBridge(const rclcpp::NodeOptions& options = rclcpp::NodeOptions())
-    : Node("prompt_bridge", options), provider_loader_("prompt_bridge", "prompt::BaseClass")
+    : Node("prompt_bridge", options)
+    , prompt_loader("prompt_bridge", "prompt::BaseClass")
+    , embedding_loader("prompt_bridge", "prompt::BaseClass")
+    , tokenizer_loader("prompt_bridge", "prompt::BaseClass")
   {
     try
     {
@@ -97,6 +102,20 @@ public:
     }
 
     /*************************************************************************
+     * load tokenizer family plugins
+     ************************************************************************/
+
+    this->declare_parameter("tokenizer_family_names", rclcpp::ParameterValue(std::vector<std::string>{}));
+    tokenizer_families_keys_ = this->get_parameter("tokenizer_family_names").as_string_array();
+
+    for (const auto& family_key : tokenizer_families_keys_)
+    {
+      this->declare_parameter("tokenizer_family_plugins." + family_key, rclcpp::ParameterValue(""));
+      std::string plugin = this->get_parameter("tokenizer_family_plugins." + family_key).as_string();
+      tokenizer_families_names_[family_key] = plugin;
+    }
+
+    /*************************************************************************
      * prompt history ros interfaces
      ************************************************************************/
 
@@ -114,13 +133,18 @@ public:
     prompt_service_ =
         this->create_service<PromptSrv>("prompt/prompt", std::bind(&PromptBridge::prompt_service_cb, this,
                                                                    std::placeholders::_1, std::placeholders::_2));
+    RCLCPP_INFO(this->get_logger(), "Prompt service created at 'prompt/prompt'");
 
     embedding_service_ =
         this->create_service<EmbeddingSrv>("prompt/embedding", std::bind(&PromptBridge::embedding_service_cb, this,
                                                                          std::placeholders::_1, std::placeholders::_2));
-
-    RCLCPP_INFO(this->get_logger(), "Prompt service created at 'prompt/prompt'");
     RCLCPP_INFO(this->get_logger(), "Embedding service created at 'prompt/embedding'");
+
+    tokenizer_service_ =
+        this->create_service<TokenizeSrv>("prompt/tokenizer", std::bind(&PromptBridge::tokenize_service_cb, this,
+                                                                         std::placeholders::_1, std::placeholders::_2));
+    RCLCPP_INFO(this->get_logger(), "Tokenizer service created at 'prompt/tokenizer'");
+
     RCLCPP_INFO(this->get_logger(), "PromptBridge initialized");
   }
 
@@ -152,7 +176,7 @@ public:
     // check if the prompt family exists
     if (prompt_families_names_.find(family) != prompt_families_names_.end())
     {
-      prompt_provider_instance_ = provider_loader_.createSharedInstance(prompt_families_names_[family]);
+      prompt_provider_instance_ = prompt_loader.createSharedInstance(prompt_families_names_[family]);
       prompt_provider_instance_->initialize(shared_from_this());
 
       return prompt_provider_instance_;
@@ -179,15 +203,42 @@ public:
     // check if the prompt family exists
     if (embedding_families_names_.find(family) != embedding_families_names_.end())
     {
-      embed_provider_instance_ = provider_loader_.createSharedInstance(embedding_families_names_[family]);
+      embed_provider_instance_ = embedding_loader.createSharedInstance(embedding_families_names_[family]);
       embed_provider_instance_->initialize(shared_from_this());
 
       return embed_provider_instance_;
     }
     else
     {
-      RCLCPP_ERROR(this->get_logger(), "Prompt family not found");
-      throw prompt::PromptException("Prompt family not found");
+      RCLCPP_ERROR(this->get_logger(), "Embedding family not found");
+      throw prompt::PromptException("Embedding family not found");
+    }
+  }
+
+  /**
+   * @brief Load a tokenizer model plugin based on the tokenizer family
+   *
+   * @param family The tokenizer family name
+   * @return std::shared_ptr<prompt::BaseClass> The loaded tokenizer provider instance
+   *
+   * @throws prompt::PromptException if the tokenizer family is not found
+   */
+  std::shared_ptr<prompt::BaseClass> load_tokenizer_model(std::string family)
+  {
+    std::shared_ptr<prompt::BaseClass> tokenizer_provider_instance_;
+
+    // check if the prompt family exists
+    if (tokenizer_families_names_.find(family) != tokenizer_families_names_.end())
+    {
+      tokenizer_provider_instance_ = tokenizer_loader.createSharedInstance(tokenizer_families_names_[family]);
+      tokenizer_provider_instance_->initialize(shared_from_this());
+
+      return tokenizer_provider_instance_;
+    }
+    else
+    {
+      RCLCPP_ERROR(this->get_logger(), "Tokenizer family not found");
+      throw prompt::PromptException("Tokenizer family not found");
     }
   }
 
@@ -530,10 +581,16 @@ public:
   }
 
   /**
-   * @brief
+   * @brief embedding service callback for embedding requests
    *
-   * @param req
-   * @param res
+   * This function is called when an embedding service request is received. It processes the embedding request
+   * using the embedding provider, and sends the response back to the client.
+   *
+   * @param req the embedding service request. contains an embedding request message, which is processed by the
+   * embedding provider
+   * @param res the embedding service response. contains the processed embedding response.
+   *
+   * @throws prompt::PromptException if the embedding provider fails to process the embedding request
    */
   void embedding_service_cb(const std::shared_ptr<EmbeddingSrv::Request> req,
                             std::shared_ptr<EmbeddingSrv::Response> res)
@@ -569,8 +626,56 @@ public:
     RCLCPP_INFO(this->get_logger(), "Embedding request processed.");
   }
 
+  /**
+   * @brief tokenizer service callback for tokenization requests
+   *
+   * This function is called when a tokenizer service request is received. It processes the tokenization request
+   * using the tokenizer provider, and sends the response back to the client.
+   *
+   * @param req the tokenizer service request. contains a tokenization request message, which is processed by the
+   * tokenizer provider
+   * @param res the tokenizer service response. contains the processed tokenization response.
+   *
+   * @throws prompt::PromptException if the tokenizer provider fails to process the tokenization request
+   */
+  void tokenize_service_cb(const std::shared_ptr<TokenizeSrv::Request> req, std::shared_ptr<TokenizeSrv::Response> res)
+  {
+    // tokenizer provider
+    std::shared_ptr<prompt::BaseClass> tokenizer_provider_;
+    try
+    {
+      tokenizer_provider_ = load_tokenizer_model(req->input.model_family);
+    }
+    catch (const prompt::PromptException& e)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Failed to load model: %s", e.what());
+      res->output.success = false;
+      res->output.error = "Failed to load model: " + std::string(e.what());
+      return;
+    }
+    catch (const std::exception& e)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Unexpected error while loading model: %s", e.what());
+      res->output.success = false;
+      res->output.error = "Unexpected error while loading model: " + std::string(e.what());
+      return;
+    }
+
+    prompt::TokenRequest input = prompt::fromMsg(req->input);
+    prompt::TokenResponse result;
+
+    // process the tokenization request
+    result = tokenizer_provider_->get_tokens(input);
+    res->output = prompt::toMsg(result);
+
+    RCLCPP_INFO(this->get_logger(), "Tokenization request processed.");
+  }
+
 private:
-  // history pub timer callback
+  /**
+   * @brief Timer callback to publish prompt history at regular intervals
+   *
+   */
   void history_timer()
   {
     // publish the prompt history
@@ -579,6 +684,14 @@ private:
     prompt_history_pub_->publish(prompt_history_);
   }
 
+  /**
+   * @brief Update the prompt history with a new prompt transaction
+   *
+   * @param prompt The prompt message
+   * @param response The prompt response message
+   * @param prompt_time The time the prompt was sent
+   * @param response_time The time the response was received
+   */
   void update_prompt_history(prompt_msgs::msg::Prompt prompt, prompt_msgs::msg::PromptResponse response,
                              rclcpp::Time prompt_time, rclcpp::Time response_time)
   {
@@ -612,7 +725,9 @@ private:
   prompt_msgs::msg::PromptHistory prompt_history_;
 
   // loaders
-  pluginlib::ClassLoader<prompt::BaseClass> provider_loader_;
+  pluginlib::ClassLoader<prompt::BaseClass> prompt_loader;
+  pluginlib::ClassLoader<prompt::BaseClass> embedding_loader;
+  pluginlib::ClassLoader<prompt::BaseClass> tokenizer_loader;
 
   // pubs
   rclcpp::Publisher<prompt_msgs::msg::PromptHistory>::SharedPtr prompt_history_pub_;
@@ -620,6 +735,7 @@ private:
   // services
   rclcpp::Service<PromptSrv>::SharedPtr prompt_service_;
   rclcpp::Service<EmbeddingSrv>::SharedPtr embedding_service_;
+  rclcpp::Service<TokenizeSrv>::SharedPtr tokenizer_service_;
 
   // timers
   rclcpp::TimerBase::SharedPtr history_pub_timer_;
@@ -631,6 +747,10 @@ private:
   // embedding families
   std::vector<std::string> embedding_families_keys_;
   std::map<std::string, std::string> embedding_families_names_;
+
+  // tokenizer families
+  std::vector<std::string> tokenizer_families_keys_;
+  std::map<std::string, std::string> tokenizer_families_names_;
 
   // prompt conversations
   std::map<std::string, std::vector<prompt::PromptDialogue>> prompt_conversations_;

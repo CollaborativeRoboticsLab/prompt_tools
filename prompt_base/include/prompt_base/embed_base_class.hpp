@@ -6,11 +6,12 @@
 
 namespace prompt
 {
+
 /**
  * @brief EmbedBaseClass
  *
- * This class implements a base class for RESTful prompt plugins.
- * It provides a common interface for sending prompts and receiving responses
+ * This class implements a base class for RESTful embedding plugins.
+ * It provides a common interface for sending embedding requests and receiving responses
  */
 class EmbedBaseClass : public RestBaseClass
 {
@@ -69,7 +70,7 @@ public:
   virtual prompt::EmbedResponse get_embeddings(prompt::EmbedRequest& req) override
   {
     // verify and add required model options
-    check_model_options(req.options);
+    prompt::check_model_options(node_, req.options, required_options_);
 
     // prepare request body
     Poco::JSON::Object body_json = toJson(req);

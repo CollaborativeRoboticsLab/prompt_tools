@@ -109,39 +109,10 @@ public:
     RCLCPP_INFO(node_->get_logger(), "%s Plugin initialized", plugin_name_.c_str());
 
     RCLCPP_INFO(node_->get_logger(), "Loading default model options from parameters.");
-    required_options_ = prompt::load_from_paramters(node_, plugin_name_);
+    required_options_ = prompt::load_from_parameters(node_, plugin_name_);
   }
 
 protected:
-  /**
-   * @brief Check and add required model options to the prompt request
-   *
-   * This method checks if the required model options are present in the prompt request.
-   * If any required option is missing, it adds it to the request.
-   *
-   * @param request The prompt request to check and modify.
-   */
-  void check_model_options(std::vector<prompt::PromptOption>& options)
-  {
-    // check required options are available and if not add them
-    for (const auto& required_opt : required_options_)
-    {
-      bool found = false;
-      for (const auto& opt : options)
-      {
-        if (opt.key == required_opt.key)
-          found = true;
-      }
-
-      if (!found)
-      {
-        RCLCPP_WARN(node_->get_logger(), "Model option '%s' not found, Adding '%s'", required_opt.key.c_str(),
-                    required_opt.value.c_str());
-        options.push_back(required_opt);
-      }
-    }
-  }
-
   /**
    * @brief Process the HTTP request and return the response as a JSON object
    *

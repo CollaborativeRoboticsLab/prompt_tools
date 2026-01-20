@@ -13,6 +13,10 @@
     embedding_family_plugins:
       openai: prompt::OpenAIEmbedding
 
+    tokenizer_family_names: [openai]
+    tokenizer_family_plugins:
+      openai: prompt::OpenAITokenize
+
     OpenAIProvider:
       rest:
         # OpenAI Responses API endpoint (used for both single prompts and conversations)
@@ -21,8 +25,8 @@
         method: POST
         auth_type: Bearer
         ssl_verify: true
-      prompt_option_keys: [stream, model] # options will be used if model options are not set in the prompt requests
-      prompt_options:
+      option_keys: [stream, model] # options will be used if model options are not set in the prompt requests
+      options:
         stream:
           value: false
           type: bool
@@ -37,8 +41,8 @@
         method: POST
         auth_type: Bearer
         ssl_verify: true
-      prompt_option_keys: [model, dimensions, encoding_format] # options will be used if model options are not set in the prompt requests
-      prompt_options:
+      option_keys: [model, dimensions, encoding_format] # options will be used if model options are not set in the prompt requests
+      options:
         model:
           value: text-embedding-3-small    # e.g., text-embedding-3-small, text-embedding-3-large
           type: string
@@ -48,6 +52,13 @@
           type: int
         encoding_format:
           value: float   # e.g., float, base64
+          type: string
+
+    OpenAITokenize:
+      option_keys: [model] # options will be used if model options are not set in the prompt requests
+      options:
+        model:
+          value: O200K_BASE    # e.g., gpt-4o, gpt-4.1, gpt-4o-mini
           type: string
 
     OllamaProvider:
@@ -61,8 +72,8 @@
         method: POST
         auth_type: Bearer
         ssl_verify: false
-      prompt_option_keys: [stream, model] # options will be used if model options are not set in the prompt requests
-      prompt_options:
+      option_keys: [stream, model] # options will be used if model options are not set in the prompt requests
+      options:
         stream:
           value: false
           type: bool

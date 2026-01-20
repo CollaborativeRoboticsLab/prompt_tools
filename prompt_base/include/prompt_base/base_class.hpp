@@ -40,12 +40,12 @@ public:
   }
 
   /**
-   * @brief get_tokens sends a text to a token provider using REST
+   * @brief get_tokens sends a text to a token provider
    *
-   * @param req The prompt request containing the text and options.
-   * @return const PromptResponse
+   * @param req The token request containing the text and options.
+   * @return const TokenResponse
    */
-  virtual prompt::PromptResponse get_tokens(prompt::PromptRequest& req)
+  virtual prompt::TokenResponse get_tokens(prompt::TokenRequest& req)
   {
     throw prompt::PromptException("get_tokens not implemented in base class");
   }
@@ -95,11 +95,8 @@ protected:
 
     // Declare the plugin name parameter
     plugin_name_ = plugin_name;
-
-    // Log the initialization
-    RCLCPP_INFO(node_->get_logger(), "BaseClass initialized for plugin: %s", plugin_name_.c_str());
   }
-  
+
   /**
    * @brief Node shared pointer
    *

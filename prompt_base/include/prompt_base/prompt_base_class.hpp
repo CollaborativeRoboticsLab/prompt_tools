@@ -6,12 +6,12 @@
 
 namespace prompt
 {
+
 /**
  * @brief PromptBaseClass
  *
  * This class implements a base class for RESTful prompt plugins.
  * It provides a common interface for sending prompts and receiving responses
- *
  */
 class PromptBaseClass : public RestBaseClass
 {
@@ -78,7 +78,7 @@ public:
   virtual prompt::PromptResponse sendPrompt(prompt::PromptRequest& req)
   {
     // verify and add required model options
-    check_model_options(req.options);
+    prompt::check_model_options(node_, req.options, required_options_);
 
     // prepare request body
     Poco::JSON::Object body_json = toJson(req);
@@ -105,7 +105,7 @@ public:
                                                   std::vector<PromptDialogue>& conversation)
   {
     // verify and add required model options
-    check_model_options(latest_request.options);
+    prompt::check_model_options(node_, latest_request.options, required_options_);
 
     // prepare request body
     Poco::JSON::Object body_json = toJsonConversation(latest_request, conversation);

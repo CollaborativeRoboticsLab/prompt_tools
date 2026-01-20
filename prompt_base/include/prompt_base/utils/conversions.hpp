@@ -1,11 +1,12 @@
 #pragma once
 #include <prompt_base/utils/structs.hpp>
-#include <prompt_msgs/msg/embed.hpp>
-#include <prompt_msgs/msg/embed_format.hpp>
-#include <prompt_msgs/msg/embed_response.hpp>
 #include <prompt_msgs/msg/model_option.hpp>
+#include <prompt_msgs/msg/embed.hpp>
+#include <prompt_msgs/msg/embed_response.hpp>
 #include <prompt_msgs/msg/prompt.hpp>
 #include <prompt_msgs/msg/prompt_response.hpp>
+#include <prompt_msgs/msg/token.hpp>
+#include <prompt_msgs/msg/token_response.hpp>
 
 namespace prompt
 {
@@ -54,6 +55,30 @@ static const prompt::EmbedRequest fromMsg(const prompt_msgs::msg::Embed& input)
   }
   return result;
 }
+
+/**
+ * @brief Converts prompt_msgs::msg::Token into prompt::TokenRequest
+ * which is used internally in prompt tools
+ *
+ * @param prompt input ros2 message
+ * @return const prompt::TokenRequest
+ */
+static const prompt::TokenRequest fromMsg(const prompt_msgs::msg::Token& input)
+{
+  prompt::TokenRequest result;
+
+  result.text = input.text;
+  result.tokens = input.tokens;
+  result.encode = input.encode;
+  result.model_family = input.model_family;
+
+  for (const auto& option : input.options)
+  {
+    result.options.push_back(prompt::PromptOption{ option.key, option.value, option.type });
+  }
+  return result;
+}
+
 
 /**
  * @brief Converts prompt::PromptResponse into prompt_msgs::msg::PromptResponse
@@ -107,6 +132,24 @@ static const prompt_msgs::msg::EmbedResponse toMsg(const prompt::EmbedResponse& 
   result.prompt_tokens = res.prompt_tokens;
   result.total_tokens = res.total_tokens;
 
+  return result;
+}
+
+/**
+ * @brief Converts prompt::TokenResponse into prompt_msgs::msg::TokenResponse
+ * which is used in ros2 eco system
+ *
+ * @param res
+ * @return const prompt_msgs::msg::TokenResponse
+ */
+static const prompt_msgs::msg::TokenResponse toMsg(const prompt::TokenResponse& res)
+{
+  prompt_msgs::msg::TokenResponse result;
+  result.tokens = res.tokens;
+  result.text = res.text;
+  result.success = res.success;
+  result.error = res.error;
+  
   return result;
 }
 
