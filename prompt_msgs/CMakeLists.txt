@@ -22,8 +22,8 @@ set(msg_files
   "msg/PromptTransaction.msg"
   "msg/PromptHistory.msg"
   "msg/Embed.msg"
-  "msg/EmbedFormat.msg"
   "msg/EmbedResponse.msg"
+  "msg/Embedding.msg"
 )
 
 set(srv_files

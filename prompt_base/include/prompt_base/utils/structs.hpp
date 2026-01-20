@@ -42,29 +42,29 @@ struct PromptResponse
   double risk{ 0.0 };
 };
 
-// embedding types
-enum class EmbedType
-{
-  Float,
-  Base64
-};
-
 struct EmbedRequest
 {
   std::string text;
   std::string model_family;
   std::vector<PromptOption> options;
-  EmbedType embed_type{ EmbedType::Float };
+};
+
+struct Embedding
+{
+  std::string base64_embedding;
+  std::vector<float> float_embedding;
+  bool is_float{ true };
+  int index{ -1 };
 };
 
 struct EmbedResponse
 {
-  std::string base64_embedding;
-  std::vector<float> float_embedding;
-  std::vector<PromptOption> options;
+  std::vector<Embedding> embeddings;
   bool success{ false };
   std::string error;
-  EmbedType embed_type{ EmbedType::Float };
+  std::string model;
+  int prompt_tokens{ 0 };
+  int total_tokens{ 0 };
 };
 
 }  // namespace prompt

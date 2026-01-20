@@ -1,11 +1,5 @@
-# Embedding response if encoding_format is "float"
-float32[] float_embedding
-
-# Embedding response if encoding_format is "base64"
-string base64_embedding
-
-# (optional) provided embedding format
-prompt_msgs/EmbedFormat format
+# list of embeddings
+prompt_msgs/Embedding[] embeddings
 
 # indicates if the embedding generation was successful
 bool success
@@ -13,5 +7,9 @@ bool success
 # (optional) error message if the embedding generation failed
 string error
 
-# the options for the prompt, which can include model options, temperature, etc.
-prompt_msgs/ModelOption[] options
+# used model
+string model
+
+# token usage
+int64 prompt_tokens
+int64 total_tokens

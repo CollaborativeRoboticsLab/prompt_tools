@@ -1,11 +1,11 @@
 #pragma once
 #include <prompt_base/utils/structs.hpp>
-#include <prompt_msgs/msg/prompt.hpp>
-#include <prompt_msgs/msg/prompt_response.hpp>
 #include <prompt_msgs/msg/embed.hpp>
+#include <prompt_msgs/msg/embed_format.hpp>
 #include <prompt_msgs/msg/embed_response.hpp>
 #include <prompt_msgs/msg/model_option.hpp>
-#include <prompt_msgs/msg/embed_format.hpp>
+#include <prompt_msgs/msg/prompt.hpp>
+#include <prompt_msgs/msg/prompt_response.hpp>
 
 namespace prompt
 {
@@ -48,19 +48,6 @@ static const prompt::EmbedRequest fromMsg(const prompt_msgs::msg::Embed& input)
   result.text = input.text;
   result.model_family = input.model_family;
 
-  if (input.format.value == prompt_msgs::msg::EmbedFormat::FLOAT)
-  {
-    result.embed_type = prompt::EmbedType::Float;
-  }
-  else if (input.format.value == prompt_msgs::msg::EmbedFormat::BASE64)
-  {
-    result.embed_type = prompt::EmbedType::Base64;
-  }
-  else
-  {
-    throw prompt::PromptException("Invalid embed_type in Embed message");
-  }
-
   for (const auto& option : input.options)
   {
     result.options.push_back(prompt::PromptOption{ option.key, option.value, option.type });
@@ -98,28 +85,27 @@ static const prompt_msgs::msg::EmbedResponse toMsg(const prompt::EmbedResponse& 
 {
   prompt_msgs::msg::EmbedResponse result;
 
-  if (res.embed_type == prompt::EmbedType::Float)
+  for (const auto& emb : res.embeddings)
   {
-    result.format.value = prompt_msgs::msg::EmbedFormat::FLOAT;
-    result.float_embedding = res.float_embedding;
-  }
-  else if (res.embed_type == prompt::EmbedType::Base64)
-  {
-    result.format.value = prompt_msgs::msg::EmbedFormat::BASE64;
-    result.base64_embedding = res.base64_embedding;
-  }
-
-  for (const auto& option : res.options)
-  {
-    prompt_msgs::msg::ModelOption msg_option;
-    msg_option.key = option.key;
-    msg_option.value = option.value;
-    msg_option.type = option.type;
-    result.options.push_back(msg_option);
+    prompt_msgs::msg::Embedding embedding_msg;
+    if (emb.is_float)
+    {
+      embedding_msg.float_embedding = emb.float_embedding;
+    }
+    else
+    {
+      embedding_msg.base64_embedding = emb.base64_embedding;
+    }
+    embedding_msg.is_float = emb.is_float;
+    embedding_msg.index = emb.index;
+    result.embeddings.push_back(embedding_msg);
   }
 
-  result.error = res.error;
   result.success = res.success;
+  result.error = res.error;
+  result.model = res.model;
+  result.prompt_tokens = res.prompt_tokens;
+  result.total_tokens = res.total_tokens;
 
   return result;
 }

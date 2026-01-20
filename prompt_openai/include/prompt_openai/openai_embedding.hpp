@@ -68,74 +68,78 @@ protected:
   virtual prompt::EmbedResponse fromJson(const Poco::JSON::Object::Ptr object) override
   {
     prompt::EmbedResponse res;
-    // Embeddings API returns 'data' array with 'embedding' field
-    if (object->has("data"))
+    try
     {
-      try
+      // Embeddings API returns 'data' array with one or more items containing 'embedding' and 'index'
+      if (object->has("data"))
       {
         Poco::JSON::Array::Ptr data_array = object->getArray("data");
-        if (!data_array->empty())
+        for (size_t di = 0; di < data_array->size(); ++di)
         {
-          Poco::JSON::Object::Ptr embed_obj = data_array->getObject(0);
+          Poco::JSON::Object::Ptr embed_obj = data_array->getObject(di);
+          prompt::Embedding emb;
+
           if (embed_obj->has("embedding"))
           {
-            // Try to detect type: float array or base64 string
             if (embed_obj->isArray("embedding"))
             {
-              Poco::JSON::Array::Ptr embedding = embed_obj->getArray("embedding");
-              res.float_embedding.clear();
-              for (size_t i = 0; i < embedding->size(); ++i)
+              Poco::JSON::Array::Ptr arr = embed_obj->getArray("embedding");
+              emb.float_embedding.reserve(arr->size());
+              for (size_t i = 0; i < arr->size(); ++i)
               {
-                res.float_embedding.push_back(static_cast<float>(embedding->get(i).convert<double>()));
+                emb.float_embedding.push_back(static_cast<float>(arr->get(i).convert<double>()));
               }
-              res.embed_type = prompt::EmbedType::Float;
-              res.success = !res.float_embedding.empty();
+              emb.is_float = true;
             }
-            else // treat as string if not array
+            else
             {
-              try {
-                res.base64_embedding = embed_obj->getValue<std::string>("embedding");
-                res.embed_type = prompt::EmbedType::Base64;
-                res.success = !res.base64_embedding.empty();
-              } catch (const Poco::Exception& ex) {
-                RCLCPP_WARN(node_->get_logger(), "Failed to get base64 embedding as string: %s", ex.what());
-                res.error = ex.what();
-                res.success = false;
-              }
+              // Treat as base64 string
+              emb.base64_embedding = embed_obj->getValue<std::string>("embedding");
+              emb.is_float = false;
             }
           }
+
+          if (embed_obj->has("index"))
+          {
+            emb.index = embed_obj->getValue<int>("index");
+          }
+
+          res.embeddings.push_back(emb);
         }
       }
-      catch (const Poco::Exception& ex)
+
+      // Top-level metadata
+      if (object->has("model"))
       {
-        RCLCPP_WARN(node_->get_logger(), "Failed to parse OpenAI embeddings response: %s", ex.what());
-        res.error = ex.what();
+        res.model = object->getValue<std::string>("model");
       }
+      if (object->has("usage"))
+      {
+        try
+        {
+          Poco::JSON::Object::Ptr usage = object->getObject("usage");
+          if (usage->has("prompt_tokens"))
+          {
+            res.prompt_tokens = usage->getValue<int>("prompt_tokens");
+          }
+          if (usage->has("total_tokens"))
+          {
+            res.total_tokens = usage->getValue<int>("total_tokens");
+          }
+        }
+        catch (const Poco::Exception& ex)
+        {
+          RCLCPP_WARN(node_->get_logger(), "Failed to parse usage: %s", ex.what());
+        }
+      }
+
+      res.success = !res.embeddings.empty();
     }
-    // Attach remaining top-level fields as options (excluding large nested structures)
-    for (Poco::JSON::Object::ConstIterator it = object->begin(); it != object->end(); ++it)
+    catch (const Poco::Exception& ex)
     {
-      if ((it->first == "data") || (it->first == "usage"))
-        continue;
-      try
-      {
-        if (!it->second.isEmpty() && it->second.isString())
-        {
-          res.options.push_back(prompt::PromptOption{ it->first, it->second.convert<std::string>(), "" });
-        }
-        else if (!it->second.isEmpty())
-        {
-          res.options.push_back(prompt::PromptOption{ it->first, it->second.toString(), "" });
-        }
-        else
-        {
-          res.options.push_back(prompt::PromptOption{ it->first, "[null]", "" });
-        }
-      }
-      catch (const Poco::Exception& ex)
-      {
-        RCLCPP_WARN(node_->get_logger(), "Failed to convert JSON key '%s': %s", it->first.c_str(), ex.what());
-      }
+      RCLCPP_WARN(node_->get_logger(), "Failed to parse OpenAI embeddings response: %s", ex.what());
+      res.error = ex.what();
+      res.success = false;
     }
     return res;
   }

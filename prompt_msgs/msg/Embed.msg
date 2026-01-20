@@ -6,6 +6,3 @@ string model_family
 
 # the options for the prompt, which can include model options, temperature, etc.
 prompt_msgs/ModelOption[] options
-
-# (optional) desired encoding format for the embedding vector
-prompt_msgs/EmbedFormat format

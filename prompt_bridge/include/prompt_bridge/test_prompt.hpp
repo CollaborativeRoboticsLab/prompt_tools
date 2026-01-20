@@ -8,6 +8,7 @@
 #include <prompt_msgs/msg/embed_response.hpp>
 #include <prompt_msgs/msg/prompt.hpp>
 #include <prompt_msgs/msg/prompt_response.hpp>
+#include <prompt_msgs/msg/model_option.hpp>
 #include <prompt_msgs/srv/embedding.hpp>
 #include <prompt_msgs/srv/prompt.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -138,6 +139,7 @@ public:
   }
 
 private:
+
   void run_test()
   {
     if (!client_->wait_for_service(std::chrono::seconds(1)))
@@ -146,25 +148,115 @@ private:
       return;
     }
     timer_->cancel();
-    RCLCPP_INFO(this->get_logger(), "Running embedding interface test...");
+    RCLCPP_INFO(this->get_logger(), "Running embedding interface tests (FLOAT + BASE64)...");
 
+    test_step_ = 1;
+    send_next_embedding();
+  }
+
+  void send_next_embedding()
+  {
     auto req = std::make_shared<prompt_msgs::srv::Embedding::Request>();
-    req->input.text = "What is the capital of Germany?";
+    req->input.text = "Hellow How are you?";
     req->input.model_family = "openai";
 
-    // Optionally set options/format here
+    if (test_step_ == 1)
+    {
+      prompt_msgs::msg::ModelOption option1;
+      option1.key = "encoding_format";
+      option1.value = "float";
+      option1.type = prompt_msgs::msg::ModelOption::STRING_TYPE;
 
-    client_->async_send_request(req, [this](rclcpp::Client<prompt_msgs::srv::Embedding>::SharedFuture future) {
-      auto res = future.get();
-      RCLCPP_INFO(this->get_logger(),
-                  "Embedding response: success=%d, float_embedding.size=%zu, base64_embedding='%s', error='%s'",
-                  res->output.success, res->output.float_embedding.size(), res->output.base64_embedding.c_str(),
-                  res->output.error.c_str());
-    });
+      req->input.options.push_back(option1);
+      RCLCPP_INFO(this->get_logger(), "Requesting FLOAT embedding format");
+    }
+    else if (test_step_ == 2)
+    {
+      prompt_msgs::msg::ModelOption option2;
+      option2.key = "encoding_format";
+      option2.value = "base64";
+      option2.type = prompt_msgs::msg::ModelOption::STRING_TYPE;
+
+      req->input.options.push_back(option2);
+      RCLCPP_INFO(this->get_logger(), "Requesting BASE64 embedding format");
+    }
+    else
+    {
+      return;
+    }
+
+    client_->async_send_request(req, std::bind(&TestEmbeddingNode::handle_embedding_response, this, std::placeholders::_1));
+  }
+
+  void handle_embedding_response(rclcpp::Client<prompt_msgs::srv::Embedding>::SharedFuture future)
+  {
+    auto res = future.get();
+    const auto & out = res->output;
+    size_t emb_count = out.embeddings.size();
+    int first_index = (emb_count > 0) ? out.embeddings[0].index : -1;
+    bool first_is_float = (emb_count > 0) ? out.embeddings[0].is_float : false;
+    size_t first_float_size = (emb_count > 0) ? out.embeddings[0].float_embedding.size() : 0;
+    size_t first_b64_len = (emb_count > 0) ? out.embeddings[0].base64_embedding.size() : 0;
+
+    RCLCPP_INFO(this->get_logger(),
+                "Embedding response: success=%d, embeddings=%zu, first.index=%d, first.is_float=%d, float.size=%zu, base64.len=%zu, model='%s', prompt_tokens=%d, total_tokens=%d, error='%s'",
+                out.success, emb_count, first_index, first_is_float, first_float_size, first_b64_len,
+                out.model.c_str(), out.prompt_tokens, out.total_tokens, out.error.c_str());
+
+    if (!out.success)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Embedding request failed: %s", out.error.c_str());
+    }
+
+    if (test_step_ == 1)
+    {
+      if (emb_count == 0)
+      {
+        RCLCPP_ERROR(this->get_logger(), "Expected at least one embedding in response.");
+      }
+      else if (!out.embeddings[0].is_float)
+      {
+        RCLCPP_ERROR(this->get_logger(), "Expected FLOAT format in response.");
+      }
+      if (out.embeddings[0].float_embedding.empty())
+      {
+        RCLCPP_ERROR(this->get_logger(), "FLOAT embedding array is empty.");
+      }
+      if (!out.embeddings[0].base64_embedding.empty())
+      {
+        RCLCPP_WARN(this->get_logger(), "Base64 embedding should be empty when FLOAT requested.");
+      }
+    }
+    else if (test_step_ == 2)
+    {
+      if (emb_count == 0)
+      {
+        RCLCPP_ERROR(this->get_logger(), "Expected at least one embedding in response.");
+      }
+      else if (out.embeddings[0].is_float)
+      {
+        RCLCPP_ERROR(this->get_logger(), "Expected BASE64 format in response.");
+      }
+      if (out.embeddings[0].base64_embedding.empty())
+      {
+        RCLCPP_ERROR(this->get_logger(), "BASE64 embedding string is empty.");
+      }
+      if (!out.embeddings[0].float_embedding.empty())
+      {
+        RCLCPP_WARN(this->get_logger(), "Float embedding should be empty when BASE64 requested.");
+      }
+    }
+
+    ++test_step_;
+    if (test_step_ <= 2)
+    {
+      send_next_embedding();
+    }
   }
 
   rclcpp::Client<prompt_msgs::srv::Embedding>::SharedPtr client_;
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::CallbackGroup::SharedPtr client_group_;
+  int test_step_ = 0;
 };
 }  // namespace prompt_test
