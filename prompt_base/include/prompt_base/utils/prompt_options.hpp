@@ -156,7 +156,10 @@ void check_model_options(rclcpp::Node::SharedPtr node, std::vector<prompt::Promp
     for (const auto& opt : options)
     {
       if (opt.key == required_opt.key)
+      {
         found = true;
+        break;
+      }
     }
 
     if (!found)
