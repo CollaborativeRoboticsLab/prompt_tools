@@ -330,8 +330,9 @@ private:
     if (test_step_ == 1)
     {
       last_tokens_ = out.tokens;
+      std::string first_token_str = out.tokens.empty() ? "" : std::to_string(out.tokens[0]);
       RCLCPP_INFO(this->get_logger(), "Encoded tokens: [%s] (count=%zu)",
-                  (out.tokens.empty() ? "" : std::to_string(out.tokens[0]).c_str()), out.tokens.size());
+                  first_token_str.c_str(), out.tokens.size());
       for (size_t i = 1; i < out.tokens.size(); ++i)
         RCLCPP_INFO(this->get_logger(), "  token[%zu]=%d", i, out.tokens[i]);
       ++test_step_;
