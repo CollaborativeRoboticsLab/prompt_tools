@@ -157,7 +157,7 @@ private:
   void send_next_embedding()
   {
     auto req = std::make_shared<prompt_msgs::srv::Embedding::Request>();
-    req->input.text = "Hellow How are you?";
+    req->input.text = "Hello, how are you?";
     req->input.model_family = "openai";
 
     if (test_step_ == 1)
