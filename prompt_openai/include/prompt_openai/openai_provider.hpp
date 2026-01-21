@@ -1,6 +1,6 @@
 #pragma once
 
-#include <prompt_base/rest_base_class.hpp>
+#include <prompt_base/prompt_base_class.hpp>
 
 namespace prompt
 {
@@ -13,14 +13,14 @@ namespace prompt
  * supported
  *
  */
-class OpenAIProvider : public RestBaseClass
+class OpenAIProvider : public PromptBaseClass
 {
 public:
   /**
    * @brief Construct a new Chat Prompt Provider OpenAI object
    *
    */
-  OpenAIProvider() : RestBaseClass()
+  OpenAIProvider() : PromptBaseClass()
   {
   }
 
@@ -34,7 +34,7 @@ public:
   virtual void initialize(rclcpp::Node::SharedPtr node) override
   {
     // initialize base class
-    initialize_rest_base(node, "OpenAIProvider", "OPENAI_API_KEY");
+    initialize_prompt_base(node, "OpenAIProvider", "OPENAI_API_KEY");
   }
 
 protected:
@@ -50,7 +50,7 @@ protected:
   virtual Poco::JSON::Object toJson(prompt::PromptRequest& prompt) override
   {
    // add options (model, temperature, etc.)
-   Poco::JSON::Object result = handle_options(prompt);
+   Poco::JSON::Object result = handle_options(prompt.options);
 
     // /v1/responses uses `input` instead of `prompt`
     // For simple one-shot prompts, send the text directly as a string.
@@ -73,7 +73,7 @@ protected:
                                                 std::vector<PromptDialogue>& conversation) override
   {
     // add options (model, temperature, etc.)
-    Poco::JSON::Object result = handle_options(prompt);
+    Poco::JSON::Object result = handle_options(prompt.options);
 
     // /v1/responses represents conversational input as an array of "message" items
     // Each message has: role + content array with input_text/output_text entries.

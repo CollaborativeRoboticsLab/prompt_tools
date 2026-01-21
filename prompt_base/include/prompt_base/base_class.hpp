@@ -29,22 +29,25 @@ public:
   virtual void initialize(rclcpp::Node::SharedPtr node) = 0;
 
   /**
-   * @brief Initialize the prompt base class
+   * @brief get_embeddings sends a text to an embedding provider using REST
    *
-   * This method initializes the baseclass with parameters from the ROS parameter server.
-   *
-   * @param node rclcpp::Node::SharedPtr ROS node
+   * @param req The embed request containing the text and options.
+   * @return const EmbedResponse
    */
-  virtual void initialize_base(rclcpp::Node::SharedPtr node, std::string plugin_name = "BaseClass")
+  virtual prompt::EmbedResponse get_embeddings(prompt::EmbedRequest& req)
   {
-    // set the node pointer
-    node_ = node;
+    throw prompt::PromptException("get_embeddings not implemented in base class");
+  }
 
-    // Declare the plugin name parameter
-    plugin_name_ = plugin_name;
-
-    // Log the initialization
-    RCLCPP_INFO(node_->get_logger(), "BaseClass initialized for plugin: %s", plugin_name_.c_str());
+  /**
+   * @brief get_tokens sends a text to a token provider
+   *
+   * @param req The token request containing the text and options.
+   * @return const TokenResponse
+   */
+  virtual prompt::TokenResponse get_tokens(prompt::TokenRequest& req)
+  {
+    throw prompt::PromptException("get_tokens not implemented in base class");
   }
 
   /**
@@ -72,26 +75,28 @@ public:
    * @throws prompt::PromptException if the method is not implemented in the derived class.
    */
   virtual prompt::PromptResponse sendConversation(prompt::PromptRequest& latest_request,
-                                                        std::vector<PromptDialogue>& conversation)
+                                                  std::vector<PromptDialogue>& conversation)
   {
-    throw prompt::PromptException("sendPrompt not implemented in base class");
-  }
-
-  /**
-   * @brief Send a prompt with a file to the prompt plugin
-   *
-   * This method sends a prompt request with a file to the prompt plugin and returns a response.
-   *
-   * @param req The prompt request containing the prompt, options, and file.
-   * @return prompt::PromptResponse from the prompt provider.
-   * @throws prompt::PromptException if the method is not implemented in the derived class.
-   */
-  virtual prompt::PromptResponse sendPromptAudio(prompt::PromptRequest& req)
-  {
-    throw prompt::PromptException("sendPromptAudio not implemented in base class");
+    throw prompt::PromptException("sendConversation not implemented in base class");
   }
 
 protected:
+  /**
+   * @brief Initialize the prompt base class
+   *
+   * This method initializes the baseclass with parameters from the ROS parameter server.
+   *
+   * @param node rclcpp::Node::SharedPtr ROS node
+   */
+  virtual void initialize_base(rclcpp::Node::SharedPtr node, std::string plugin_name = "BaseClass")
+  {
+    // set the node pointer
+    node_ = node;
+
+    // Declare the plugin name parameter
+    plugin_name_ = plugin_name;
+  }
+
   /**
    * @brief Node shared pointer
    *

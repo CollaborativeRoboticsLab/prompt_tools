@@ -1,76 +1,88 @@
-# OpenAI prompt provider plugins
 
-This directory contains prompt plugins for OpenAI API.
+# OpenAI Prompt Provider Plugins
+
+This package provides prompt, embedding, and tokenization plugins for the OpenAI API, supporting both chat and completion endpoints, as well as embeddings via REST and tokenization via [cpp-tiktoken](https://github.com/gh-markt/cpp-tiktoken).
 
 ## Plugins
 
-| Provider | Description |
-| --- | --- |
-| `SingleOpenAIProvider` | A prompt provider plugin that fetches single prompts using a REST API. |
-| `ChatOpenAIProvider` | A prompt provider plugin that fetches conversation prompts using a REST API. |
+The following plugin classes are available (see `plugins.xml` and `include/prompt_openai/`):
+
+### `prompt::OpenAIProvider`
+
+- Provides Prompt interface
+- Inherits from PromptBaseClass and overrides JSON conversion functions to be compatible with OpenAI json architecture.
+
+### `prompt::OpenAIEmbedding`
+
+- Provides Embedding interface
+- Inherits from EmbedBaseClass and overrides JSON conversion functions to be compatible with OpenAI json architecture.
+
+### `prompt::OpenAITokenize`
+
+- Provides Tokenizing interface
+- Inherits from TokenizeBaseClass and overrides process function to interact with cpp-tiktoken interface.
+
 
 ## Usage
 
-Providers are loaded from config. The following example shows how to load the `ChatOpenAIProvider` or `SingleOpenAIProvider`:
+Providers are loaded from config. Example configuration for prompt providers:
 
 ```yaml
 # comment everything else except the one needed
-prompt_provider: prompt::ChatOpenAIProvider
-prompt_provider: prompt::SingleOpenAIProvider
+prompt_provider: prompt::OpenAIProvider
+prompt_provider: prompt::OpenAIEmbedding
+prompt_provider: prompt::OpenAITokenize
 
-ChatOpenAIProvider:
+OpenAIProvider:
   rest:
-    uri: https://api.openai.com/v1/chat/completions # openai endpoint for gpt models
+    # OpenAI Responses API endpoint (used for both single prompts and conversations)
+    uri: https://api.openai.com/v1/responses
+    chat_uri: https://api.openai.com/v1/responses
     method: POST
     auth_type: Bearer
     ssl_verify: true
-  override_model_options: true
-  prompt_option_keys: [stream, model]
-  prompt_options:
+  option_keys: [stream, model] # options will be used if model options are not set in the prompt requests
+  options:
     stream:
       value: false
       type: bool
     model:
-    #   value: gpt-4o
-    #   value: gpt-4.1
-      value: gpt-5
+      value: gpt-5    # e.g., gpt-4o, gpt-4.1, gpt-4o-mini
       type: string
 
-SingleOpenAIProvider:
+OpenAIEmbedding:
   rest:
-    uri: https://api.openai.com/v1/completions # openai endpoint for gpt models
+    uri: https://api.openai.com/v1/embeddings
     method: POST
     auth_type: Bearer
     ssl_verify: true
   override_model_options: true
-  prompt_option_keys: [stream, model]
-  prompt_options:
-    stream:
-      value: false
-      type: bool
+  option_keys: [model]
+  options:
     model:
-    #   value: gpt-4o
-    #   value: gpt-4.1
-      value: gpt-5
+      value: text-embedding-3-small
       type: string
+
+OpenAITokenize:
+  # No REST config needed; uses local cpp-tiktoken for tokenization
+  option_keys: [model] # options will be used if model options are not set in the prompt requests
+  options:
+    model:
+      value: O200K_BASE
+      type: string
+
 ```
 
-## Parameters
+## Build & Dependencies
 
-| Parameter | Default Value | Description |
-| --------- | ------------- | ----------- |
-| rest.uri  | http://localhost:8000/api/v1/prompt  | Api endpoint of the service (including ip and port)     |
-| rest.method | POST | REST method to use |
-| rest.ssl_verify | True | Whether to verify ssl |
-| rest.auth_type  | Bearer | Autherntication Token type | 
-| override_model_options | True | whether to override model options in service message |
-| prompt_option_keys |  | list of parameters to override |
-| prompt_options.x.value |  | value of the parameter | 
-| prompt_options.x.type |  | type of the parameter | 
+- Depends on `rclcpp`, `pluginlib`, `prompt_msgs`, `prompt_base`, and `Poco` libraries.
+- Integrates the [cpp-tiktoken](external/cpp-tiktoken/) library for local tokenization.
 
-### Current Prompt Options
+## Notes
+- See `plugins.xml` and the `include/prompt_openai/` headers for class details.
 
-| Option | Type | Description |
-| ------ | ---- | ----------- |
-| stream | bool | Whether to stream messages (not supported yet) |
-| model  | string | What model to use. Look provider documentation for possible values |
+- Model options can be overridden via config.
+
+- Tokenization uses cpp-tiktoken locally, not via REST.
+
+- cpp-Tiktoken expects the model files to be in a 'tokenizers' folder relative to the executable. Eventhough prompt_openai plugins CMakeLists.txt lives here, the executables will be in prompt_bridge package. So tiktoken model/data files are installed into `install/prompt_bridge/lib/prompt_bridge` manually via `prompt_openai/CMakeLists.txt`.

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <prompt_base/rest_base_class.hpp>
+#include <prompt_base/prompt_base_class.hpp>
 
 namespace prompt
 {
@@ -13,14 +13,14 @@ namespace prompt
  * supported
  *
  */
-class OllamaProvider : public RestBaseClass
+class OllamaProvider : public PromptBaseClass
 {
 public:
   /**
    * @brief Construct a new OllamaProvider object
    *
    */
-  OllamaProvider() : RestBaseClass()
+  OllamaProvider() : PromptBaseClass()
   {
   }
 
@@ -34,7 +34,7 @@ public:
   virtual void initialize(rclcpp::Node::SharedPtr node) override
   {
     // initialize base class
-    initialize_rest_base(node, "OllamaProvider", "");
+    initialize_prompt_base(node, "OllamaProvider", "");
   }
 
 
@@ -51,7 +51,7 @@ protected:
   virtual Poco::JSON::Object toJson(prompt::PromptRequest& prompt) override
   {
     // add options
-    Poco::JSON::Object result = handle_options(prompt);
+    Poco::JSON::Object result = handle_options(prompt.options);
 
     // add prompt
     result.set("prompt", prompt.prompt);
@@ -73,7 +73,7 @@ protected:
                                                 std::vector<PromptDialogue>& conversation)
   {
     // add options
-    Poco::JSON::Object result = handle_options(prompt);
+    Poco::JSON::Object result = handle_options(prompt.options);
 
     Poco::JSON::Array messages_array;
 

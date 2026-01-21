@@ -1,0 +1,4 @@
+prompt_msgs/Embed input
+---
+prompt_msgs/EmbedResponse output
+

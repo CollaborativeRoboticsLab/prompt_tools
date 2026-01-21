@@ -1,7 +1,9 @@
 
 # Service Interface: `prompt/prompt`
 
-The main service interface for sending prompts and receiving responses is `prompt/prompt`, using the [Prompt.srv](../prompt_msgs/srv/Prompt.srv) definition.
+The main service interface for sending prompts and receiving responses is `prompt/prompt`, using the [Prompt.srv](../prompt_msgs/srv/Prompt.srv) definition. Capable of supporting, loading and running plugins for multiple LLM service vendors concurrently. Current system architecture is as follows.
+
+![Prompt Interface](./images/prompt_interface.png)
 
 ## Service Definition
 
@@ -19,6 +21,7 @@ prompt_msgs/PromptResponse response
 | `uuid`        | string                  | (Optional) Conversation/session ID. Use empty string for new prompt/session. |
 | `prompt`      | [Prompt](../prompt_msgs/msg/Prompt.msg) | The prompt message and options.                                              |
 
+
 #### Prompt.msg Fields
 | Field            | Type      | Description                                                                 |
 |------------------|-----------|-----------------------------------------------------------------------------|
@@ -27,7 +30,14 @@ prompt_msgs/PromptResponse response
 | `flush_cache`    | bool      | Whether to flush the cache and process all cached prompts.                  |
 | `use_chat_mode`  | bool      | Enable chat/conversational mode (tracks dialogue history).                  |
 | `model_family`   | string    | Which model family/provider to use (e.g., `openai`, `ollama`).              |
-| `options`        | ModelOption[] | Additional model-specific options (e.g., temperature, model name).          |
+| `options`        | [ModelOption[]](../prompt_msgs/msg/ModelOption.msg) | Additional model-specific options (e.g., temperature, model name).          |
+
+#### ModelOption.msg Fields
+| Field   | Type   | Description                        |
+|---------|--------|------------------------------------|
+| `key`   | string | Option key                         |
+| `value` | string | Option value                       |
+| `type`  | string | Type hint (e.g., str, bool, int)   |
 
 ### Response Fields
 | Field         | Type                    | Description                                                                 |
@@ -46,6 +56,8 @@ prompt_msgs/PromptResponse response
 | `risk`        | float64   | (Optional) Risk metric.                                                     |
 
 ## How to Use the Service
+
+![Basic Usgae](./images/prompt_usage.png)
 
 ### 1. Single prompt (stateless):
 - Set `uuid` to empty string.
@@ -77,6 +89,11 @@ prompt:
   model_family: "openai"
   options: []
 ```
+
+## Extending
+
+To add a new Online Prompt provider, implement a plugin inheriting from `prompt::PromptBaseClass` and register it. Add its configuration to your YAML file and list it in `prompt_family_names` and `prompt_family_plugins`.
+
 
 ## Notes
 - The service is designed to support both stateless and conversational (chat) interactions.
