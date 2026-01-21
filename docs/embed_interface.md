@@ -1,7 +1,7 @@
 
-# Service Interface: `prompt/embed`
+# Service Interface: `prompt/embedding`
 
-The embedding service interface is `prompt/embed`, using the [Embedding.srv](../prompt_msgs/srv/Embedding.srv) definition. Capable of supporting, loading and running plugins for multiple Embedding service vendors concurrently. Current system architecture is as follows.
+The embedding service interface is `prompt/embedding`, using the [Embedding.srv](../prompt_msgs/srv/Embedding.srv) definition. Capable of supporting, loading and running plugins for multiple Embedding service vendors concurrently. Current system architecture is as follows.
 
 ![Embedding Architecture](./images/embed_interface.png)
 
