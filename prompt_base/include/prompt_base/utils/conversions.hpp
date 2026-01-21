@@ -149,7 +149,6 @@ static const prompt_msgs::msg::TokenResponse toMsg(const prompt::TokenResponse& 
   result.text = res.text;
   result.success = res.success;
   result.error = res.error;
-  
   return result;
 }
 
