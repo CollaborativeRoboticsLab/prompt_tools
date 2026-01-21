@@ -78,7 +78,7 @@ public:
   virtual prompt::PromptResponse sendPrompt(prompt::PromptRequest& req)
   {
     // verify and add required model options
-    prompt::check_model_options(node_, req.options, required_options_);
+    prompt::ensure_model_options(node_, req.options, required_options_);
 
     // prepare request body
     Poco::JSON::Object body_json = toJson(req);
@@ -105,7 +105,7 @@ public:
                                                   std::vector<PromptDialogue>& conversation)
   {
     // verify and add required model options
-    prompt::check_model_options(node_, latest_request.options, required_options_);
+    prompt::ensure_model_options(node_, latest_request.options, required_options_);
 
     // prepare request body
     Poco::JSON::Object body_json = toJsonConversation(latest_request, conversation);

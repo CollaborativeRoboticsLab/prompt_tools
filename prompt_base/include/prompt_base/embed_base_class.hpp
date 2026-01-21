@@ -70,7 +70,7 @@ public:
   virtual prompt::EmbedResponse get_embeddings(prompt::EmbedRequest& req) override
   {
     // verify and add required model options
-    prompt::check_model_options(node_, req.options, required_options_);
+    prompt::ensure_model_options(node_, req.options, required_options_);
 
     // prepare request body
     Poco::JSON::Object body_json = toJson(req);

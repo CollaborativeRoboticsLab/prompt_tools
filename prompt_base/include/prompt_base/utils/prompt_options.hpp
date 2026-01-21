@@ -146,7 +146,7 @@ std::vector<prompt::PromptOption> load_from_parameters(rclcpp::Node::SharedPtr n
  * @param options The prompt options to check and modify
  * @param required_options The required model options to ensure are present
  */
-void check_model_options(rclcpp::Node::SharedPtr node, std::vector<prompt::PromptOption>& options,
+void ensure_model_options(rclcpp::Node::SharedPtr node, std::vector<prompt::PromptOption>& options,
                          std::vector<prompt::PromptOption>& required_options)
 {
   // check required options are available and if not add them

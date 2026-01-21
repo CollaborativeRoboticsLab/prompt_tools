@@ -60,7 +60,7 @@ public:
   virtual prompt::TokenResponse get_tokens(prompt::TokenRequest& req) override
   {
     // verify and add required model options
-    prompt::check_model_options(node_, req.options, required_options_);
+    prompt::ensure_model_options(node_, req.options, required_options_);
 
     // create prompt provider response container
     prompt::TokenResponse res = process(req);
