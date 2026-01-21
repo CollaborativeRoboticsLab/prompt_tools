@@ -57,7 +57,7 @@ Following is the current system Architecture
 - [Embed Interface](./docs/embed_interface.md) to understand about Embedding Sub System
 - [Tokenize Interface](./docs/tokenize_interface.md) to understand about PromptTokenizer Sub System
 - [Class Inheritance](./docs/class_structure.md)  to understand how to inherit when creating new plugins
-- [Plugin parameters](./docs/plugin_parameters.md)  to understand how to configure new and exisitng plugins to change behaviour
+- [Plugin parameters](./docs/plugin_parameters.md)  to understand how to configure new and existing plugins to change behaviour
 
 <br>
 
