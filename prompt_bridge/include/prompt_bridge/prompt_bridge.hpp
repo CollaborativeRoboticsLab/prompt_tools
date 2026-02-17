@@ -142,7 +142,7 @@ public:
 
     tokenizer_service_ =
         this->create_service<TokenizeSrv>("prompt/tokenizer", std::bind(&PromptBridge::tokenize_service_cb, this,
-                                                                         std::placeholders::_1, std::placeholders::_2));
+                                                                        std::placeholders::_1, std::placeholders::_2));
     RCLCPP_INFO(this->get_logger(), "Tokenizer service created at 'prompt/tokenizer'");
 
     RCLCPP_INFO(this->get_logger(), "PromptBridge initialized");
@@ -533,6 +533,21 @@ public:
             // flushing the cache, retrieve the conversation history using the provided uuid
             uuid = req->uuid;
 
+            // check if the uuid exists in the conversation history. if not, log a warning and process the prompt
+            // directly since there's no conversation history to flush
+            if (prompt_conversations_.find(uuid) == prompt_conversations_.end())
+            {
+              RCLCPP_WARN(this->get_logger(), "UUID provided for flush request does not exist in conversation history. "
+                                              "Processing prompt directly.");
+              result = prompt_provider_->sendPrompt(input);
+              result.buffered = false;
+
+              // convert the result to message and discontinue the uuid since chat mode disabled
+              res->response = prompt::toMsg(result);
+              res->uuid = "";
+              return;
+            }
+
             result = prompt_provider_->sendConversation(input, prompt_conversations_[uuid]);
             result.buffered = false;
 
@@ -548,9 +563,23 @@ public:
             // flushing not requested, continue caching, retrieve the conversation history using the provided uuid
             uuid = req->uuid;
 
-            // get the last dialogue from the conversation and append the new prompt to that for caching
-            prompt_conversations_[uuid].back().content += " " + req->prompt.prompt;
-            result.buffered = true;
+            // check if the uuid exists in the conversation history. if not, log a warning and start a new cache with
+            // the provided uuid
+            if (prompt_conversations_.find(uuid) == prompt_conversations_.end())
+            {
+              RCLCPP_WARN(this->get_logger(), "uuid : %s does not exist in cache. Starting new cache", uuid.c_str());
+              PromptDialogue dialogue;
+              dialogue.role = "user";
+              dialogue.content = req->prompt.prompt;
+              prompt_conversations_[uuid].push_back(dialogue);
+              result.buffered = true;
+            }
+            else
+            {
+              // get the last dialogue from the conversation and append the new prompt to that for caching
+              prompt_conversations_[uuid].back().content += " " + req->prompt.prompt;
+              result.buffered = true;
+            }
 
             // convert the (buffered-only) result to a message and return the same UUID so the client can continue
             res->response = prompt::toMsg(result);
