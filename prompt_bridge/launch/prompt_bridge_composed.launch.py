@@ -10,14 +10,8 @@ from ament_index_python.packages import get_package_share_directory
 
 
 def generate_launch_description():
-    """Generate launch description for prompt bridge
-
-    Returns:
-        LaunchDescription: The launch description for prompt bridge
-    """
     # load config file
-    bridge_config = os.path.join(get_package_share_directory('prompt_bridge'), 'config', 'prompt_bridge.yaml'
-    )
+    bridge_config = os.path.join(get_package_share_directory('prompt_bridge'), 'config', 'prompt_bridge.yaml')
 
     # create bridge composition
     prompt_bridge = ComposableNodeContainer(
@@ -30,7 +24,7 @@ def generate_launch_description():
         composable_node_descriptions=[
             ComposableNode(
                 package='prompt_bridge',
-                plugin='prompt::PromptBridge',
+                plugin='prompt_bridge::PromptBridge',
                 name='prompt_bridge',
                 parameters=[bridge_config]
             )

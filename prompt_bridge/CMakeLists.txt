@@ -67,7 +67,7 @@ ament_target_dependencies(${PROJECT_NAME}_comp
 
 # register component
 rclcpp_components_register_node(${PROJECT_NAME}_comp
-  PLUGIN "prompt::PromptBridge"
+  PLUGIN "prompt_bridge::PromptBridge"
   EXECUTABLE prompt_bridge_component
 )
 
