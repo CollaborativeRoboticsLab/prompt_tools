@@ -1,5 +1,6 @@
 #pragma once
 
+#include <sstream>
 #include <string>
 
 // include poco json and net/netssl
@@ -113,6 +114,48 @@ public:
   }
 
 protected:
+  static std::string extract_error_description(const std::string& response_body)
+  {
+    if (response_body.empty())
+    {
+      return "";
+    }
+
+    try
+    {
+      Poco::JSON::Parser parser;
+      Poco::Dynamic::Var parsed = parser.parse(response_body);
+      const auto object = parsed.extract<Poco::JSON::Object::Ptr>();
+
+      if (object->has("error"))
+      {
+        const auto error_var = object->get("error");
+        if (error_var.type() == typeid(Poco::JSON::Object::Ptr))
+        {
+          const auto error_object = error_var.extract<Poco::JSON::Object::Ptr>();
+          if (error_object->has("message"))
+          {
+            return error_object->getValue<std::string>("message");
+          }
+        }
+        else if (error_var.type() == typeid(std::string))
+        {
+          return error_var.convert<std::string>();
+        }
+      }
+
+      if (object->has("message"))
+      {
+        return object->getValue<std::string>("message");
+      }
+    }
+    catch (const std::exception&)
+    {
+    }
+
+    return response_body;
+  }
+
   /**
    * @brief Process the HTTP request and return the response as a JSON object
    *
@@ -209,8 +252,28 @@ protected:
     // check for errors
     if (response.getStatus() != Poco::Net::HTTPResponse::HTTP_OK)
     {
-      RCLCPP_ERROR(node_->get_logger(), "HTTP Error: %i, %s", response.getStatus(), response.getReason().c_str());
-      throw prompt::PromptException("HTTP Error: " + std::to_string(response.getStatus()) + " " + response.getReason());
+      std::ostringstream error_stream;
+      error_stream << rs.rdbuf();
+      const std::string response_body = error_stream.str();
+      const std::string description = extract_error_description(response_body);
+
+      if (!description.empty())
+      {
+        RCLCPP_ERROR(node_->get_logger(), "HTTP Error: %i %s. Description: %s", response.getStatus(),
+                     response.getReason().c_str(), description.c_str());
+      }
+      else
+      {
+        RCLCPP_ERROR(node_->get_logger(), "HTTP Error: %i %s", response.getStatus(), response.getReason().c_str());
+      }
+
+      std::string message = "HTTP Error: " + std::to_string(response.getStatus()) + " " + response.getReason();
+      if (!description.empty())
+      {
+        message += " - " + description;
+      }
+
+      throw prompt::PromptException(message);
     }
 
     // check content type is 'text/event-stream' or 'application/x-ndjson'

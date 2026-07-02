@@ -277,17 +277,19 @@ public:
       return;
     }
 
-    std::string uuid;
-
-    prompt::PromptRequest input = prompt::fromMsg(req->prompt);
-    prompt::PromptResponse result;
-
-    // pre send time
-    auto pre_send_time = this->now();
-
-    // check if chat mode is enabled
-    if (req->prompt.use_chat_mode)
+    try
     {
+      std::string uuid;
+
+      prompt::PromptRequest input = prompt::fromMsg(req->prompt);
+      prompt::PromptResponse result;
+
+      // pre send time
+      auto pre_send_time = this->now();
+
+      // check if chat mode is enabled
+      if (req->prompt.use_chat_mode)
+      {
       // chat mode is enabled. requests and response are part of a conversation and they are stored accordingly.
       // check if this is a new prompt or a continuation of a previous prompt
       if (req->uuid == "")
@@ -604,9 +606,26 @@ public:
           RCLCPP_INFO(this->get_logger(), "Prompt processed.");
         }
       }
-    }
+      }
 
-    update_prompt_history(req->prompt, res->response, pre_send_time, this->now());
+      update_prompt_history(req->prompt, res->response, pre_send_time, this->now());
+    }
+    catch (const prompt::PromptException& e)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Prompt request failed: %s", e.what());
+      res->response.success = false;
+      res->response.buffered = false;
+      res->response.response = std::string("Prompt request failed: ") + e.what();
+      res->uuid.clear();
+    }
+    catch (const std::exception& e)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Unexpected prompt request failure: %s", e.what());
+      res->response.success = false;
+      res->response.buffered = false;
+      res->response.response = std::string("Unexpected prompt request failure: ") + e.what();
+      res->uuid.clear();
+    }
   }
 
   /**
@@ -645,14 +664,29 @@ public:
       return;
     }
 
-    prompt::EmbedRequest input = prompt::fromMsg(req->input);
-    prompt::EmbedResponse result;
+    try
+    {
+      prompt::EmbedRequest input = prompt::fromMsg(req->input);
+      prompt::EmbedResponse result;
 
-    // process the embedding request
-    result = embedding_provider_->get_embeddings(input);
-    res->output = prompt::toMsg(result);
+      // process the embedding request
+      result = embedding_provider_->get_embeddings(input);
+      res->output = prompt::toMsg(result);
 
-    RCLCPP_INFO(this->get_logger(), "Embedding request processed.");
+      RCLCPP_INFO(this->get_logger(), "Embedding request processed.");
+    }
+    catch (const prompt::PromptException& e)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Embedding request failed: %s", e.what());
+      res->output.success = false;
+      res->output.error = std::string("Embedding request failed: ") + e.what();
+    }
+    catch (const std::exception& e)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Unexpected embedding request failure: %s", e.what());
+      res->output.success = false;
+      res->output.error = std::string("Unexpected embedding request failure: ") + e.what();
+    }
   }
 
   /**
@@ -690,14 +724,29 @@ public:
       return;
     }
 
-    prompt::TokenRequest input = prompt::fromMsg(req->input);
-    prompt::TokenResponse result;
+    try
+    {
+      prompt::TokenRequest input = prompt::fromMsg(req->input);
+      prompt::TokenResponse result;
 
-    // process the tokenization request
-    result = tokenizer_provider_->get_tokens(input);
-    res->output = prompt::toMsg(result);
+      // process the tokenization request
+      result = tokenizer_provider_->get_tokens(input);
+      res->output = prompt::toMsg(result);
 
-    RCLCPP_INFO(this->get_logger(), "Tokenization request processed.");
+      RCLCPP_INFO(this->get_logger(), "Tokenization request processed.");
+    }
+    catch (const prompt::PromptException& e)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Tokenization request failed: %s", e.what());
+      res->output.success = false;
+      res->output.error = std::string("Tokenization request failed: ") + e.what();
+    }
+    catch (const std::exception& e)
+    {
+      RCLCPP_ERROR(this->get_logger(), "Unexpected tokenization request failure: %s", e.what());
+      res->output.success = false;
+      res->output.error = std::string("Unexpected tokenization request failure: ") + e.what();
+    }
   }
 
 private:
