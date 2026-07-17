@@ -1,6 +1,6 @@
 # Plugin Parameters for prompt_bridge
 
-This document describes the common configuration parameters available for a supported plugin in the `prompt_bridge` ROS package. These parameters are typically set in the `config/prompt_bridge.yaml` file.
+This document describes the configuration parameters used by `prompt_bridge`. These parameters are typically set in [prompt_bridge/config/prompt_bridge.yaml](../prompt_bridge/config/prompt_bridge.yaml).
 
 ## Server-Level Parameters
 
@@ -24,8 +24,8 @@ These parameters are related to prompting plugins that provide generic communica
 
 | Parameter               | Description                                  | Example/Default                                 |
 |-------------------------|----------------------------------------------|-------------------------------------------------|
-| `rest.uri`              | The endpoint for completions                 | `https://api.openai.com/v1/completions`         |
-| `rest.chat_uri`         | The endpoint for chat completions            | `https://api.openai.com/v1/chat/completions`    |
+| `rest.uri`              | Endpoint for single prompt requests          | `https://api.openai.com/v1/responses`           |
+| `rest.chat_uri`         | Endpoint for conversation requests           | `https://api.openai.com/v1/responses`           |
 | `rest.method`           | HTTP method to use                           | `POST`                                          |
 | `rest.auth_type`        | Authentication type                          | `Bearer`                                        |
 | `rest.ssl_verify`       | Whether to verify SSL certificates           | `true`                                          |
@@ -33,7 +33,7 @@ These parameters are related to prompting plugins that provide generic communica
 | `options.stream.value`  | Whether to stream responses                  | `false`                                         |
 | `options.stream.type`   | Data type for stream option                  | `bool`                                          |
 | `options.model.value`   | Default model to use                         | `gpt-5`                                         |
-| `options.model.type`    | Data type for model option                   | `string`                                        |
+| `options.model.type`    | Data type for model option                   | `string` in parameters, typically sent as `str` in `ModelOption.type` |
 
 ## Embedding Parameters
 
@@ -55,7 +55,7 @@ These parameters are related to embedding plugins that provide communication wit
 
 ## Tokenizing Parameters
 
-These parameters are related to Tokenizer plugins that provide an interface for tools that facilitate tokenizing
+These parameters are related to tokenizer plugins that provide an interface for local or remote tokenization.
 
 | Parameter               | Description                                   | Example/Default                                 |
 |-------------------------|-----------------------------------------------|-------------------------------------------------|
@@ -65,4 +65,10 @@ These parameters are related to Tokenizer plugins that provide an interface for 
 
 ---
 
-For more details, see the main README and the example configuration in `config/prompt_bridge.yaml`.
+## Provider Notes
+
+- `prompt::OpenAIProvider` and `prompt::OpenAIEmbedding` also require the `OPENAI_API_KEY` environment variable.
+- `prompt::OpenAITokenize` does not use REST parameters; it only loads default option values such as `model`.
+- `prompt::OllamaProvider` currently uses prompt parameters only and does not require an API key.
+
+For more details, see the main README and the example configuration in `prompt_bridge/config/prompt_bridge.yaml`.

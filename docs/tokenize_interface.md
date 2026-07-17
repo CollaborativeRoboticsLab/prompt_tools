@@ -1,7 +1,7 @@
 
-# Service Interface: `prompt/tokenize`
+# Service Interface: `prompt/tokenizer`
 
-The tokenization service interface is `prompt/tokenize`, using the [Tokenize.srv](../prompt_msgs/srv/Tokenize.srv) definition. Capable of supporting, loading and running plugins for multiple tokenization tools concurrently. Current system architecture is as follows.
+The tokenization service interface is `prompt/tokenizer`, using the [Tokenize.srv](../prompt_msgs/srv/Tokenize.srv) definition. `prompt_bridge` selects the tokenizer plugin from `input.model_family` and executes tokenization locally or through the provider implementation.
 
 ![Tokenizer Architecture](./images/tokenize_interface.png)
 
@@ -45,7 +45,7 @@ prompt_msgs/TokenResponse output
 |---------|--------|------------------------------------|
 | `key`   | string | Option key                         |
 | `value` | string | Option value                       |
-| `type`  | string | Type hint (e.g., str, bool, int)   |
+| `type`  | string | Type hint. The message constants currently define `str`, `bool`, `int`, and `real`. |
 
 ## How to Use the Service
 
@@ -53,6 +53,7 @@ prompt_msgs/TokenResponse output
 - To decode: set `tokens` to your token list, `encode` to `false`, and leave `text` empty.
 - Set `model_family` to the provider/plugin (e.g., `openai`, `ollama`).
 - Use `options` for model-specific parameters (see [plugin_parameters.md](plugin_parameters.md)).
+- The current OpenAI tokenizer plugin supports `O200K_BASE`, `CL100K_BASE`, `R50K_BASE`, `P50K_BASE`, and `P50K_EDIT`.
 
 ## Example Request (YAML)
 
@@ -63,7 +64,10 @@ input:
 	tokens: []
 	encode: true
 	model_family: "openai"
-	options: [("model", "O200K_BASE")]
+	options:
+		- key: model
+			value: O200K_BASE
+			type: str
 ```
 
 Decoding example:
@@ -73,7 +77,10 @@ input:
 	tokens: [15496, 995]
 	encode: false
 	model_family: "openai"
-	options: [("model", "O200K_BASE")]
+	options:
+		- key: model
+			value: O200K_BASE
+			type: str
 ```
 
 
@@ -83,4 +90,5 @@ To add a new Offline Tokenizer provider, implement a plugin inheriting from `pro
 
 ## Notes
 - The service can encode text to tokens or decode tokens to text, depending on the `encode` flag.
+- The current bundled tokenizer implementation is `prompt::OpenAITokenize`, which uses `cpp-tiktoken` locally rather than a REST endpoint.
 - Use the `success` and `error` fields to check for errors.

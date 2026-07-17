@@ -1,7 +1,7 @@
 
 # OpenAI Prompt Provider Plugins
 
-This package provides prompt, embedding, and tokenization plugins for the OpenAI API, supporting both chat and completion endpoints, as well as embeddings via REST and tokenization via [cpp-tiktoken](https://github.com/gh-markt/cpp-tiktoken).
+This package provides prompt, embedding, and tokenization plugins for OpenAI. The current prompt implementation targets the OpenAI Responses API, embeddings use the Embeddings API, and tokenization is provided locally through [cpp-tiktoken](https://github.com/gh-markt/cpp-tiktoken).
 
 ## Plugins
 
@@ -25,14 +25,9 @@ The following plugin classes are available (see `plugins.xml` and `include/promp
 
 ## Usage
 
-Providers are loaded from config. Example configuration for prompt providers:
+Providers are loaded through `prompt_bridge/config/prompt_bridge.yaml`. Example plugin sections:
 
 ```yaml
-# comment everything else except the one needed
-prompt_provider: prompt::OpenAIProvider
-prompt_provider: prompt::OpenAIEmbedding
-prompt_provider: prompt::OpenAITokenize
-
 OpenAIProvider:
   rest:
     # OpenAI Responses API endpoint (used for both single prompts and conversations)
@@ -52,15 +47,20 @@ OpenAIProvider:
 
 OpenAIEmbedding:
   rest:
-    uri: https://api.openai.com/v1/embeddings
+    embedding_uri: https://api.openai.com/v1/embeddings
     method: POST
     auth_type: Bearer
     ssl_verify: true
-  override_model_options: true
-  option_keys: [model]
+  option_keys: [model, dimensions, encoding_format]
   options:
     model:
       value: text-embedding-3-small
+      type: string
+    dimensions:
+      value: 1536
+      type: int
+    encoding_format:
+      value: float
       type: string
 
 OpenAITokenize:
@@ -81,8 +81,10 @@ OpenAITokenize:
 ## Notes
 - See `plugins.xml` and the `include/prompt_openai/` headers for class details.
 
-- Model options can be overridden via config.
+- Default model options are loaded from ROS parameters and filled in when a request omits them.
 
 - Tokenization uses cpp-tiktoken locally, not via REST.
+
+- `OPENAI_API_KEY` must be present in the environment before `prompt_bridge` loads either `OpenAIProvider` or `OpenAIEmbedding`.
 
 - cpp-Tiktoken expects the model files to be in a 'tokenizers' folder relative to the executable. Eventhough prompt_openai plugins CMakeLists.txt lives here, the executables will be in prompt_bridge package. So tiktoken model/data files are installed into `install/prompt_bridge/lib/prompt_bridge` manually via `prompt_openai/CMakeLists.txt`.

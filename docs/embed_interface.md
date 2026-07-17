@@ -1,7 +1,7 @@
 
 # Service Interface: `prompt/embedding`
 
-The embedding service interface is `prompt/embedding`, using the [Embedding.srv](../prompt_msgs/srv/Embedding.srv) definition. Capable of supporting, loading and running plugins for multiple Embedding service vendors concurrently. Current system architecture is as follows.
+The embedding service interface is `prompt/embedding`, using the [Embedding.srv](../prompt_msgs/srv/Embedding.srv) definition. `prompt_bridge` selects the embedding provider from `input.model_family` and forwards the request to the matching plugin.
 
 ![Embedding Architecture](./images/embed_interface.png)
 
@@ -53,7 +53,7 @@ prompt_msgs/EmbedResponse output
 |---------|--------|------------------------------------|
 | `key`   | string | Option key                         |
 | `value` | string | Option value                       |
-| `type`  | string | Type hint (e.g., str, bool, int)   |
+| `type`  | string | Type hint. The message constants currently define `str`, `bool`, `int`, and `real`. |
 
 ## How to Use the Service
 
@@ -67,7 +67,16 @@ prompt_msgs/EmbedResponse output
 input:
 	text: "The quick brown fox jumps over the lazy dog."
 	model_family: "openai"
-	options: [("model", "text-embedding-3-small"), ("dimensions", "1536")]
+	options:
+		- key: model
+			value: text-embedding-3-small
+			type: str
+		- key: dimensions
+			value: "1536"
+			type: int
+		- key: encoding_format
+			value: float
+			type: str
 ```
 
 
@@ -77,6 +86,6 @@ To add a new Online Embedding provider, implement a plugin inheriting from `prom
 
 
 ## Notes
-- The service returns one or more embeddings for the input text.
-- Embeddings may be returned as float arrays or base64 strings, depending on the model and configuration.
+- The OpenAI embedding plugin returns either `float_embedding` or `base64_embedding` for each item depending on `encoding_format`.
+- The service can return more than one embedding item if the provider returns multiple entries in the `data` array.
 - Use the `success` and `error` fields to check for errors.

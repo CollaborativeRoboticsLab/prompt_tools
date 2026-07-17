@@ -6,7 +6,7 @@
 [![Open in Visual Studio Code](https://img.shields.io/badge/vscode-dev-blue)](https://open.vscode.dev/CollaborativeRoboticsLab/prompt_tools)
 <!-- [![DOI](https://zenodo.org/badge/DOI/10.1/zenodo.1.svg)](https://doi.org/10.1/zenodo.1) -->
 
-ROS2 meta-package with tools for working with prompted systems such as large language models and their responses in a distributed data driven robotic system application (ROS) including generic ROS message types for LLM prompts.  Provides a flexible, plugin-based interface for prompting, embedding and tokenization via plugins. Currently supports following providers
+ROS 2 meta-package with tools for working with prompted systems such as large language models and their responses in distributed robotic applications. It provides generic ROS message types for prompt, embedding, and tokenization workflows together with a flexible plugin-based bridge. The current providers are:
 
 | Provider | Package |
 | --- | --- |
@@ -20,7 +20,7 @@ ROS2 meta-package with tools for working with prompted systems such as large lan
 ## Features
 
 - **Plugin-based architecture:** Easily add new LLM providers or prompt schemes via plugins.
-- **Unified ROS interfaces:** Provides ROS services for sending prompts and receiving responses.
+- **Unified ROS interfaces:** Provides ROS services for prompt, embedding, and tokenization requests.
 - **Prompt history tracking:** Publishes prompt/response history for monitoring and debugging.
 - **Chat and cache modes:** Supports conversational (chat) and stateless prompt handling, with optional caching and flushing.
 - **Dynamic configuration:** Model families and plugins are loaded at runtime from parameters or YAML config.
@@ -29,7 +29,7 @@ ROS2 meta-package with tools for working with prompted systems such as large lan
 
 ## Prompt Bridge
 
-The main system that connects ROS2 system and a LLM. Utilizes plugins for connection interfaces. Currently support parallel connections with Prompt Interfaces, Embedding Interfaces and Tokenization interfaces.
+The main node that connects ROS 2 applications to prompt providers. It loads providers through `pluginlib` and exposes prompt, embedding, and tokenization services concurrently.
 
 - **Prompt Interfaces:** 
     - `prompt/prompt` ([prompt_msgs/srv/Prompt](prompt_msgs/srv/Prompt.srv))
@@ -41,7 +41,7 @@ The main system that connects ROS2 system and a LLM. Utilizes plugins for connec
 
 - **Tokenization interfaces:** 
     - `prompt/tokenizer` ([prompt_msgs/srv/Tokenize](prompt_msgs/srv/Tokenize.srv))
-    - Main entry point for encoding text to tokens and decoding tokens into text.
+    - Main entry point for encoding text to tokens and decoding tokens back into text.
 
 - **History Publisher:** 
     - `prompt/history` ([prompt_msgs/msg/PromptHistory](prompt_msgs/msg/PromptHistory.msg))
@@ -100,7 +100,7 @@ rosdep install --from-paths src --ignore-src -r -y
 
 If not connecting to a Online API, a local LLM running on docker can be used. Separately clone a repository such as [CollaborativeRoboticsLab/ollama-docker](https://github.com/CollaborativeRoboticsLab/ollama-docker) for this purpose and start it.
 
-### Using OpenAI api
+### Using OpenAI API
 
 Run the following command with the actual `OPENAI_API_KEY` in place of `<open-ai-api-key>` if using prompt-openai plugins
 
@@ -108,7 +108,7 @@ Run the following command with the actual `OPENAI_API_KEY` in place of `<open-ai
 export OPENAI_API_KEY="<open-ai-api-key>"
 ```
 
-and then update the config file with the correct api endpoints and model names and run,
+Then build the workspace and launch `prompt_bridge` with the packaged YAML configuration. The default OpenAI configuration uses the Responses API for prompts and the Embeddings API for embeddings.
 
 ```bash
 colcon build
@@ -132,11 +132,36 @@ ros2 launch prompt_bridge prompt_bridge.launch.py
 
 ### Testing
 
-To build and run the test node that exercises all features of prompt_bridge:
+To build and run the C++ test node that exercises the current prompt, chat, cache, and embedding flows:
 
 ```bash
 source install/setup.bash
 ros2 run prompt_bridge test_prompt_node
 ```
 
-This will run the test node and print results for stateless, chat, caching, and model selection features.
+This will run the test node and print results for stateless prompting, chat mode, cached prompting, and embedding requests.
+
+### Python Examples
+
+Two lightweight Python examples are available under `prompt_bridge/test/`:
+
+- `call_srvs.py` sends a single request to `prompt/prompt`.
+- `call_services.py` exercises `prompt/prompt`, `prompt/embedding`, and `prompt/tokenizer`.
+
+Run them from a sourced workspace after `prompt_bridge` is already running:
+
+```bash
+source install/setup.bash
+python3 src/prompt_tools/prompt_bridge/test/call_srvs.py
+python3 src/prompt_tools/prompt_bridge/test/call_services.py
+```
+
+## Current Defaults
+
+- Prompt service: `prompt/prompt`
+- Embedding service: `prompt/embedding`
+- Tokenizer service: `prompt/tokenizer`
+- History topic: `prompt/history`
+- Default config: `prompt_bridge/config/prompt_bridge.yaml`
+
+OpenAI prompt requests are sent to `https://api.openai.com/v1/responses`, OpenAI embedding requests are sent to `https://api.openai.com/v1/embeddings`, and OpenAI tokenization is handled locally through `cpp-tiktoken`.

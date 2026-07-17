@@ -1,7 +1,7 @@
 
 # Ollama Prompt Provider Plugins
 
-This package provides prompt plugins for the Ollama API, supporting both single-turn and chat-based prompt completion via REST. Ollama must be running locally or in a Docker container.
+This package provides prompt plugins for the Ollama API, supporting both single-turn and chat-based prompting via REST. Ollama must be reachable from the machine running `prompt_bridge`.
 
 ## Plugins
 
@@ -14,12 +14,9 @@ The following plugin class is available (see `plugins.xml` and `include/prompt_o
 
 ## Usage
 
-Providers are loaded from config. Example configuration for prompt providers:
+Providers are loaded through `prompt_bridge/config/prompt_bridge.yaml`. Example plugin section:
 
 ```yaml
-# comment everything else except the one needed
-prompt_provider: prompt::OllamaProvider
-
 OllamaProvider:
   rest:
     uri: http://10.0.0.246:11434/api/generate           # local ollama container. change ip as required
@@ -44,4 +41,5 @@ OllamaProvider:
 ## Notes
 - Only prompt (completion/chat) plugins are provided for Ollama.
 - See `plugins.xml` and the `include/prompt_ollama/` header for class details.
-- Model options can be overridden via config.
+- Default model options are loaded from ROS parameters and filled in when a request omits them.
+- No API key is required by the bundled Ollama provider.
