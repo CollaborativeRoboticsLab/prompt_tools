@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>prompt_openai</name>
-  <version>0.1.0</version>
+  <version>0.3.2</version>
   <description>
     This package provides a prompt provider plugin for different language models
   </description>

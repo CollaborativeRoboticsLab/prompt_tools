@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="3">
   <name>prompt_tools</name>
-  <version>0.0.1</version>
+  <version>0.3.2</version>
   <description>meta-package with tools for working with prompted systems such as large language models and their responses</description>
 
   <maintainer email="michael.pritchard@canberra.edu.au">Michael Pritchard</maintainer>
