@@ -1,4 +1,4 @@
-# Class Structure: prompt_base Package
+# Class Structure
 
 This document provides an overview of the main classes and their relationships in the `prompt_base` package. The package is designed to provide base classes and utilities for prompt handling, embedding, REST interfaces, and tokenization.
 

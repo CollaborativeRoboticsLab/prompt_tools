@@ -1,5 +1,5 @@
 
-# Service Interface: `prompt/embedding`
+# Embedding Service Interface
 
 The embedding service interface is `prompt/embedding`, using the [Embedding.srv](../prompt_msgs/srv/Embedding.srv) definition. `prompt_bridge` selects the embedding provider from `input.model_family` and forwards the request to the matching plugin.
 

@@ -1,5 +1,5 @@
 
-# Service Interface: `prompt/tokenizer`
+# Tokenizer Service Interface
 
 The tokenization service interface is `prompt/tokenizer`, using the [Tokenize.srv](../prompt_msgs/srv/Tokenize.srv) definition. `prompt_bridge` selects the tokenizer plugin from `input.model_family` and executes tokenization locally or through the provider implementation.
 

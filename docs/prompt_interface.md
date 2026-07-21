@@ -1,5 +1,5 @@
 
-# Service Interface: `prompt/prompt`
+# Prompt Service Interface
 
 The main service interface for sending prompts and receiving responses is `prompt/prompt`, using the [Prompt.srv](../prompt_msgs/srv/Prompt.srv) definition. `prompt_bridge` can load multiple prompt providers concurrently and dispatch each request by `model_family`.
 
