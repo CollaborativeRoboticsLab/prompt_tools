@@ -1,9 +1,0 @@
-<map id="prompt_openai/external/cpp&#45;tiktoken/pcre2/vms/stdint.h" name="prompt_openai/external/cpp&#45;tiktoken/pcre2/vms/stdint.h">
-<area shape="rect" id="Node000001" title=" " alt="" coords="62,5,241,60"/>
-<area shape="rect" id="Node000002" title=" " alt="" coords="5,108,92,133"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="122,62,75,101,71,97,118,58"/>
-<area shape="rect" id="Node000003" title=" " alt="" coords="116,108,187,133"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="154,60,154,94,149,94,149,60"/>
-<area shape="rect" id="Node000004" title=" " alt="" coords="211,108,294,133"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="184,58,230,97,227,101,181,62"/>
-</map>

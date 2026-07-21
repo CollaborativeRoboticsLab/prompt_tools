@@ -1,9 +1,0 @@
-<map id="prompt_base/include/prompt_base/utils/conversions.hpp" name="prompt_base/include/prompt_base/utils/conversions.hpp">
-<area shape="rect" id="Node000001" title=" " alt="" coords="81,5,334,45"/>
-<area shape="rect" id="Node000002" href="$prompt__bridge_8hpp.html" title=" " alt="" coords="121,93,293,148"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="210,59,210,93,205,93,205,59"/>
-<area shape="rect" id="Node000003" href="$prompt__bridge_8cpp.html" title=" " alt="" coords="5,196,196,236"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="169,159,124,198,120,194,165,155"/>
-<area shape="rect" id="Node000004" href="$prompt__bridge__node_8cpp.html" title=" " alt="" coords="220,196,411,236"/>
-<area shape="poly" id="edge3_Node000002_Node000004" title=" " alt="" coords="250,155,295,194,292,198,247,159"/>
-</map>

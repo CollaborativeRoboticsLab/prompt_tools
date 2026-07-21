@@ -1,8 +1,0 @@
-<map id="dfa_match_block" name="dfa_match_block">
-<area shape="rect" id="Node000001" title=" " alt="" coords="39,93,172,119"/>
-<area shape="rect" id="Node000002" href="$structpcre2__memctl.html" title=" " alt="" coords="5,5,120,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="77,42,102,92,97,94,72,44"/>
-<area shape="rect" id="Node000003" href="$structdfa__recursion__info.html" title=" " alt="" coords="145,5,287,31"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="192,41,122,95,119,91,188,37"/>
-<area shape="poly" id="edge3_Node000003_Node000003" title=" " alt="" coords="303,10,314,18,306,26,288,28,287,23,304,21,309,18,300,14"/>
-</map>

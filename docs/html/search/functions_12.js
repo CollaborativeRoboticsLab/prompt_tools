@@ -1,8 +1,0 @@
-var searchData=
-[
-  ['update_5fmem_5faddr_0',['update_mem_addr',['../sljitNativeARM__32_8c.html#a81f74d9135b243284400993c11fb2669',1,'update_mem_addr(struct sljit_compiler *compiler, sljit_s32 *mem, sljit_sw *memw, sljit_s32 max_offset):&#160;sljitNativeARM_32.c'],['../sljitNativeARM__T2__32_8c.html#a81f74d9135b243284400993c11fb2669',1,'update_mem_addr(struct sljit_compiler *compiler, sljit_s32 *mem, sljit_sw *memw, sljit_s32 max_offset):&#160;sljitNativeARM_T2_32.c'],['../sljitNativeMIPS__common_8c.html#a5a1de5a01c923dfaf17cd9b66ef790f0',1,'update_mem_addr(struct sljit_compiler *compiler, sljit_s32 *mem, sljit_sw *memw, sljit_s16 max_offset):&#160;sljitNativeMIPS_common.c']]],
-  ['update_5fprompt_5fhistory_1',['update_prompt_history',['../classprompt_1_1PromptBridge.html#ad38a4dfe96eda2993b3b16aba3baefdd',1,'prompt::PromptBridge']]],
-  ['update_5fzero_5foverflow_2',['update_zero_overflow',['../sljitNativeS390X_8c.html#aefa41b52de9315e75880a261cb5ff60c',1,'sljitNativeS390X.c']]],
-  ['usage_3',['usage',['../pcre2__dftables_8c.html#ad96d407a911fbb914fa8e4cfbf2faf0f',1,'usage(void):&#160;pcre2_dftables.c'],['../pcre2grep_8c.html#ac8089aea752948fba171c6cd11896df7',1,'usage(int rc):&#160;pcre2grep.c'],['../pcre2test_8c.html#ad96d407a911fbb914fa8e4cfbf2faf0f',1,'usage(void):&#160;pcre2test.c']]],
-  ['utf82ord_4',['utf82ord',['../utf8_8c.html#aa82f7229a3e4c894845a38ed4e0828cc',1,'utf82ord(unsigned char *buffer, unsigned char *buffend, long unsigned int *vptr, int *lenptr):&#160;utf8.c'],['../pcre2test_8c.html#aabb6213de1643967c1f8cc2270609f74',1,'utf82ord(PCRE2_SPTR8 utf8bytes, PCRE2_SPTR8 end, uint32_t *vptr):&#160;pcre2test.c']]]
-];

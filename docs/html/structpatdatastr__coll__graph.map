@@ -1,6 +1,0 @@
-<map id="patdatastr" name="patdatastr">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,108,95,133"/>
-<area shape="rect" id="Node000002" href="$structpatstr.html" title=" " alt="" coords="20,5,80,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="53,45,53,108,47,108,47,45"/>
-<area shape="poly" id="edge2_Node000002_Node000002" title=" " alt="" coords="95,7,103,11,107,18,98,28,81,30,80,25,96,23,101,18,99,15,93,12"/>
-</map>

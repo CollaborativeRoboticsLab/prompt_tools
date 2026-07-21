@@ -1,9 +1,0 @@
-<map id="compile_block" name="compile_block">
-<area shape="rect" id="Node000001" title=" " alt="" coords="99,196,215,221"/>
-<area shape="rect" id="Node000002" href="$structpcre2__real__compile__context.html" title=" " alt="" coords="5,93,155,133"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="106,142,150,194,146,197,102,145"/>
-<area shape="rect" id="Node000003" href="$structpcre2__memctl.html" title=" " alt="" coords="23,5,137,31"/>
-<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="83,44,83,93,77,93,77,44"/>
-<area shape="rect" id="Node000004" href="$structnamed__group.html" title=" " alt="" coords="179,101,290,126"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="219,138,169,198,165,194,214,135"/>
-</map>

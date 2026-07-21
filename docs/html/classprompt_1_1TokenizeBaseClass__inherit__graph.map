@@ -1,7 +1,0 @@
-<map id="prompt::TokenizeBaseClass" name="prompt::TokenizeBaseClass">
-<area shape="rect" id="Node000001" title="TokenizeBaseClass." alt="" coords="5,79,205,104"/>
-<area shape="rect" id="Node000003" href="$classprompt_1_1OpenAITokenize.html" title="OpenAITokenize." alt="" coords="15,152,195,177"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="108,118,108,152,103,152,103,118"/>
-<area shape="rect" id="Node000002" href="$classprompt_1_1BaseClass.html" title="PromptProviderBase." alt="" coords="33,5,177,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="108,44,108,79,103,79,103,44"/>
-</map>
