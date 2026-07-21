@@ -1,0 +1,22 @@
+var searchData=
+[
+  ['j_0',['J',['../sljitNativeMIPS__common_8c.html#ad59246fadffe0205c1ecfcd147c407f6',1,'sljitNativeMIPS_common.c']]],
+  ['jal_1',['jal',['../sljitNativeMIPS__common_8c.html#a9f8938c41dd93edd84b1e8319560cea7',1,'JAL:&#160;sljitNativeMIPS_common.c'],['../sljitNativeRISCV__common_8c.html#a9f8938c41dd93edd84b1e8319560cea7',1,'JAL:&#160;sljitNativeRISCV_common.c']]],
+  ['jalr_2',['jalr',['../sljitNativeMIPS__common_8c.html#a0fa8374fa39b77297efc164c358c024a',1,'JALR:&#160;sljitNativeMIPS_common.c'],['../sljitNativeRISCV__common_8c.html#a0fa8374fa39b77297efc164c358c024a',1,'JALR:&#160;sljitNativeRISCV_common.c']]],
+  ['je_5fi8_3',['JE_i8',['../sljitNativeX86__common_8c.html#a1414ba3ec3022a920f4cc4c6240c728b',1,'sljitNativeX86_common.c']]],
+  ['jirl_4',['JIRL',['../sljitNativeLOONGARCH__64_8c.html#a0bea3ae1fdd68c0ec9170150e9ca0845',1,'sljitNativeLOONGARCH_64.c']]],
+  ['jirl_5fmax_5',['JIRL_MAX',['../sljitNativeLOONGARCH__64_8c.html#a2772d949f639a112f5a2ef43b9757580',1,'sljitNativeLOONGARCH_64.c']]],
+  ['jirl_5fmin_6',['JIRL_MIN',['../sljitNativeLOONGARCH__64_8c.html#a274ab85184139de9098d319e126ca3a3',1,'sljitNativeLOONGARCH_64.c']]],
+  ['jit_5fdefault_7',['JIT_DEFAULT',['../pcre2test_8c.html#a94e70c70657af052b23419c9deb93f5c',1,'pcre2test.c']]],
+  ['jit_5fsize_5flimit_8',['JIT_SIZE_LIMIT',['../pcre2__fuzzsupport_8c.html#ab9af3a47c3430366da1c26af013bc5a6',1,'pcre2_fuzzsupport.c']]],
+  ['jl_5fi8_9',['JL_i8',['../sljitNativeX86__common_8c.html#ae25b3b7ee712eb5b6fd2a7403f5723ab',1,'sljitNativeX86_common.c']]],
+  ['jmp_5fi32_10',['JMP_i32',['../sljitNativeX86__common_8c.html#ac1bd85f7e837e4aea4ceecbc8957c41c',1,'sljitNativeX86_common.c']]],
+  ['jmp_5fi8_11',['JMP_i8',['../sljitNativeX86__common_8c.html#a55ce78e2af99a08f533233ab03e04a2b',1,'sljitNativeX86_common.c']]],
+  ['jmp_5frm_12',['JMP_rm',['../sljitNativeX86__common_8c.html#aa8f96e6c831fe948e9847358496d40f2',1,'sljitNativeX86_common.c']]],
+  ['jnc_5fi8_13',['JNC_i8',['../sljitNativeX86__common_8c.html#a2a912e4cd4f9236ea87a87716f2741b1',1,'sljitNativeX86_common.c']]],
+  ['jne_5fi8_14',['JNE_i8',['../sljitNativeX86__common_8c.html#a7e82ca61ef836d8677596bba61732081',1,'sljitNativeX86_common.c']]],
+  ['jr_15',['JR',['../sljitNativeMIPS__common_8c.html#a2be408601f1de958fd6243bd97efe40f',1,'sljitNativeMIPS_common.c']]],
+  ['jump_5fmax_16',['jump_max',['../sljitNativeLOONGARCH__64_8c.html#a6f13a064c055784e22dae026c99d4d8f',1,'JUMP_MAX:&#160;sljitNativeLOONGARCH_64.c'],['../sljitNativeRISCV__common_8c.html#a6f13a064c055784e22dae026c99d4d8f',1,'JUMP_MAX:&#160;sljitNativeRISCV_common.c']]],
+  ['jump_5fmin_17',['jump_min',['../sljitNativeLOONGARCH__64_8c.html#a4ac88aa9ee57b98ea43b028f37b48e6f',1,'JUMP_MIN:&#160;sljitNativeLOONGARCH_64.c'],['../sljitNativeRISCV__common_8c.html#a4ac88aa9ee57b98ea43b028f37b48e6f',1,'JUMP_MIN:&#160;sljitNativeRISCV_common.c']]],
+  ['junk_5foffset_18',['JUNK_OFFSET',['../pcre2test_8c.html#aee0b47976427cad866a03a50c5f64dab',1,'pcre2test.c']]]
+];

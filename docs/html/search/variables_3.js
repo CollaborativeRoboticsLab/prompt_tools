@@ -1,0 +1,24 @@
+var searchData=
+[
+  ['dat_5fdatctl_0',['dat_datctl',['../pcre2test_8c.html#a3d8467547aa90a2f8f2b383b261dc49c',1,'pcre2test.c']]],
+  ['data_1',['data',['../structstateblock.html#aeca60671b6cc7190b41339eb26d11d0d',1,'stateblock::data'],['../namespaceGenerateUcd.html#a51a32df8f54491be11b7192ff45c36f8',1,'GenerateUcd.data'],['../pcre2posix__test_8c.html#a10762cf48bbb586e6ed4c362c27169e8',1,'data:&#160;pcre2posix_test.c']]],
+  ['data0_5f1_2',['data0_1',['../pcre2posix__test_8c.html#a2a392c26f6e44a9c2c6f431bb83cc1e3',1,'pcre2posix_test.c']]],
+  ['data2_5f3_3',['data2_3',['../pcre2posix__test_8c.html#a14facacce16ce4f58541d8a08d06b6ed',1,'pcre2posix_test.c']]],
+  ['data4_4',['data4',['../pcre2posix__test_8c.html#a62b387a2c86b6058476dc0f842a3ede7',1,'pcre2posix_test.c']]],
+  ['data_5ftransfer_5finsts_5',['data_transfer_insts',['../sljitNativeRISCV__common_8c.html#ad7d23338f709f820d3afe785c0086d5d',1,'data_transfer_insts:&#160;sljitNativeRISCV_common.c'],['../sljitNativePPC__common_8c.html#a89e56b1d30ace0f26afab90bed725d47',1,'data_transfer_insts:&#160;sljitNativePPC_common.c'],['../sljitNativeARM__32_8c.html#adb3bb018f860adce4ce44f0e7c141b86',1,'data_transfer_insts:&#160;sljitNativeARM_32.c'],['../sljitNativeLOONGARCH__64_8c.html#ad7d23338f709f820d3afe785c0086d5d',1,'data_transfer_insts:&#160;sljitNativeLOONGARCH_64.c'],['../sljitNativeMIPS__common_8c.html#ad7d23338f709f820d3afe785c0086d5d',1,'data_transfer_insts:&#160;sljitNativeMIPS_common.c']]],
+  ['data_5ftransfer_5finsts_5fx_6',['data_transfer_insts_x',['../sljitNativeLOONGARCH__64_8c.html#ad9ade944a3a0401ba0937c54f6636fa9',1,'sljitNativeLOONGARCH_64.c']]],
+  ['dataptr_7',['dataptr',['../structoption__item.html#ae685fbc6cfd991e87b381fbbf75d3610',1,'option_item']]],
+  ['datasourcename_5f_8',['dataSourceName_',['../classEmbeddedResourceLoader.html#a726f35a975b83a65162fba4914ad3f64',1,'EmbeddedResourceLoader']]],
+  ['dbuffer_9',['dbuffer',['../pcre2test_8c.html#a5f97b75f1a2236dc2fd28ccf4d8e5502',1,'pcre2test.c']]],
+  ['dbuffer_5fsize_10',['dbuffer_size',['../pcre2test_8c.html#a0b1489a57bb32dac7a5f89d3961e2b26',1,'pcre2test.c']]],
+  ['dee_5faction_11',['dee_action',['../pcre2grep_8c.html#aecf7d33f494600550ee8988f4d1cdab5',1,'dee_action:&#160;pcre2grep.c'],['../pcre2grep_8c.html#a49253a833b0a1e0e96c8d8f9fd018b3e',1,'DEE_action:&#160;pcre2grep.c']]],
+  ['dee_5foption_12',['dee_option',['../pcre2grep_8c.html#a402286af76c0e2c079d180e17758367b',1,'dee_option:&#160;pcre2grep.c'],['../pcre2grep_8c.html#ac0574665cb8d880da64d9972512192ba',1,'DEE_option:&#160;pcre2grep.c']]],
+  ['def_5fdatctl_13',['def_datctl',['../pcre2test_8c.html#a7fe83e8df095350ef8f8b9e904eac952',1,'pcre2test.c']]],
+  ['def_5fpatctl_14',['def_patctl',['../pcre2test_8c.html#a6e9684bd6c6a3fdfd658c4a766639d2c',1,'pcre2test.c']]],
+  ['depth_5flimit_15',['depth_limit',['../structpcre2__real__match__context.html#a0adae694b47c018e878c50239307db5e',1,'pcre2_real_match_context::depth_limit'],['../pcre2grep_8c.html#a15aa534fc4d7d947f5846b06406144f3',1,'depth_limit:&#160;pcre2grep.c']]],
+  ['dfa_5fmatched_16',['dfa_matched',['../pcre2test_8c.html#a502fdb2e21945591000544e82e5e04ec',1,'pcre2test.c']]],
+  ['dfa_5fworkspace_17',['dfa_workspace',['../pcre2test_8c.html#a9bb28d0615dc17ebc1e9fca7fbc3167d',1,'pcre2test.c']]],
+  ['digitsets_18',['digitsets',['../namespaceGenerateUcd.html#afc793e64b365b228efceeec0fa2969a5',1,'GenerateUcd']]],
+  ['do_5fcolour_19',['do_colour',['../pcre2grep_8c.html#a73403c57df453129477a5a8d76d2e409',1,'pcre2grep.c']]],
+  ['dupnames_20',['dupnames',['../structcompile__block.html#afb0e752af8c9a61bc37f6006ed0a45ab',1,'compile_block']]]
+];

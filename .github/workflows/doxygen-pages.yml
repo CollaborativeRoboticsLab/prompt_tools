@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - Doxygen
+      - '**/package.xml'
       - README.md
       - docs/**
       - '**/*.md'
@@ -24,7 +24,7 @@ on:
     branches:
       - main
     paths:
-      - Doxygen
+      - '**/package.xml'
       - README.md
       - docs/**
       - '**/*.md'
@@ -58,12 +58,57 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      - name: Install Doxygen
-        run: sudo apt-get update && sudo apt-get install -y doxygen
+      - name: Install documentation dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y doxygen graphviz
+
+      - name: Configure GitHub Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+
+      - name: Check package versions
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          package_paths = sorted(Path('.').glob('*/package.xml'))
+          if not package_paths:
+              print('No package.xml files found', file=sys.stderr)
+              sys.exit(1)
+
+          versions = {}
+          for package_path in package_paths:
+              root = ET.parse(package_path).getroot()
+              version = root.findtext('version', default='').strip()
+              if not version:
+                  print(f'Missing <version> in {package_path}', file=sys.stderr)
+                  sys.exit(1)
+              versions[str(package_path.parent)] = version
+
+          unique_versions = sorted(set(versions.values()))
+          if len(unique_versions) != 1:
+              print('Package versions do not match:', file=sys.stderr)
+              for package_name, version in versions.items():
+                  print(f'  {package_name}: {version}', file=sys.stderr)
+              sys.exit(1)
+
+          version = unique_versions[0]
+          with open(Path.cwd() / 'docs_version.env', 'w', encoding='utf-8') as handle:
+              handle.write(f'DOCS_VERSION={version}\n')
+          print(f'Using documentation version: {version}')
+          PY
 
       - name: Build HTML documentation
         run: |
-          doxygen Doxygen
+          set -euo pipefail
+          source docs_version.env
+          cp Doxygen Doxygen.generated
+          printf '\nPROJECT_NUMBER = "%s"\n' "$DOCS_VERSION" >> Doxygen.generated
+          doxygen Doxygen.generated
           touch docs/html/.nojekyll
 
       - name: Upload Pages artifact

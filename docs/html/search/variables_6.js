@@ -1,0 +1,19 @@
+var searchData=
+[
+  ['gb_5fnames_0',['gb_names',['../ucptest_8c.html#a895022c28b336f52a3b6ac2da875c6fb',1,'ucptest.c']]],
+  ['gbprop_1',['gbprop',['../structucd__record.html#a37d527a4c55d5a4ff0d59815b95c3c43',1,'ucd_record']]],
+  ['gcn_5fset_2',['gcn_set',['../namespaceGenerateCommon.html#a003592ba01020d2d0eea5620f3fd905d',1,'GenerateCommon']]],
+  ['general_5fcategory_5fnames_3',['general_category_names',['../namespaceGenerateCommon.html#a35cfcc50174b265c25e7474c744a652d',1,'GenerateCommon']]],
+  ['get_5fnames_4',['get_names',['../structdatctl.html#ac921d78336cbfa83814e225104ce3c46',1,'datctl']]],
+  ['get_5fnumbers_5',['get_numbers',['../structdatctl.html#a124be40120160a42c6c6e9f0d5773a0f',1,'datctl']]],
+  ['glob_5fescape_6',['glob_escape',['../structpcre2__real__convert__context.html#acb4740223f092861a0b1d8b4aef7d3a8',1,'pcre2_real_convert_context']]],
+  ['glob_5fseparator_7',['glob_separator',['../structpcre2__real__convert__context.html#aa6c36678424284656931300d865afbe1',1,'pcre2_real_convert_context']]],
+  ['group_8',['group',['../structrecurse__check.html#afd3196b244c5ae717dc431575b7b07e1',1,'recurse_check::group'],['../structrecurse__cache.html#a43bf30f089941a147debae133f7b6ed8',1,'recurse_cache::group']]],
+  ['group_5fframe_5ftype_9',['group_frame_type',['../structheapframe.html#a9c8ba3262ef902c8d8d96c138ff488f4',1,'heapframe']]],
+  ['group_5fnum_10',['group_num',['../structdfa__recursion__info.html#acc1131bc1a01a8b5377640efa979b72c',1,'dfa_recursion_info']]],
+  ['group_5fseparator_11',['group_separator',['../pcre2grep_8c.html#a4865e46b8b8bd1cd70245b0ddae98cf4',1,'pcre2grep.c']]],
+  ['groupinfo_12',['groupinfo',['../structcompile__block.html#aaf7442b5d9e60d940cd50644be887104',1,'compile_block']]],
+  ['groupnum_13',['groupnum',['../structomstr.html#a9e4857d439558bb0f97180eca46c4bbc',1,'omstr']]],
+  ['groupnumber_14',['groupnumber',['../structrecurse__cache.html#a547bdd4a54040542b6aff79dbd975ddf',1,'recurse_cache']]],
+  ['groupptr_15',['groupptr',['../structparsed__recurse__check.html#ac754d5f1e6fd555feb72bf8764ee53ea',1,'parsed_recurse_check']]]
+];
