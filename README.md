@@ -165,3 +165,19 @@ python3 src/prompt_tools/prompt_bridge/test/call_services.py
 - Default config: `prompt_bridge/config/prompt_bridge.yaml`
 
 OpenAI prompt requests are sent to `https://api.openai.com/v1/responses`, OpenAI embedding requests are sent to `https://api.openai.com/v1/embeddings`, and OpenAI tokenization is handled locally through `cpp-tiktoken`.
+
+## Citation
+
+If you use this work in an academic context, please cite the following publication(s):
+
+```bibtex
+@misc{ratnayake2026gpsfsm,
+  title={A Generative Partially Specified Finite State Machine Approach to Complex Behaviour Planning}, 
+  author={Kalana Ratnayake and Michael Pritchard and David Hinwood and Maleen Jayasuriya and Damith Herath},
+  year={2026},
+  eprint={2607.15674},
+  archivePrefix={arXiv},
+  primaryClass={cs.RO},
+  url={https://arxiv.org/abs/2607.15674}, 
+}
+```
