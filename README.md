@@ -130,6 +130,8 @@ source install/setup.bash
 ros2 launch prompt_bridge prompt_bridge.launch.py
 ```
 
+If you are launching Fabric through `fabric.launch.py` or one of the capability wrapper `system.launch.py` files, those launches now start `prompt_bridge` by default. Use `start_prompt_tools:=false` only when you want to exclude it.
+
 ### Testing
 
 To build and run the C++ test node that exercises the current prompt, chat, cache, and embedding flows:
