@@ -12,6 +12,7 @@
 #include <Poco/Net/HTTPResponse.h>
 #include <Poco/Net/HTTPSClientSession.h>
 #include <Poco/Net/NetException.h>
+#include <Poco/Timespan.h>
 #include <Poco/URI.h>
 
 #include <prompt_base/base_class.hpp>
@@ -75,11 +76,16 @@ public:
     {
       node_->declare_parameter(plugin_name_ + ".rest.auth_type", "Bearer");
     }
+    if (!node_->has_parameter(plugin_name_ + ".rest.timeout_ms"))
+    {
+      node_->declare_parameter(plugin_name_ + ".rest.timeout_ms", 60000);
+    }
 
     // get parameters from the parameter server
     method_ = node_->get_parameter(plugin_name_ + ".rest.method").as_string();
     ssl_verify_ = node_->get_parameter(plugin_name_ + ".rest.ssl_verify").as_bool();
     auth_type_ = node_->get_parameter(plugin_name_ + ".rest.auth_type").as_string();
+    timeout_ms_ = node_->get_parameter(plugin_name_ + ".rest.timeout_ms").as_int();
 
     // get api key from environment
     if (!api_key_name.empty())
@@ -107,6 +113,7 @@ public:
     RCLCPP_INFO(node_->get_logger(), "%s Method: %s", plugin_name_.c_str(), method_.c_str());
     RCLCPP_INFO(node_->get_logger(), "%s SSL Verify: %s", plugin_name_.c_str(), ssl_verify_ ? "true" : "false");
     RCLCPP_INFO(node_->get_logger(), "%s Auth Type: %s", plugin_name_.c_str(), auth_type_.c_str());
+    RCLCPP_INFO(node_->get_logger(), "%s Timeout: %d ms", plugin_name_.c_str(), timeout_ms_);
     RCLCPP_INFO(node_->get_logger(), "%s Plugin initialized", plugin_name_.c_str());
 
     RCLCPP_INFO(node_->get_logger(), "Loading default model options from parameters.");
@@ -232,6 +239,11 @@ protected:
       RCLCPP_WARN(node_->get_logger(), "insecure session created");
     }
 
+    if (timeout_ms_ > 0)
+    {
+      session_ptr->setTimeout(Poco::Timespan(0, 0, 0, 0, timeout_ms_ * 1000));
+    }
+
     try
     {
       // send request
@@ -245,9 +257,25 @@ protected:
       throw prompt::PromptException("network error: " + std::string(e.what()));
     }
 
-    // get response
     Poco::Net::HTTPResponse response;
-    std::istream& rs = session_ptr->receiveResponse(response);
+    std::istream* response_stream = nullptr;
+    try
+    {
+      response_stream = &session_ptr->receiveResponse(response);
+    }
+    catch (const Poco::TimeoutException& e)
+    {
+      RCLCPP_ERROR(node_->get_logger(), "HTTP request timed out after %d ms: %s", timeout_ms_, e.what());
+      throw prompt::PromptException("HTTP request timed out after " + std::to_string(timeout_ms_) +
+                                    " ms: " + e.what());
+    }
+    catch (const Poco::Net::NetException& e)
+    {
+      RCLCPP_ERROR(node_->get_logger(), "network error while receiving response: %s", e.what());
+      throw prompt::PromptException("network error while receiving response: " + std::string(e.what()));
+    }
+
+    std::istream& rs = *response_stream;
 
     // check for errors
     if (response.getStatus() != Poco::Net::HTTPResponse::HTTP_OK)
@@ -356,6 +384,7 @@ protected:
   std::string method_;
   bool ssl_verify_;
   std::string auth_type_;
+  int timeout_ms_ = 60000;
 
   /**
    * @brief API key
