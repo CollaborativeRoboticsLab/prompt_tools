@@ -326,7 +326,7 @@ public:
             // convert the result to message and return the uuid to the client for future reference
             res->response = prompt::toMsg(result);
             res->uuid = uuid;
-            RCLCPP_INFO(this->get_logger(), "New chat prompt processed. Generated UUID: %s", uuid.c_str());
+            RCLCPP_DEBUG(this->get_logger(), "New chat prompt processed. Generated UUID: %s", uuid.c_str());
           }
           else
           {
@@ -344,7 +344,7 @@ public:
             res->response = prompt::toMsg(result);
             res->uuid = uuid;
 
-            RCLCPP_INFO(this->get_logger(), "New chat prompt cached. Generated UUID: %s", uuid.c_str());
+            RCLCPP_DEBUG(this->get_logger(), "New chat prompt cached. Generated UUID: %s", uuid.c_str());
           }
         }
         else
@@ -373,7 +373,7 @@ public:
           res->response = prompt::toMsg(result);
           res->uuid = uuid;
 
-          RCLCPP_INFO(this->get_logger(), "New chat prompt processed. Generated UUID: %s", uuid.c_str());
+          RCLCPP_DEBUG(this->get_logger(), "New chat prompt processed. Generated UUID: %s", uuid.c_str());
         }
       }
       else
@@ -405,7 +405,7 @@ public:
             // convert the result to message and return the uuid to the client for future reference
             res->response = prompt::toMsg(result);
             res->uuid = uuid;
-            RCLCPP_INFO(this->get_logger(), "Chat prompt processed with flushed cache. UUID: %s", uuid.c_str());
+            RCLCPP_DEBUG(this->get_logger(), "Chat prompt processed with flushed cache. UUID: %s", uuid.c_str());
           }
           else
           {
@@ -433,7 +433,7 @@ public:
             res->response = prompt::toMsg(result);
             res->uuid = uuid;
 
-            RCLCPP_INFO(this->get_logger(), "Chat prompt cached. UUID: %s", uuid.c_str());
+            RCLCPP_DEBUG(this->get_logger(), "Chat prompt cached. UUID: %s", uuid.c_str());
           }
         }
         else
@@ -462,7 +462,7 @@ public:
           res->response = prompt::toMsg(result);
           res->uuid = uuid;
 
-          RCLCPP_INFO(this->get_logger(), "Chat prompt processed. UUID: %s", uuid.c_str());
+          RCLCPP_DEBUG(this->get_logger(), "Chat prompt processed. UUID: %s", uuid.c_str());
         }
       }
     }
@@ -488,7 +488,7 @@ public:
 
             res->response = prompt::toMsg(result);
             res->uuid = "";
-            RCLCPP_INFO(this->get_logger(), "New chat prompt processed. No UUID generated due to flush request and "
+            RCLCPP_DEBUG(this->get_logger(), "New chat prompt processed. No UUID generated due to flush request and "
                                             "disabled chat mode");
           }
           else
@@ -508,7 +508,7 @@ public:
             res->response = prompt::toMsg(result);
             res->uuid = uuid;
 
-            RCLCPP_INFO(this->get_logger(), "New prompt cached. Generated UUID: %s", uuid.c_str());
+            RCLCPP_DEBUG(this->get_logger(), "New prompt cached. Generated UUID: %s", uuid.c_str());
           }
         }
         else
@@ -521,7 +521,7 @@ public:
           // convert the result to message and return
           res->response = prompt::toMsg(result);
           res->uuid = "";
-          RCLCPP_INFO(this->get_logger(), "New prompt processed.");
+          RCLCPP_DEBUG(this->get_logger(), "New prompt processed.");
         }
       }
       else
@@ -557,7 +557,7 @@ public:
             res->response = prompt::toMsg(result);
             res->uuid = "";
 
-            RCLCPP_INFO(this->get_logger(), "Prompt processed with flushed cache. UUID: %s discontinued.",
+            RCLCPP_DEBUG(this->get_logger(), "Prompt processed with flushed cache. UUID: %s discontinued.",
                         uuid.c_str());
           }
           else
@@ -587,7 +587,7 @@ public:
             res->response = prompt::toMsg(result);
             res->uuid = uuid;
 
-            RCLCPP_INFO(this->get_logger(), "Prompt cached without flushing in non-chat mode. UUID: %s.", uuid.c_str());
+            RCLCPP_DEBUG(this->get_logger(), "Prompt cached without flushing in non-chat mode. UUID: %s.", uuid.c_str());
           }
         }
         else
@@ -603,7 +603,7 @@ public:
           // convert the result to message and return
           res->response = prompt::toMsg(result);
           res->uuid = "";
-          RCLCPP_INFO(this->get_logger(), "Prompt processed.");
+          RCLCPP_DEBUG(this->get_logger(), "Prompt processed.");
         }
       }
       }

@@ -63,6 +63,8 @@ public:
     // initialize base class
     initialize_base(node, plugin_name);
 
+    const bool first_initialization = !node_->has_parameter(plugin_name_ + ".rest.method");
+
     // declare parameters only if not already declared (idempotent init)
     if (!node_->has_parameter(plugin_name_ + ".rest.method"))
     {
@@ -94,7 +96,8 @@ public:
       if (api_key_env)
       {
         api_key_ = api_key_env;
-        RCLCPP_INFO(node_->get_logger(), "API key loaded from environment variables");
+        if (first_initialization)
+          RCLCPP_INFO(node_->get_logger(), "API key loaded from environment variables");
       }
       else
       {
@@ -105,18 +108,21 @@ public:
     }
     else
     {
-      RCLCPP_INFO(node_->get_logger(), "An API key is not used for this plugin, using empty string");
+      if (first_initialization)
+        RCLCPP_INFO(node_->get_logger(), "An API key is not used for this plugin, using empty string");
       api_key_ = "";
     }
 
     // log the parameters
-    RCLCPP_INFO(node_->get_logger(), "%s Method: %s", plugin_name_.c_str(), method_.c_str());
-    RCLCPP_INFO(node_->get_logger(), "%s SSL Verify: %s", plugin_name_.c_str(), ssl_verify_ ? "true" : "false");
-    RCLCPP_INFO(node_->get_logger(), "%s Auth Type: %s", plugin_name_.c_str(), auth_type_.c_str());
-    RCLCPP_INFO(node_->get_logger(), "%s Timeout: %d ms", plugin_name_.c_str(), timeout_ms_);
-    RCLCPP_INFO(node_->get_logger(), "%s Plugin initialized", plugin_name_.c_str());
-
-    RCLCPP_INFO(node_->get_logger(), "Loading default model options from parameters.");
+    if (first_initialization)
+    {
+      RCLCPP_INFO(node_->get_logger(), "%s Method: %s", plugin_name_.c_str(), method_.c_str());
+      RCLCPP_INFO(node_->get_logger(), "%s SSL Verify: %s", plugin_name_.c_str(), ssl_verify_ ? "true" : "false");
+      RCLCPP_INFO(node_->get_logger(), "%s Auth Type: %s", plugin_name_.c_str(), auth_type_.c_str());
+      RCLCPP_INFO(node_->get_logger(), "%s Timeout: %d ms", plugin_name_.c_str(), timeout_ms_);
+      RCLCPP_INFO(node_->get_logger(), "%s Plugin initialized", plugin_name_.c_str());
+      RCLCPP_INFO(node_->get_logger(), "Loading default model options from parameters.");
+    }
     required_options_ = prompt::load_from_parameters(node_, plugin_name_);
   }
 

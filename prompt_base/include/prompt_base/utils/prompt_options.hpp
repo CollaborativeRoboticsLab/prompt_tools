@@ -164,7 +164,7 @@ void ensure_model_options(rclcpp::Node::SharedPtr node, std::vector<prompt::Prom
 
     if (!found)
     {
-      RCLCPP_WARN(node->get_logger(), "Model option '%s' not found, Adding '%s'", required_opt.key.c_str(),
+      RCLCPP_DEBUG(node->get_logger(), "Model option '%s' not found, Adding '%s'", required_opt.key.c_str(),
                   required_opt.value.c_str());
       options.push_back(required_opt);
     }

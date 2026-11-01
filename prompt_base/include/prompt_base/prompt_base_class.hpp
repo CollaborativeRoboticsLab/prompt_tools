@@ -2,6 +2,7 @@
 
 #include <prompt_base/rest_base_class.hpp>
 #include <prompt_base/utils/prompt_options.hpp>
+#include <algorithm>
 #include <string>
 
 namespace prompt
@@ -48,6 +49,12 @@ public:
     // initialize base class
     initialize_rest_base(node, plugin_name, api_key_name);
 
+    const bool first_initialization = !node_->has_parameter(plugin_name_ + ".rest.uri");
+    if (!node_->has_parameter("log_prompt_content"))
+    {
+      node_->declare_parameter("log_prompt_content", true);
+    }
+
     // declare parameters only if not already declared (idempotent init)
     if (!node_->has_parameter(plugin_name_ + ".rest.uri"))
     {
@@ -63,8 +70,11 @@ public:
     chat_uri_ = node_->get_parameter(plugin_name_ + ".rest.chat_uri").as_string();
 
     // log the parameters
-    RCLCPP_INFO(node_->get_logger(), "%s Single URI: %s", plugin_name_.c_str(), uri_.c_str());
-    RCLCPP_INFO(node_->get_logger(), "%s Chat URI: %s", plugin_name_.c_str(), chat_uri_.c_str());
+    if (first_initialization)
+    {
+      RCLCPP_INFO(node_->get_logger(), "%s Single URI: %s", plugin_name_.c_str(), uri_.c_str());
+      RCLCPP_INFO(node_->get_logger(), "%s Chat URI: %s", plugin_name_.c_str(), chat_uri_.c_str());
+    }
   }
 
   /**
@@ -79,6 +89,7 @@ public:
   {
     // verify and add required model options
     prompt::ensure_model_options(node_, req.options, required_options_);
+    log_request(req);
 
     // prepare request body
     Poco::JSON::Object body_json = toJson(req);
@@ -88,6 +99,7 @@ public:
 
     // create prompt provider response container
     prompt::PromptResponse res = fromJson(object);
+    log_response(res);
 
     return res;
   }
@@ -106,6 +118,7 @@ public:
   {
     // verify and add required model options
     prompt::ensure_model_options(node_, latest_request.options, required_options_);
+    log_request(latest_request);
 
     // prepare request body
     Poco::JSON::Object body_json = toJsonConversation(latest_request, conversation);
@@ -115,11 +128,45 @@ public:
 
     // create prompt provider response container
     prompt::PromptResponse res = fromJsonConversation(object);
+    log_response(res);
 
     return res;
   }
 
 protected:
+  static std::string preview(const std::string& text)
+  {
+    return text.substr(0, std::min<std::size_t>(100, text.find_first_of("\r\n")));
+  }
+
+  void log_request(const prompt::PromptRequest& request) const
+  {
+    std::string model = "default";
+    for (const auto& option : request.options)
+    {
+      if (option.key == "model")
+      {
+        model = option.value;
+        break;
+      }
+    }
+    if (node_->get_parameter("log_prompt_content").as_bool())
+      RCLCPP_INFO(node_->get_logger(), "[%s] prompting model '%s' from family '%s': %s", plugin_name_.c_str(),
+                  model.c_str(), request.model_family.c_str(), preview(request.prompt).c_str());
+    else
+      RCLCPP_INFO(node_->get_logger(), "[%s] prompting model '%s' from family '%s'", plugin_name_.c_str(),
+                  model.c_str(), request.model_family.c_str());
+  }
+
+  void log_response(const prompt::PromptResponse& response) const
+  {
+    if (node_->get_parameter("log_prompt_content").as_bool())
+      RCLCPP_INFO(node_->get_logger(), "[%s] response: %s", plugin_name_.c_str(), preview(response.response).c_str());
+    else
+      RCLCPP_INFO(node_->get_logger(), "[%s] response received (success=%s)", plugin_name_.c_str(),
+                  response.success ? "true" : "false");
+  }
+
   /**
    * @brief Convert a prompt request to a JSON object
    *
